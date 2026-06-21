@@ -1,0 +1,51 @@
+/* variabler.css — alle designvalg samlet på én plass.
+   Vil du endre en farge? Gjør det her, og det gjelder overalt i appen.
+   CSS-variabler definert på :root er tilgjengelige i alle andre CSS-filer. */
+
+:root {
+  /* --- FARGER --- */
+
+  /* Bakgrunnen i hele appen */
+  --ink: #141318;
+
+  /* Primær tekstfarge */
+  --paper: #F4F1EA;
+
+  /* Korall — aksent, hover, CTA-knapper */
+  --korall: #FF4D5E;
+
+  /* Lime — brukes på tid og "Gratis"-merking, gjør dem poppy og lette å scanne */
+  --lime: #C8FF4D;
+
+  /* Overflater: litt lysere enn bakgrunnen for å skape dybde */
+  --flate-1: #1E1C24;   /* Kortbakgrunn */
+  --flate-2: #28252F;   /* Hover-tilstander, inputfelter, sekundære knapper */
+
+  /* Sekundær tekstfarge — ikke så viktig info */
+  --graa: #6B6875;
+
+
+  /* --- TYPOGRAFI --- */
+
+  /* Space Grotesk: logo, titler — den tunge, ekspressive fonten */
+  --font-tittel: 'Space Grotesk', sans-serif;
+
+  /* Inter: all brødtekst — lesbar og nøytral */
+  --font-tekst: 'Inter', sans-serif;
+
+
+  /* --- SPACING ---
+     Vi bruker et konsistent sett med størrelser.
+     rem er relativt til rot-elementets font-size (typisk 16px),
+     så 1rem = 16px, 0.5rem = 8px osv. */
+  --gap-s:  0.5rem;   /*  8px */
+  --gap-m:  1rem;     /* 16px */
+  --gap-l:  1.5rem;   /* 24px */
+  --gap-xl: 2rem;     /* 32px */
+
+
+  /* --- AVRUNDING --- */
+  --radius-s: 8px;
+  --radius-m: 12px;
+  --radius-l: 16px;
+}
