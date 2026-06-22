@@ -1,21 +1,38 @@
-/* events-api.js — nettverkslaget.
-   Eneste ansvar: hente rå data fra JSON-filen og returnere den.
-   Ingen logikk, ingen DOM, ingen filtrering her. */
+/* events-api.js — datahentingslaget.
+   Importerer fra data/events.js (ES-modul) i stedet for fetch.
+   Grensesnittet er det samme som før: hentEventer() returnerer et Promise. */
+
+import { EVENTER } from '../../data/events.js';
 
 /**
- * Henter alle eventer fra data/events.json.
- * Returnerer et Promise som løser seg med en liste av event-objekter.
- * Kaster en feil hvis nettverket feiler eller JSON-en er ugyldig.
+ * Returnerer alle eventer fra data/events.js.
+ * Utleder en stabil id fra tittel + dato hvis eventet mangler en.
+ * Den stabile id-en gjør at «lagre»-funksjonen virker selv uten eksplisitt id.
+ *
+ * @returns {Promise<Array>}
  */
-export async function hentEventer() {
-  const respons = await fetch('data/events.json');
+export function hentEventer() {
+  const eventer = EVENTER.map((e) => ({
+    ...e,
+    id: e.id ?? lagId(e.tittel, e.start),
+  }));
 
-  /* HTTP-feil (404, 500 osv.) kaster ikke automatisk en exception —
-     vi må sjekke manuelt om forespørselen gikk bra */
-  if (!respons.ok) {
-    throw new Error(`Klarte ikke hente eventer: ${respons.status} ${respons.statusText}`);
-  }
+  return Promise.resolve(eventer);
+}
 
-  const eventer = await respons.json();
-  return eventer;
+/**
+ * Lager en stabil, URL-vennlig id fra tittel og startdato.
+ * Eksempel: "Blå Jazzkvelder" + "2026-06-22T20:00" → "bla-jazzkvelder-2026-06-22"
+ */
+function lagId(tittel, start) {
+  const slug = tittel
+    .toLowerCase()
+    /* Normaliser til NFD og fjern kombinerende diakritika (ø → o, å → a osv.) */
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    /* Erstatt alt som ikke er bokstav/tall med bindestrek */
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  return `${slug}-${start.slice(0, 10)}`;
 }

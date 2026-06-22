@@ -1,6 +1,4 @@
-/* stil.css — all visuell styling.
-   Mobil-først: vi designer for liten skjerm, og bruker @media-queries for å
-   justere for større skjermer der det trengs. */
+/* stil.css — all visuell styling. Mobil-først. */
 
 
 /* === BASIS === */
@@ -11,25 +9,37 @@ body {
   font-family: var(--font-tekst);
   font-size: 1rem;
   line-height: 1.5;
-  /* dvh = "dynamic viewport height" — fungerer bedre på mobil enn vh
-     fordi den tar høyde for at nettleserbaren glir inn og ut */
   min-height: 100dvh;
+}
+
+
+/* === TOPBAR (sticky: header + filtre) ===
+   Én felles sticky container gjør at begge elementer
+   klistrer seg til toppen som én blokk ved scrolling. */
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--ink);
+  box-shadow: 0 1px 0 var(--flate-2);
+}
+
+/* Sentrert innhold-wrapper brukt av både header og filtre */
+.topbar-innhold {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 var(--gap-m);
 }
 
 
 /* === TOPPTEKST === */
 
 .topptekst {
-  /* sticky + top:0 gjør at headeren klistrer seg øverst når du scroller */
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: var(--ink);
-  padding: var(--gap-m) var(--gap-m) var(--gap-s);
   display: flex;
   align-items: center;
   gap: var(--gap-m);
-  border-bottom: 1px solid var(--flate-2);
+  padding: var(--gap-m) 0 var(--gap-s);
 }
 
 .logo {
@@ -37,35 +47,35 @@ body {
   font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.03em;
-  /* Flexbox for å få logo-bokstavene på linje */
   display: inline-flex;
   align-items: center;
 }
 
-/* Wrapper rundt "a"-en — position:relative gjør at vi kan plassere
-   SVG-pinen absolutt relativt til akkurat dette elementet */
-.logo-a-wrapper {
+/* Wrapper rundt å-en — position:relative lar oss plassere SVG-pinen
+   absolutt relativt til akkurat denne bokstaven */
+.logo-aa {
   position: relative;
   display: inline-block;
 }
 
-/* SVG-pinen som flyver over "a"-en og ser ut som ringen i "å" */
+/* SVG-pinen overlapper prikken/ringen i å, og erstatter den visuelt
+   med et korall-farget kartnål-hode */
 .logo-pin {
   position: absolute;
-  /* Negative top-verdi skyver pinen opp over bokstaven */
-  top: -10px;
-  left: 50%;
-  /* translateX(-50%) sentrerer den horisontalt */
-  transform: translateX(-50%);
   width: 14px;
   height: 14px;
   fill: var(--korall);
-  /* Pinsymbolen skal ikke påvirke layout — den "flyter" over */
+  /* Plasser pinens sirkulære hode over ringen i å.
+     top: -5px skyver SVG-en litt over bokstavens øverste kant,
+     slik at pinhodet treffer akkurat der ringen ville vært. */
+  top: -5px;
+  left: 50%;
+  transform: translateX(-50%);
   pointer-events: none;
 }
 
 .tagline {
-  flex: 1;  /* Dytt lagret-knappen til høyre */
+  flex: 1;
   font-size: 0.8rem;
   color: var(--graa);
   white-space: nowrap;
@@ -84,7 +94,6 @@ body {
   background: var(--flate-2);
 }
 
-/* Når lagret-visning er aktiv, gjør hjertet korall */
 .lagret-knapp.aktiv {
   color: var(--korall);
 }
@@ -93,37 +102,48 @@ body {
 /* === FILTRE === */
 
 .filtre {
-  padding: var(--gap-m) var(--gap-m) 0;
+  padding: var(--gap-s) 0 var(--gap-m);
   display: flex;
   flex-direction: column;
   gap: var(--gap-s);
-  /* Horisontal scroll hvis chips ikke får plass */
-  overflow-x: auto;
-  /* Skjul scrollbar visuelt men behold funksjonaliteten */
-  scrollbar-width: none;
-}
-
-.filtre::-webkit-scrollbar {
-  display: none;
 }
 
 .filter-gruppe {
   display: flex;
-  gap: var(--gap-s);
-  /* nowrap hindrer chips fra å brekke til ny linje */
-  flex-wrap: nowrap;
+  flex-direction: column;
+  gap: 4px;
 }
 
-/* Filter-chips: pill-formede knapper */
+.filter-etikett {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--graa);
+}
+
+.filter-chips {
+  display: flex;
+  gap: var(--gap-s);
+  flex-wrap: wrap;
+}
+
+/* Bunnraden: Nærhets-chip + Nullstill på samme linje */
+.filter-bunn-rad {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-s);
+  margin-top: 2px;
+}
+
 .chip {
-  padding: 0.375rem 0.875rem;
+  padding: 0.3rem 0.8rem;
   border: 1.5px solid var(--flate-2);
-  border-radius: 100px; /* Høy verdi = perfekt pill-form uansett høyde */
-  font-size: 0.875rem;
+  border-radius: 100px;
+  font-size: 0.8rem;
   color: var(--graa);
   white-space: nowrap;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
-  /* Tydelig fokus-ring for tastatur-navigasjon */
   outline-offset: 2px;
 }
 
@@ -132,24 +152,49 @@ body {
   color: var(--paper);
 }
 
-/* Aktiv chip — valgt filter får korall bakgrunn */
 .chip.aktiv {
   background: var(--korall);
   border-color: var(--korall);
   color: white;
 }
 
+.nullstill-knapp {
+  font-size: 0.8rem;
+  color: var(--korall);
+  border: none;
+  background: none;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+  font-family: var(--font-tekst);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: opacity 0.15s;
+}
+
+.nullstill-knapp:hover {
+  opacity: 0.75;
+}
+
+
+/* === SENTRERT INNHOLDS-WRAPPER === */
+
+.senter {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 0 var(--gap-m);
+}
+
 
 /* === TREFF-LINJE === */
 
 .treff-linje {
-  padding: var(--gap-m) var(--gap-m) 0;
+  padding: var(--gap-m) 0 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 0.875rem;
   color: var(--graa);
-  min-height: 2rem; /* Forhindrer layout-hopp når telleren oppdateres */
+  min-height: 2rem;
 }
 
 .tilbake-knapp {
@@ -157,19 +202,53 @@ body {
   font-size: 0.875rem;
 }
 
-/* Hjelpeklasse: skjuler et element fullstendig */
 .skjult {
   display: none !important;
+}
+
+
+/* === DAG-SEKSJON === */
+
+.dag-gruppe {
+  margin-top: var(--gap-l);
+}
+
+.dag-gruppe:first-child {
+  margin-top: var(--gap-m);
+}
+
+.dag-overskrift {
+  font-family: var(--font-tittel);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--graa);
+  padding-bottom: var(--gap-s);
+  border-bottom: 1px solid var(--flate-2);
+  margin-bottom: var(--gap-m);
+}
+
+/* "I dag" fremheves */
+.dag-overskrift:first-letter {
+  /* Stor I → ingen spesialbehandling, brukes bare for "I dag" */
+}
+
+.dag-gruppe:first-child .dag-overskrift {
+  color: var(--paper);
+}
+
+.dag-kort {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-m);
 }
 
 
 /* === FEED === */
 
 .feed {
-  padding: var(--gap-m);
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap-m);
+  padding-bottom: var(--gap-xl);
 }
 
 .tom-feed,
@@ -179,6 +258,7 @@ body {
   padding: var(--gap-xl) var(--gap-m);
   font-size: 0.9rem;
   line-height: 1.6;
+  margin-top: var(--gap-l);
 }
 
 
@@ -187,10 +267,9 @@ body {
 .kort {
   background: var(--flate-1);
   border-radius: var(--radius-l);
-  overflow: hidden; /* Gjør at bildet ikke stikker utenfor avrundingen */
+  overflow: hidden;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-  /* Fjerner det blå glow-flakket på mobil når man tapper */
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -203,27 +282,30 @@ body {
   transform: translateY(0);
 }
 
-/* Bilde-wrapper: position:relative lar oss stapple badge og hjerte-knapp
-   absolutt over bildet */
 .kort-bilde-wrapper {
   position: relative;
-  /* aspect-ratio holder bildet i 16:9-format uansett kortbredde */
-  aspect-ratio: 16 / 9;
+  /* Litt flatere enn 16:9 — gjør at flere kort vises */
+  aspect-ratio: 16 / 7;
   overflow: hidden;
 }
 
 .kort-bilde {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Fyller hele området uten å strekke bildet */
+  object-fit: cover;
   transition: transform 0.3s ease;
 }
 
 .kort:hover .kort-bilde {
-  transform: scale(1.03); /* Subtil zoom på hover */
+  transform: scale(1.03);
 }
 
-/* Kategori-badge øverst til venstre */
+.kort-bilde-placeholder {
+  width: 100%;
+  height: 100%;
+  background: var(--flate-2);
+}
+
 .kort-kategori {
   position: absolute;
   top: var(--gap-s);
@@ -236,12 +318,10 @@ body {
   letter-spacing: 0.05em;
 }
 
-/* Ulike farger per kategori — subtile, transparente bakgrunner */
 .kategori-musikk { background: rgba(200, 255, 77, 0.15); color: var(--lime); }
 .kategori-mat    { background: rgba(255, 77, 94, 0.15);  color: var(--korall); }
 .kategori-klubb  { background: rgba(244, 241, 234, 0.12); color: var(--paper); }
 
-/* Hjerte-knapp øverst til høyre */
 .hjerte-knapp {
   position: absolute;
   top: var(--gap-s);
@@ -249,7 +329,6 @@ body {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  /* Halvtransparent bakgrunn med blur gjør at knappen er lesbar over alle bilder */
   background: rgba(20, 19, 24, 0.6);
   backdrop-filter: blur(4px);
   display: flex;
@@ -257,7 +336,6 @@ body {
   justify-content: center;
   font-size: 1rem;
   transition: transform 0.15s, background 0.15s;
-  /* Tydelig fokus for tastatur-brukere */
   outline-offset: 2px;
 }
 
@@ -266,12 +344,10 @@ body {
   background: rgba(20, 19, 24, 0.85);
 }
 
-/* Lagret-tilstand: hjertet blir korall og fylt */
 .hjerte-knapp.lagret {
   color: var(--korall);
 }
 
-/* Kortinnholdet under bildet */
 .kort-innhold {
   padding: var(--gap-m);
   display: flex;
@@ -294,9 +370,8 @@ body {
   color: var(--graa);
 }
 
-/* Avstand vises i lime — det er en "nice-to-have" info som skal skille seg ut */
 .avstand::before {
-  content: '· '; /* Prikk som separator mellom sted og avstand */
+  content: '· ';
 }
 
 .avstand {
@@ -314,7 +389,6 @@ body {
   color: var(--graa);
 }
 
-/* "Gratis" vises i lime — positiv signal */
 .pris-gratis {
   color: var(--lime);
   font-weight: 500;
@@ -324,18 +398,15 @@ body {
 /* === MODAL === */
 
 .modal {
-  /* Dekker hele skjermen */
   position: fixed;
-  inset: 0; /* Kortform for top:0 right:0 bottom:0 left:0 */
+  inset: 0;
   background: rgba(20, 19, 24, 0.85);
   backdrop-filter: blur(4px);
   z-index: 100;
-  /* Modal glir opp fra bunnen — "bottom sheet"-pattern som er standard på mobil */
   display: flex;
   align-items: flex-end;
-  /* Skjult som standard — vises kun når klassen .aktiv legges til */
   opacity: 0;
-  pointer-events: none; /* Ikke klikkbar når usynlig */
+  pointer-events: none;
   transition: opacity 0.2s ease;
 }
 
@@ -351,18 +422,14 @@ body {
   max-height: 90dvh;
   overflow-y: auto;
   position: relative;
-  /* Starter utenfor skjermen og glir inn */
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* cubic-bezier(0.32, 0.72, 0, 1) gir en litt "springy" følelse
-   som er vanlig i iOS bottom sheet-animasjoner */
 .modal.aktiv .modal-container {
   transform: translateY(0);
 }
 
-/* Lukk-knapp (×) øverst til høyre i modalen */
 .modal-lukk {
   position: absolute;
   top: var(--gap-m);
@@ -375,7 +442,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* Legg modal-lukk over bildet */
   z-index: 1;
   transition: background 0.15s;
 }
@@ -398,7 +464,6 @@ body {
   gap: var(--gap-m);
 }
 
-/* Kategori-badge i modal (samme stil som på kort) */
 .modal-kategori {
   display: inline-block;
   padding: 0.25rem 0.625rem;
@@ -421,6 +486,34 @@ body {
   color: var(--graa);
 }
 
+/* Faktarad: Type / Tid / Pris / Avstand */
+.modal-faktarad {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-m) var(--gap-l);
+  padding: var(--gap-m);
+  background: var(--flate-2);
+  border-radius: var(--radius-m);
+}
+
+.faktarad-felt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.faktarad-etikett {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--graa);
+}
+
+.faktarad-verdi {
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
 .modal-beskrivelse {
   font-size: 1rem;
   line-height: 1.65;
@@ -431,7 +524,6 @@ body {
   gap: var(--gap-s);
 }
 
-/* Generell knapp-base */
 .knapp {
   display: inline-flex;
   align-items: center;
@@ -446,20 +538,17 @@ body {
 .knapp:hover  { opacity: 0.85; }
 .knapp:active { transform: scale(0.98); }
 
-/* Primær: korall, full bredde */
 .knapp-primaer {
   background: var(--korall);
   color: white;
   flex: 1;
 }
 
-/* Sekundær: mørk, brukes til "vis på kart" */
 .knapp-sekundaer {
   background: var(--flate-2);
   color: var(--paper);
 }
 
-/* Ghost: kun border, brukes til lagre/del */
 .knapp-ghost {
   border: 1.5px solid var(--flate-2);
   color: var(--graa);
@@ -477,34 +566,18 @@ body {
 .modal-bunn {
   display: flex;
   gap: var(--gap-s);
-  /* env(safe-area-inset-bottom) gir ekstra plass for iPhone-hakken */
   padding-bottom: calc(var(--gap-m) + env(safe-area-inset-bottom));
 }
 
-/* Forhindrer at siden scroller i bakgrunnen mens modal er åpen */
 body.modal-aapen {
   overflow: hidden;
 }
 
 
-/* === DESKTOP-JUSTERING ===
-   På bredere skjermer: sentrer innholdet og legg kortene i to kolonner */
+/* === DESKTOP === */
 
 @media (min-width: 640px) {
-  .feed {
-    max-width: 680px;
-    margin: 0 auto;
-  }
-
-  .filtre,
-  .treff-linje {
-    max-width: 680px;
-    margin-left: auto;
-    margin-right: auto;
-  }
-
   .modal {
-    /* På desktop: modal sentrert, ikke full bredde */
     align-items: center;
   }
 

@@ -2,24 +2,16 @@
 <html lang="no">
 <head>
   <meta charset="UTF-8" />
-  <!-- viewport: width=device-width betyr "bruk enhetens faktiske bredde".
-       initial-scale=1 hindrer automatisk zoom. Begge er nødvendige for mobil. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Hyperlokalt oppdagelsesverktøy for Oslo. Finn noe å gjøre i kveld." />
   <title>påby — oslo</title>
 
-  <!-- Google Fonts: Space Grotesk (titler) og Inter (brødtekst).
-       preconnect-linjene gjør at nettleseren starter tilkoblingen tidlig,
-       som gjør at fontene lastes raskere. -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link
     href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&display=swap"
     rel="stylesheet"
   />
-
-  <!-- Leaflet CSS (valgfritt kart) — kommenter inn for å aktivere kart -->
-  <!-- <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" /> -->
 
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/variabler.css" />
@@ -29,99 +21,93 @@
 <body>
 
   <!-- ==============================
-       TOPPTEKST
-       sticky: følger med når man scroller
+       TOPBAR — sticky: header + filtre
+       Begge klistrer seg til toppen som én blokk.
        ============================== -->
-  <header class="topptekst">
+  <div class="topbar">
 
-    <!-- Logo: "påby" der ringen i "å" er en SVG-pin
-         aria-label="påby" gir skjermlesere riktig uttale -->
-    <div class="logo" aria-label="påby">
-      <!-- De vanlige bokstavene p, a, b, y.
-           "a"-en er pakket i en wrapper slik at vi kan plassere
-           SVG-pinen absolutt over den. -->
-      p<span class="logo-a-wrapper" aria-hidden="true">
-        <span class="logo-a">a</span>
-        <svg class="logo-pin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <!-- Map pin-path: en fyllt dråpeform med hull i midten -->
-          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-        </svg>
-      </span>by
-    </div>
+    <header class="topptekst topbar-innhold">
 
-    <!-- Tagline: tar opp den ledige plassen mellom logo og hjerte-knapp -->
-    <p class="tagline">kjeder du deg? på by.</p>
+      <!-- Logo: "påby" der SVG-kartnålen sitter som prikken over å -->
+      <div class="logo" aria-label="påby">
+        p<span class="logo-aa" aria-hidden="true">
+          å
+          <svg class="logo-pin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+          </svg>
+        </span>by
+      </div>
 
-    <!-- Hjerte-knapp: bytter mellom normal feed og lagret-visning -->
-    <button id="vis-lagret" class="lagret-knapp" aria-label="Vis lagrede eventer" aria-pressed="false">
-      ♡
-    </button>
-  </header>
+      <p class="tagline">kjeder du deg? på by.</p>
+
+      <button id="vis-lagret" class="lagret-knapp" aria-label="Vis lagrede eventer" aria-pressed="false">
+        ♡
+      </button>
+    </header>
 
 
-  <!-- ==============================
-       FILTRE
-       nav er semantisk riktig her — det er en navigasjons-/filtreringsbar
-       ============================== -->
-  <nav class="filtre" aria-label="Filtrer eventer">
+    <!-- Filtrer — organisert med etiketter per gruppe -->
+    <nav class="filtre topbar-innhold" aria-label="Filtrer eventer">
 
-    <!-- Kategori-filtre: musikk / mat / klubb -->
-    <div class="filter-gruppe" role="group" aria-label="Kategori">
-      <button class="chip" data-filter="kategori" data-verdi="musikk">musikk</button>
-      <button class="chip" data-filter="kategori" data-verdi="mat">mat</button>
-      <button class="chip" data-filter="kategori" data-verdi="klubb">klubb</button>
-    </div>
+      <div class="filter-gruppe">
+        <span class="filter-etikett" aria-hidden="true">Type</span>
+        <div class="filter-chips" role="group" aria-label="Kategori">
+          <button class="chip" data-filter="kategori" data-verdi="musikk">Musikk</button>
+          <button class="chip" data-filter="kategori" data-verdi="mat">Mat</button>
+          <button class="chip" data-filter="kategori" data-verdi="klubb">Klubb</button>
+        </div>
+      </div>
 
-    <!-- Tids-filtre -->
-    <div class="filter-gruppe" role="group" aria-label="Tidspunkt">
-      <button class="chip" data-filter="tid" data-verdi="i-kveld">i kveld</button>
-      <button class="chip" data-filter="tid" data-verdi="i-helga">i helga</button>
-    </div>
+      <div class="filter-gruppe">
+        <span class="filter-etikett" aria-hidden="true">Tid</span>
+        <div class="filter-chips" role="group" aria-label="Tidspunkt">
+          <button class="chip" data-filter="tid" data-verdi="i-kveld">I kveld</button>
+          <button class="chip" data-filter="tid" data-verdi="i-helga">I helga</button>
+        </div>
+      </div>
 
-    <!-- Pris-filtre -->
-    <div class="filter-gruppe" role="group" aria-label="Pris">
-      <button class="chip" data-filter="pris" data-verdi="gratis">gratis</button>
-      <button class="chip" data-filter="pris" data-verdi="under-200">under 200</button>
-      <button class="chip" data-filter="pris" data-verdi="over-200">200 kr+</button>
-    </div>
+      <div class="filter-gruppe">
+        <span class="filter-etikett" aria-hidden="true">Pris</span>
+        <div class="filter-chips" role="group" aria-label="Pris">
+          <button class="chip" data-filter="pris" data-verdi="gratis">Gratis</button>
+          <button class="chip" data-filter="pris" data-verdi="under-200">Under 200</button>
+          <button class="chip" data-filter="pris" data-verdi="over-200">200 kr+</button>
+        </div>
+      </div>
 
-    <!-- Nærhetssortering (ingen data-verdi fordi det er en toggle) -->
-    <div class="filter-gruppe" role="group" aria-label="Avstand">
-      <button class="chip" data-filter="naerhet" aria-pressed="false">i nærheten</button>
-    </div>
+      <!-- Nærhets-toggle + nullstill på samme rad -->
+      <div class="filter-bunn-rad">
+        <button class="chip" data-filter="naerhet" aria-pressed="false">I nærheten</button>
+        <button id="nullstill-knapp" class="nullstill-knapp skjult" aria-label="Nullstill alle filtre">
+          Nullstill
+        </button>
+      </div>
 
-  </nav>
-
-
-  <!-- ==============================
-       TREFF-LINJE
-       Viser antall treff og tilbake-knapp (i lagret-visning)
-       ============================== -->
-  <div class="treff-linje">
-    <span id="treff-teller" aria-live="polite">henter hva som skjer...</span>
-    <!-- aria-live="polite" forteller skjermlesere at denne teksten oppdateres -->
-
-    <button id="vis-alle" class="tilbake-knapp skjult" aria-label="Tilbake til alle eventer">
-      ← alle eventer
-    </button>
+    </nav>
   </div>
 
 
   <!-- ==============================
-       FEED
-       main er det semantiske innholdet på siden.
-       Kortene genereres og settes inn her av feed.js.
+       SENTRERT INNHOLD
        ============================== -->
-  <main id="feed" class="feed" aria-label="Event-feed">
-    <!-- Vises mens events.json lastes -->
-    <p class="laster">henter hva som skjer...</p>
-  </main>
+  <div class="senter">
+
+    <div class="treff-linje">
+      <span id="treff-teller" aria-live="polite">henter hva som skjer...</span>
+      <button id="vis-alle" class="tilbake-knapp skjult" aria-label="Tilbake til alle eventer">
+        ← alle eventer
+      </button>
+    </div>
+
+    <main id="feed" class="feed" aria-label="Event-feed">
+      <p class="laster">henter hva som skjer...</p>
+    </main>
+
+  </div>
 
 
   <!-- ==============================
        KART-VISNING (valgfritt)
-       Skjult som standard. Vis/skjul styres av kart.js.
-       Denne hele seksjonen kan slettes uten å påvirke resten.
        ============================== -->
   <section id="kart-visning" class="skjult" aria-label="Kartvisning" style="
     position: fixed; inset: 0; z-index: 50;
@@ -132,14 +118,12 @@
       <span style="font-family: var(--font-tittel); font-weight: 600;">kart</span>
       <button id="lukk-kart" class="knapp-ghost">× lukk</button>
     </div>
-    <!-- Leaflet rendrer kartet inne i dette elementet -->
     <div id="kart-container" style="flex: 1;"></div>
   </section>
 
 
   <!-- ==============================
        MODAL (detaljvisning)
-       Skjult som standard via CSS. Fylles inn av modal.js.
        ============================== -->
   <div
     id="modal"
@@ -150,27 +134,12 @@
     aria-labelledby="modal-overskrift"
   >
     <div class="modal-container">
-      <!-- Lukk-knapp (×) — alltid synlig over innholdet -->
       <button id="modal-lukk" class="modal-lukk" aria-label="Lukk">×</button>
-
-      <!-- Innholdet genereres dynamisk av modal.js når et kort trykkes -->
       <div id="modal-innhold" class="modal-innhold"></div>
     </div>
   </div>
 
 
-  <!-- ==============================
-       LEAFLET JS (valgfritt kart)
-       Kommenter inn for å aktivere kart.
-       Må lastes FØR main.js fordi kart.js bruker den globale variabelen L.
-       ============================== -->
-  <!-- <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script> -->
-
-
-  <!-- Hoved-skript.
-       type="module" aktiverer ES modules (import/export).
-       Modules kjøres ALLTID etter at HTML er parset — ingen defer nødvendig.
-       NB: type="module" krever en lokal HTTP-server (se README). -->
   <script type="module" src="js/main.js"></script>
 
 </body>

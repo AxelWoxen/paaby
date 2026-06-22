@@ -1,75 +1,70 @@
 /* filtre.js — filtreringslogikk.
-   Eneste ansvar: ta en liste eventer + aktive filtre, returnere filtrert liste.
-   Ingen DOM, ingen fetch, ingen side-effekter. Ren inn/ut-funksjon. */
+   Rene funksjoner: ingen DOM, ingen fetch, ingen side-effekter.
+
+   Filterlogikk:
+   - Innad i gruppe  = ELLER  (Musikk + Klubb viser begge)
+   - Mellom grupper  = OG     (Musikk OG Gratis = gratis musikkeventer)
+   - Tom gruppe      = vis alt (ingen kategorifilter = vis alle kategorier) */
 
 /**
- * Filtrerer og (eventuelt) sorterer en liste med eventer.
+ * Filtrerer en liste med eventer basert på aktive filtre.
  *
- * @param {Array}  eventer        - Alle eventer (ufiltrerte)
- * @param {Object} filtre         - Aktive filtre: { kategori, tid, pris, naerhet }
- * @param {Object|null} posisjon  - Brukerens posisjon { lat, lng }, eller null
- * @returns {Array} Filtrert (og eventuelt sortert) liste
+ * @param {Array}  eventer  - Alle eventer (ufiltrerte)
+ * @param {Object} filtre   - { kategori: [], tid: [], pris: [], naerhet: false }
+ * @param {Object} posisjon - Brukerens posisjon { lat, lng } eller null
+ * @returns {Array} Filtrert liste
  */
 export function filtrerEventer(eventer, filtre, posisjon) {
-  /* Vi kopierer lista med spread (...) så vi aldri muterer originalen */
   let resultat = [...eventer];
 
-  /* --- KATEGORIFILTER --- */
-  if (filtre.kategori) {
-    resultat = resultat.filter((e) => e.kategori === filtre.kategori);
+  /* --- KATEGORI (ELLER) --- */
+  if (filtre.kategori.length > 0) {
+    resultat = resultat.filter((e) => filtre.kategori.includes(e.kategori));
   }
 
-  /* --- TIDSFILTER --- */
-  if (filtre.tid === 'i-kveld') {
-    /* "I kveld" = eventer som starter samme kalenderdag som i dag */
-    const iDagStreng = new Date().toDateString();
-    resultat = resultat.filter(
-      (e) => new Date(e.start).toDateString() === iDagStreng
-    );
-  } else if (filtre.tid === 'i-helga') {
-    /* "I helga" = eventer som starter på nærmeste kommende lørdag eller søndag */
-    resultat = resultat.filter((e) => erKommendeHelg(new Date(e.start)));
+  /* --- TID (ELLER) --- */
+  if (filtre.tid.length > 0) {
+    resultat = resultat.filter((e) => {
+      const start = new Date(e.start);
+      return filtre.tid.some((t) => {
+        if (t === 'i-kveld') return erIDag(start);
+        if (t === 'i-helga') return erKommendeHelg(start);
+        return false;
+      });
+    });
   }
 
-  /* --- PRISFILTER --- */
-  if (filtre.pris === 'gratis') {
-    resultat = resultat.filter((e) => e.pris === 0);
-  } else if (filtre.pris === 'under-200') {
-    resultat = resultat.filter((e) => e.pris > 0 && e.pris < 200);
-  } else if (filtre.pris === 'over-200') {
-    resultat = resultat.filter((e) => e.pris >= 200);
-  }
-
-  /* --- NÆRHETSSORTERING ---
-     Sorter etter avstand kun hvis brukeren har valgt filteret OG posisjon er kjent.
-     _avstand er lagt på eventene av main.js etter at posisjon ble hentet. */
-  if (filtre.naerhet && posisjon) {
-    resultat = resultat.sort((a, b) => {
-      /* Eventer uten avstandsdata skyves til bunnen */
-      const aAvstand = a._avstand ?? Infinity;
-      const bAvstand = b._avstand ?? Infinity;
-      return aAvstand - bAvstand;
+  /* --- PRIS (ELLER) --- */
+  if (filtre.pris.length > 0) {
+    resultat = resultat.filter((e) => {
+      const pris = e.pris ?? 0;
+      return filtre.pris.some((p) => {
+        if (p === 'gratis')    return pris === 0;
+        if (p === 'under-200') return pris > 0 && pris < 200;
+        if (p === 'over-200')  return pris >= 200;
+        return false;
+      });
     });
   }
 
   return resultat;
 }
 
+/* Sjekker om en dato er i dag (lokal kalenderdag). */
+function erIDag(dato) {
+  return dato.toDateString() === new Date().toDateString();
+}
+
 /**
  * Sjekker om en dato faller på kommende lørdag eller søndag.
- * "Kommende" betyr: fra og med i dag til og med søndag denne uken,
- * eller neste lørdag og søndag hvis vi er midt i uken.
- *
- * @param {Date} dato
- * @returns {boolean}
+ * "Kommende" = fra og med nærmeste lørdag til slutten av søndagen.
  */
 function erKommendeHelg(dato) {
   const iDag = new Date();
-  /* Sett klokkeslett til midnatt så vi bare sammenligner datoer */
   iDag.setHours(0, 0, 0, 0);
 
-  /* Finn nærmeste lørdag (dag 6) */
-  const dagensDag = iDag.getDay(); /* 0=søndag, 1=mandag, ..., 6=lørdag */
+  /* Finn neste lørdag (getDay: 0=søn, 6=lør) */
+  const dagensDag      = iDag.getDay();
   const dagerTilLordag = dagensDag === 6 ? 0 : (6 - dagensDag);
 
   const lordag = new Date(iDag);
@@ -77,7 +72,7 @@ function erKommendeHelg(dato) {
 
   const sondag = new Date(lordag);
   sondag.setDate(lordag.getDate() + 1);
-  sondag.setHours(23, 59, 59, 999); /* Til slutten av søndagen */
+  sondag.setHours(23, 59, 59, 999);
 
   return dato >= lordag && dato <= sondag;
 }

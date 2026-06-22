@@ -1,36 +1,33 @@
 /* main.js — appens inngangspunkt og orkestrator.
-   Eneste ansvar: koordinere de tre lagene.
-   Importerer fra alle lag, men lagene importerer IKKE fra hverandre
+   Koordinerer de tre lagene. Lagene importerer IKKE fra hverandre
    (unntatt presentation → application, som er tillatt). */
 
 import { hentEventer }                    from './network/events-api.js';
 import { filtrerEventer }                  from './application/filtre.js';
+import { skjulPasserte, grupperEtterDag }  from './application/gruppering.js';
 import { hentPosisjon, kalkulerAvstand }   from './application/posisjon.js';
 import { hentLagredeIder }                 from './application/lagret.js';
 import { visEventer }                      from './presentation/feed.js';
 import { initModal }                       from './presentation/modal.js';
-/* Kart er valgfritt — fjern disse to linjene for å skru av kartet */
 import { initKart, visKart, skjulKart }    from './presentation/kart.js';
 
 
 /* ========================
    GLOBAL TILSTAND
-   Én plass der appens data bor. main.js eier denne og sender den videre.
    ======================== */
 
 const tilstand = {
-  alleEventer: [],   /* Alle eventer lastet fra JSON, uendret */
+  alleEventer: [],
 
   aktivFiltre: {
-    kategori: null,  /* "musikk" | "mat" | "klubb" | null */
-    tid: null,       /* "i-kveld" | "i-helga" | null */
-    pris: null,      /* "gratis" | "under-200" | "over-200" | null */
-    naerhet: false,  /* boolean */
+    kategori: [],   /* Array: [] = vis alle, ['musikk','klubb'] = vis begge */
+    tid:      [],   /* Array: [] = vis alle, ['i-kveld'] = kun i dag */
+    pris:     [],   /* Array: [] = vis alle, ['gratis','under-200'] = billig */
+    naerhet:  false,
   },
 
-  brukerPosisjon: null,   /* { lat, lng } eller null hvis posisjon er avslått */
-  visLagret: false,       /* Er vi i "lagret"-visning? */
-  visKartModus: false,    /* Er kartet åpent? */
+  brukerPosisjon: null,
+  visLagret:      false,
 };
 
 
@@ -38,42 +35,35 @@ const tilstand = {
    OPPDATER FEED
    ======================== */
 
-/**
- * Kalkulerer hvilke eventer som skal vises og sender dem til feed.js.
- * Kalles hver gang noe endres: filter, posisjon, eller visningsmode.
- */
 function oppdaterFeed() {
   let eventer;
 
   if (tilstand.visLagret) {
-    /* Lagret-visning: vis kun eventer brukeren har hjertet */
     const lagredeIder = hentLagredeIder();
+    /* I lagret-visning viser vi alle lagrede eventer, inkludert passerte */
     eventer = tilstand.alleEventer.filter((e) => lagredeIder.includes(e.id));
   } else {
-    /* Normal visning: kjør gjennom filtreringslogikken */
-    eventer = filtrerEventer(
-      tilstand.alleEventer,
-      tilstand.aktivFiltre,
-      tilstand.brukerPosisjon
-    );
+    /* Skjul passerte, kjør så gjennom filtrene */
+    const aktive = skjulPasserte(tilstand.alleEventer);
+    eventer = filtrerEventer(aktive, tilstand.aktivFiltre, tilstand.brukerPosisjon);
   }
 
-  visEventer(eventer);
-  oppdaterTreffLinje(eventer.length);
+  const dagGrupper   = grupperEtterDag(eventer, tilstand.brukerPosisjon, tilstand.aktivFiltre.naerhet);
+  const totaltAntall = dagGrupper.reduce((sum, g) => sum + g.eventer.length, 0);
+
+  visEventer(dagGrupper, tilstand.visLagret);
+  oppdaterTreffLinje(totaltAntall);
 }
 
-/**
- * Oppdaterer treff-telleren og tilbake-knappen øverst.
- */
 function oppdaterTreffLinje(antall) {
   const teller       = document.getElementById('treff-teller');
   const tilbakeKnapp = document.getElementById('vis-alle');
 
   if (tilstand.visLagret) {
-    teller.textContent = antall === 0 ? 'ingenting lagret ennå' : `${antall} lagret`;
+    teller.textContent = antall === 0 ? 'ingenting lagret' : `${antall} forslag lagret`;
     tilbakeKnapp.classList.remove('skjult');
   } else {
-    teller.textContent = `${antall} steder`;
+    teller.textContent = `${antall} forslag`;
     tilbakeKnapp.classList.add('skjult');
   }
 }
@@ -83,11 +73,6 @@ function oppdaterTreffLinje(antall) {
    FILTRE
    ======================== */
 
-/**
- * Setter opp klikk-lyttere på alle filter-chips.
- * Chips bruker data-filter og data-verdi for å fortelle hvilken type
- * filter de representerer.
- */
 function initFiltre() {
   document.querySelectorAll('[data-filter]').forEach((chip) => {
     chip.addEventListener('click', () => {
@@ -95,27 +80,51 @@ function initFiltre() {
       const verdi = chip.dataset.verdi;
 
       if (type === 'naerhet') {
-        /* Nærhets-filter er en on/off-toggle (ingen verdi) */
+        /* Nærhets-filter er en enkel on/off-toggle */
         tilstand.aktivFiltre.naerhet = !tilstand.aktivFiltre.naerhet;
         chip.classList.toggle('aktiv', tilstand.aktivFiltre.naerhet);
+        chip.setAttribute('aria-pressed', String(tilstand.aktivFiltre.naerhet));
       } else {
-        if (tilstand.aktivFiltre[type] === verdi) {
-          /* Klikk på allerede aktiv chip = slå av filteret */
-          tilstand.aktivFiltre[type] = null;
+        /* Kategori, tid, pris: legg til/fjern fra array (multi-select) */
+        const liste  = tilstand.aktivFiltre[type];
+        const indeks = liste.indexOf(verdi);
+
+        if (indeks >= 0) {
+          liste.splice(indeks, 1);
           chip.classList.remove('aktiv');
         } else {
-          /* Slå på dette filteret og slå av eventuelle andre i samme gruppe */
-          document
-            .querySelectorAll(`[data-filter="${type}"]`)
-            .forEach((s) => s.classList.remove('aktiv'));
-
-          tilstand.aktivFiltre[type] = verdi;
+          liste.push(verdi);
           chip.classList.add('aktiv');
         }
       }
 
+      oppdaterNullstillKnapp();
       oppdaterFeed();
     });
+  });
+}
+
+function oppdaterNullstillKnapp() {
+  const harAktive =
+    tilstand.aktivFiltre.kategori.length > 0 ||
+    tilstand.aktivFiltre.tid.length > 0 ||
+    tilstand.aktivFiltre.pris.length > 0 ||
+    tilstand.aktivFiltre.naerhet;
+
+  document.getElementById('nullstill-knapp').classList.toggle('skjult', !harAktive);
+}
+
+function initNullstillKnapp() {
+  document.getElementById('nullstill-knapp').addEventListener('click', () => {
+    tilstand.aktivFiltre = { kategori: [], tid: [], pris: [], naerhet: false };
+
+    document.querySelectorAll('.chip').forEach((c) => {
+      c.classList.remove('aktiv');
+      if (c.dataset.filter === 'naerhet') c.setAttribute('aria-pressed', 'false');
+    });
+
+    oppdaterNullstillKnapp();
+    oppdaterFeed();
   });
 }
 
@@ -124,9 +133,6 @@ function initFiltre() {
    LAGRET-VISNING
    ======================== */
 
-/**
- * Setter opp lagret-knappen (♡) i headeren og tilbake-knappen.
- */
 function initLagretKnapp() {
   const visLagretKnapp = document.getElementById('vis-lagret');
   const visAlleKnapp   = document.getElementById('vis-alle');
@@ -134,12 +140,14 @@ function initLagretKnapp() {
   visLagretKnapp.addEventListener('click', () => {
     tilstand.visLagret = true;
     visLagretKnapp.classList.add('aktiv');
+    visLagretKnapp.setAttribute('aria-pressed', 'true');
     oppdaterFeed();
   });
 
   visAlleKnapp.addEventListener('click', () => {
     tilstand.visLagret = false;
     visLagretKnapp.classList.remove('aktiv');
+    visLagretKnapp.setAttribute('aria-pressed', 'false');
     oppdaterFeed();
   });
 }
@@ -149,26 +157,16 @@ function initLagretKnapp() {
    KART (valgfritt)
    ======================== */
 
-/**
- * Setter opp kart-knappen. Fjern denne funksjonen og kallet til den
- * i startApp() for å skru av kart-funksjonaliteten.
- */
 function initKartKnapp() {
-  const kartKnapp    = document.getElementById('vis-kart');
+  const kartKnapp     = document.getElementById('vis-kart');
   const lukkKartKnapp = document.getElementById('lukk-kart');
 
-  if (!kartKnapp) return; /* Knappen finnes ikke — ingenting å gjøre */
+  if (!kartKnapp) return;
 
-  kartKnapp.addEventListener('click', () => {
-    tilstand.visKartModus = true;
-    visKart();
-  });
+  kartKnapp.addEventListener('click', () => visKart());
 
   if (lukkKartKnapp) {
-    lukkKartKnapp.addEventListener('click', () => {
-      tilstand.visKartModus = false;
-      skjulKart();
-    });
+    lukkKartKnapp.addEventListener('click', () => skjulKart());
   }
 }
 
@@ -177,52 +175,40 @@ function initKartKnapp() {
    OPPSTART
    ======================== */
 
-/**
- * Starter appen. Async fordi vi venter på data fra nettverket.
- */
 async function startApp() {
-  /* Sett opp alt som ikke trenger data */
   initModal();
   initFiltre();
+  initNullstillKnapp();
   initLagretKnapp();
   initKartKnapp();
 
   try {
-    /* Hent eventer og vis dem */
     tilstand.alleEventer = await hentEventer();
     oppdaterFeed();
-
-    /* Initialiser kart med eventene (gjør ingenting hvis Leaflet ikke er lastet) */
     initKart(tilstand.alleEventer);
-
   } catch (feil) {
-    /* Noe gikk galt med datahentingen — vis feilmelding i feeden */
     document.getElementById('feed').innerHTML =
       '<p class="tom-feed">klarte ikke laste eventer. er du koblet til internett?</p>';
     console.error('Påby: feil ved henting av eventer:', feil);
-    return; /* Avslutt — ingen vits i å hente posisjon uten eventer */
+    return;
   }
 
-  /* Hent posisjon i bakgrunnen.
-     Vi venter IKKE på dette — appen er allerede synlig og brukbar.
-     Når posisjon ankommer oppdaterer vi lydløst avstandene. */
+  /* Hent posisjon i bakgrunnen — appen er allerede synlig og brukbar */
   hentPosisjon().then((posisjon) => {
-    if (!posisjon) return; /* Avslått eller ikke støttet — ingenting å gjøre */
+    if (!posisjon) return;
 
     tilstand.brukerPosisjon = posisjon;
 
-    /* Legg _avstand på hvert event som et ekstra felt (prefix _ = internt felt) */
+    /* Legg _avstand på eventer som har koordinater */
     tilstand.alleEventer = tilstand.alleEventer.map((event) => ({
       ...event,
-      _avstand: kalkulerAvstand(posisjon, { lat: event.lat, lng: event.lng }),
+      _avstand: (event.lat != null && event.lng != null)
+        ? kalkulerAvstand(posisjon, { lat: event.lat, lng: event.lng })
+        : null,
     }));
 
-    /* Oppdater feeden slik at avstandene vises */
     oppdaterFeed();
   });
 }
 
-/* Kjør appen — ingen DOMContentLoaded nødvendig fordi
-   script-taggen i index.html har type="module", og modules
-   kjøres alltid etter at HTML er ferdig parset */
 startApp();
