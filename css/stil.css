@@ -176,12 +176,55 @@ body {
 }
 
 
-/* === SENTRERT INNHOLDS-WRAPPER === */
+/* === HOVEDDEL — to-kolonne-layout ===
+   Mobil-default: én kolonne, sidestolpe over feedkolonne.
+   Desktop (≥900px): flex-rad, sidestolpe sticky til venstre. */
 
-.senter {
+.hoveddel {
   max-width: 640px;
   margin: 0 auto;
   padding: 0 var(--gap-m);
+}
+
+/* Sidestolpe: filtre. Ingen spesialbehandling på mobil — flyter normalt over feeden. */
+.sidestolpe {
+  padding-top: var(--gap-m);
+}
+
+/* Feedkolonne: treff-teller + feed */
+.feedkolonne {
+  /* Arver bredde fra hoveddel på mobil */
+}
+
+@media (min-width: 900px) {
+  /* Topbar-innholdet utvides til å matche hoveddel-bredden */
+  .topbar-innhold {
+    max-width: 1020px;
+    padding: 0 var(--gap-xl);
+  }
+
+  .hoveddel {
+    max-width: 1020px;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--gap-xl);
+    padding: 0 var(--gap-xl);
+  }
+
+  .sidestolpe {
+    width: 220px;
+    flex-shrink: 0;
+    /* Klistrer seg under topbaren mens man scroller feeden */
+    position: sticky;
+    top: 68px;
+    padding-top: var(--gap-l);
+  }
+
+  .feedkolonne {
+    flex: 1;
+    min-width: 0;      /* Forhindrer flex-overflow på smale containere */
+    max-width: 640px;
+  }
 }
 
 

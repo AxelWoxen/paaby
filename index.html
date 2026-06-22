@@ -21,14 +21,12 @@
 <body>
 
   <!-- ==============================
-       TOPBAR — sticky: header + filtre
-       Begge klistrer seg til toppen som én blokk.
+       TOPBAR — slank, kun logo + tagline + hjerte
+       Filtrene er flyttet ut herfra.
        ============================== -->
   <div class="topbar">
-
     <header class="topptekst topbar-innhold">
 
-      <!-- Logo: "påby" der SVG-kartnålen sitter som prikken over å -->
       <div class="logo" aria-label="påby">
         p<span class="logo-aa" aria-hidden="true">
           å
@@ -44,64 +42,72 @@
         ♡
       </button>
     </header>
-
-
-    <!-- Filtrer — organisert med etiketter per gruppe -->
-    <nav class="filtre topbar-innhold" aria-label="Filtrer eventer">
-
-      <div class="filter-gruppe">
-        <span class="filter-etikett" aria-hidden="true">Type</span>
-        <div class="filter-chips" role="group" aria-label="Kategori">
-          <button class="chip" data-filter="kategori" data-verdi="musikk">Musikk</button>
-          <button class="chip" data-filter="kategori" data-verdi="mat">Mat</button>
-          <button class="chip" data-filter="kategori" data-verdi="klubb">Klubb</button>
-        </div>
-      </div>
-
-      <div class="filter-gruppe">
-        <span class="filter-etikett" aria-hidden="true">Tid</span>
-        <div class="filter-chips" role="group" aria-label="Tidspunkt">
-          <button class="chip" data-filter="tid" data-verdi="i-kveld">I kveld</button>
-          <button class="chip" data-filter="tid" data-verdi="i-helga">I helga</button>
-        </div>
-      </div>
-
-      <div class="filter-gruppe">
-        <span class="filter-etikett" aria-hidden="true">Pris</span>
-        <div class="filter-chips" role="group" aria-label="Pris">
-          <button class="chip" data-filter="pris" data-verdi="gratis">Gratis</button>
-          <button class="chip" data-filter="pris" data-verdi="under-200">Under 200</button>
-          <button class="chip" data-filter="pris" data-verdi="over-200">200 kr+</button>
-        </div>
-      </div>
-
-      <!-- Nærhets-toggle + nullstill på samme rad -->
-      <div class="filter-bunn-rad">
-        <button class="chip" data-filter="naerhet" aria-pressed="false">I nærheten</button>
-        <button id="nullstill-knapp" class="nullstill-knapp skjult" aria-label="Nullstill alle filtre">
-          Nullstill
-        </button>
-      </div>
-
-    </nav>
   </div>
 
 
   <!-- ==============================
-       SENTRERT INNHOLD
+       HOVEDDEL
+       Mobil:   én kolonne (sidestolpe over feedkolonne)
+       Desktop: to kolonner (sidestolpe til venstre, feed til høyre)
        ============================== -->
-  <div class="senter">
+  <div class="hoveddel">
 
-    <div class="treff-linje">
-      <span id="treff-teller" aria-live="polite">henter hva som skjer...</span>
-      <button id="vis-alle" class="tilbake-knapp skjult" aria-label="Tilbake til alle eventer">
-        ← alle eventer
-      </button>
+    <!-- Venstre kolonne / mobil-topp: filtre -->
+    <aside class="sidestolpe" aria-label="Filtre">
+      <nav class="filtre" aria-label="Filtrer eventer">
+
+        <div class="filter-gruppe">
+          <span class="filter-etikett" aria-hidden="true">Type</span>
+          <div class="filter-chips" role="group" aria-label="Kategori">
+            <button class="chip" data-filter="kategori" data-verdi="musikk">Musikk</button>
+            <button class="chip" data-filter="kategori" data-verdi="mat">Mat</button>
+            <button class="chip" data-filter="kategori" data-verdi="klubb">Klubb</button>
+          </div>
+        </div>
+
+        <div class="filter-gruppe">
+          <span class="filter-etikett" aria-hidden="true">Tid</span>
+          <div class="filter-chips" role="group" aria-label="Tidspunkt">
+            <button class="chip" data-filter="tid" data-verdi="i-kveld">I kveld</button>
+            <button class="chip" data-filter="tid" data-verdi="i-helga">I helga</button>
+          </div>
+        </div>
+
+        <div class="filter-gruppe">
+          <span class="filter-etikett" aria-hidden="true">Pris</span>
+          <div class="filter-chips" role="group" aria-label="Pris">
+            <button class="chip" data-filter="pris" data-verdi="gratis">Gratis</button>
+            <button class="chip" data-filter="pris" data-verdi="under-200">Under 200</button>
+            <button class="chip" data-filter="pris" data-verdi="over-200">200 kr+</button>
+          </div>
+        </div>
+
+        <div class="filter-bunn-rad">
+          <button class="chip" data-filter="naerhet" aria-pressed="false">I nærheten</button>
+          <button id="nullstill-knapp" class="nullstill-knapp skjult" aria-label="Nullstill alle filtre">
+            Nullstill
+          </button>
+        </div>
+
+      </nav>
+    </aside>
+
+
+    <!-- Høyre kolonne / mobil-bunn: feed -->
+    <div class="feedkolonne">
+
+      <div class="treff-linje">
+        <span id="treff-teller" aria-live="polite">henter hva som skjer...</span>
+        <button id="vis-alle" class="tilbake-knapp skjult" aria-label="Tilbake til alle eventer">
+          ← alle eventer
+        </button>
+      </div>
+
+      <main id="feed" class="feed" aria-label="Event-feed">
+        <p class="laster">henter hva som skjer...</p>
+      </main>
+
     </div>
-
-    <main id="feed" class="feed" aria-label="Event-feed">
-      <p class="laster">henter hva som skjer...</p>
-    </main>
 
   </div>
 
