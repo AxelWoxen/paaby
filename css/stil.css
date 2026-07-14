@@ -31,6 +31,8 @@ body {
   max-width: 640px;
   margin: 0 auto;
   padding: 0 var(--gap-m);
+  padding-left: max(var(--gap-m), env(safe-area-inset-left));
+  padding-right: max(var(--gap-m), env(safe-area-inset-right));
 }
 
 
@@ -136,6 +138,9 @@ body {
 
 .chip {
   padding: 0.3rem 0.8rem;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
   border: 1.5px solid var(--flate-2);
   border-radius: 100px;
   font-size: 0.8rem;
@@ -182,6 +187,8 @@ body {
   max-width: 640px;
   margin: 0 auto;
   padding: 0 var(--gap-m);
+  padding-left: max(var(--gap-m), env(safe-area-inset-left));
+  padding-right: max(var(--gap-m), env(safe-area-inset-right));
 }
 
 /* Sidestolpe: filtre. Ingen spesialbehandling på mobil — flyter normalt over feeden. */
@@ -194,11 +201,12 @@ body {
   /* Arver bredde fra hoveddel på mobil */
 }
 
-@media (min-width: 900px) {
-  /* Topbar-innholdet utvides til å matche hoveddel-bredden */
+@media (min-width: 768px) {
   .topbar-innhold {
     max-width: 1020px;
     padding: 0 var(--gap-xl);
+    padding-left: max(var(--gap-xl), env(safe-area-inset-left));
+    padding-right: max(var(--gap-xl), env(safe-area-inset-right));
   }
 
   .hoveddel {
@@ -207,20 +215,21 @@ body {
     align-items: flex-start;
     gap: var(--gap-xl);
     padding: 0 var(--gap-xl);
+    padding-left: max(var(--gap-xl), env(safe-area-inset-left));
+    padding-right: max(var(--gap-xl), env(safe-area-inset-right));
   }
 
   .sidestolpe {
     width: 220px;
     flex-shrink: 0;
-    /* Klistrer seg under topbaren mens man scroller feeden */
     position: sticky;
-    top: 68px;
+    top: calc(var(--topbar-h) + env(safe-area-inset-top));
     padding-top: var(--gap-l);
   }
 
   .feedkolonne {
     flex: 1;
-    min-width: 0;      /* Forhindrer flex-overflow på smale containere */
+    min-width: 0;
     max-width: 640px;
   }
 }
@@ -289,7 +298,7 @@ body {
 /* === FEED === */
 
 .feed {
-  padding-bottom: var(--gap-xl);
+  padding-bottom: calc(var(--gap-xl) + env(safe-area-inset-bottom));
 }
 
 .tom-feed,
@@ -615,7 +624,7 @@ body.modal-aapen {
 }
 
 
-/* === DESKTOP === */
+/* === MODAL DESKTOP === */
 
 @media (min-width: 640px) {
   .modal {
@@ -630,5 +639,20 @@ body.modal-aapen {
 
   .modal-bilde {
     border-radius: var(--radius-l) var(--radius-l) 0 0;
+  }
+}
+
+
+/* === LANDSCAPE TELEFON ===
+   Reduser topbar-høyde når skjermen er lav og bred (f.eks. iPhone i sidestilt). */
+
+@media (orientation: landscape) and (max-height: 500px) {
+  .topptekst {
+    padding-top: var(--gap-s);
+    padding-bottom: var(--gap-xs, 0.25rem);
+  }
+
+  .filtre {
+    padding-bottom: var(--gap-s);
   }
 }

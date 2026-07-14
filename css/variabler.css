@@ -43,6 +43,9 @@
   --gap-l:  1.5rem;   /* 24px */
   --gap-xl: 2rem;     /* 32px */
 
+  /* Topbar-høyde på desktop (gap-l + linjehøyde for 1.75rem logo + gap-s) */
+  --topbar-h: 74px;
+
 
   /* --- AVRUNDING --- */
   --radius-s: 8px;
