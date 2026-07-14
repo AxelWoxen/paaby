@@ -39,7 +39,7 @@ body {
   display: flex;
   align-items: center;
   gap: var(--gap-m);
-  padding: var(--gap-m) 0 var(--gap-s);
+  padding: var(--gap-l) 0 var(--gap-s);
 }
 
 .logo {
