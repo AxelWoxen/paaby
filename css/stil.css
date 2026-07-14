@@ -49,6 +49,7 @@ body {
   letter-spacing: -0.03em;
   display: inline-flex;
   align-items: center;
+  line-height: 1.2;   /* legg til denne */
 }
 
 /* Wrapper rundt å-en — position:relative lar oss plassere SVG-pinen
