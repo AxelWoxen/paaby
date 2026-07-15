@@ -156,7 +156,9 @@ export function visEventer(dagGrupper, erLagretVisning) {
   const feed = document.getElementById('feed');
   feed.innerHTML = '';
 
-  if (dagGrupper.length === 0) {
+  const alleEventer = dagGrupper.flatMap((g) => g.eventer);
+
+  if (alleEventer.length === 0) {
     const melding = document.createElement('p');
     melding.className = 'tom-feed';
     melding.textContent = erLagretVisning
@@ -166,16 +168,17 @@ export function visEventer(dagGrupper, erLagretVisning) {
     return;
   }
 
-  const alleEventer = dagGrupper.flatMap((g) => g.eventer);
-
   for (const gruppe of dagGrupper) {
     const seksjon = document.createElement('section');
     seksjon.className = 'dag-gruppe';
 
-    const overskrift = document.createElement('h2');
-    overskrift.className   = 'dag-overskrift';
-    overskrift.textContent = gruppe.label;
-    seksjon.appendChild(overskrift);
+    /* label === null ved global sortering (pris/avstand) — ingen dagoverskrift */
+    if (gruppe.label) {
+      const overskrift = document.createElement('h2');
+      overskrift.className   = 'dag-overskrift';
+      overskrift.textContent = gruppe.label;
+      seksjon.appendChild(overskrift);
+    }
 
     const kortWrapper = document.createElement('div');
     kortWrapper.className = 'dag-kort';

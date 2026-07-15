@@ -43,12 +43,24 @@ export function formaterPrisTekst(pris, prisTekst) {
 }
 
 /**
- * Avstand i km til lesbar streng. Tom streng hvis avstand er ukjent.
+ * Avstand i km til norsk, lesbar streng.
+ * Returner tom streng hvis avstand er ukjent, null eller NaN.
+ *
+ * Regler:
+ *   < 100 m  (< 0,1 km) → "under 100 m unna"
+ *   100 m–999 m          → "350 m unna"
+ *   ≥ 1 km               → "1,2 km unna" (maks én desimal, norsk komma)
+ *
+ * @param {number|null} avstandKm - Avstand i kilometer
+ * @returns {string}
  */
-export function formaterAvstand(avstand) {
-  if (avstand == null) return '';
-  if (avstand < 1)     return `${Math.round(avstand * 1000)} m`;
-  return `${avstand.toFixed(1)} km`;
+export function formaterAvstand(avstandKm) {
+  if (avstandKm == null || typeof avstandKm !== 'number' || isNaN(avstandKm)) return '';
+  if (avstandKm < 0.1) return 'under 100 m unna';
+  if (avstandKm < 1)   return `${Math.round(avstandKm * 1000)} m unna`;
+  /* Rund til én desimal, bruk norsk tallformat (komma som desimaltegn) */
+  const avrundet = Math.round(avstandKm * 10) / 10;
+  return `${avrundet.toLocaleString('nb-NO', { maximumFractionDigits: 1 })} km unna`;
 }
 
 /**

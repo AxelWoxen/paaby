@@ -20,12 +20,15 @@
   <div id="ut"></div>
 
   <script type="module">
-    import { validerEventer, erGyldigUrl } from './js/application/validering.js';
-    import { skjulPasserte }               from './js/application/gruppering.js';
-    import { filtrerEventer, erIHelga }    from './js/application/filtre.js';
+    import { validerEventer, erGyldigUrl }                  from './js/application/validering.js';
+    import { skjulPasserte }                                from './js/application/gruppering.js';
+    import { filtrerEventer, erIHelga }                     from './js/application/filtre.js';
     import { hentLagredeIder, lagreEvent,
-             fjernEvent, veksleLagret }    from './js/application/lagret.js';
-    import { formaterVerifisert }          from './js/application/formatering.js';
+             fjernEvent, veksleLagret }                     from './js/application/lagret.js';
+    import { formaterVerifisert, formaterAvstand }          from './js/application/formatering.js';
+    import { sorterEventer, erAvstandsSortering,
+             erTidsSortering }                              from './js/application/sortering.js';
+    import { kalkulerAvstand, erGyldigeKoordinater }        from './js/application/posisjon.js';
 
     /* ─── Mini testrammeverk ─── */
     let bestått = 0, feilet = 0;
@@ -277,6 +280,174 @@
     test('dato',    formaterVerifisert('2026-07-10T10:00:00+02:00', refNå), 'Sjekket 10. jul');
     test('null',    formaterVerifisert(null,     refNå), null);
     test('ugyldig', formaterVerifisert('ugyldig', refNå), null);
+
+
+    /* ══════════════════════════════════════
+       9. SORTERING — TID
+       ══════════════════════════════════════ */
+    gruppe('9. Sortering — tid');
+
+    const lagE = (id, start, pris, tittel = 'T', avstand = undefined) => ({
+      id, tittel, kategori: 'musikk', sted: 'X', start, pris,
+      ...(avstand !== undefined ? { _avstand: avstand } : {}),
+    });
+
+    const tidEv = [
+      lagE('c', '2026-07-20T20:00:00+02:00', 0, 'C'),
+      lagE('a', '2026-07-18T20:00:00+02:00', 0, 'A'),
+      lagE('b', '2026-07-19T20:00:00+02:00', 0, 'B'),
+    ];
+
+    test('tid-stigende: A → B → C',
+      sorterEventer(tidEv, 'tid-stigende').map(e => e.id), ['a','b','c']);
+    test('tid-synkende: C → B → A',
+      sorterEventer(tidEv, 'tid-synkende').map(e => e.id), ['c','b','a']);
+
+    const likeT = [
+      lagE('y', '2026-07-18T20:00:00+02:00', 0, 'Øst'),
+      lagE('x', '2026-07-18T20:00:00+02:00', 0, 'Åpen'),
+      lagE('z', '2026-07-18T20:00:00+02:00', 0, 'Ball'),
+    ];
+    const tidTie = sorterEventer(likeT, 'tid-stigende').map(e => e.tittel);
+    testTrue('lik start: Ball før Øst', tidTie.indexOf('Ball') < tidTie.indexOf('Øst'));
+    testTrue('lik start: Øst før Åpen', tidTie.indexOf('Øst') < tidTie.indexOf('Åpen'));
+
+    const origTid = [...tidEv];
+    sorterEventer(tidEv, 'tid-synkende');
+    test('original array muteres ikke', tidEv.map(e=>e.id), origTid.map(e=>e.id));
+    test('ugyldig sorteringsverdi → tid-stigende',
+      sorterEventer(tidEv, 'tullesortering').map(e=>e.id), ['a','b','c']);
+
+
+    /* ══════════════════════════════════════
+       10. SORTERING — PRIS
+       ══════════════════════════════════════ */
+    gruppe('10. Sortering — pris');
+
+    const prisEv = [
+      lagE('p5', '2026-07-18T10:00:00+02:00', 350, 'P350'),
+      lagE('p4', '2026-07-18T10:00:00+02:00', 200, 'P200'),
+      lagE('p3', '2026-07-18T10:00:00+02:00', 199, 'P199'),
+      lagE('p2', '2026-07-18T10:00:00+02:00',  50, 'P50'),
+      lagE('p1', '2026-07-18T10:00:00+02:00',   0, 'P0'),
+      lagE('pN', '2026-07-18T10:00:00+02:00', null,'PNull'),
+    ];
+    test('pris-stigende: 0 50 199 200 350 null',
+      sorterEventer(prisEv, 'pris-stigende').map(e => e.pris), [0,50,199,200,350,null]);
+    test('pris-synkende: 350 200 199 50 0 null',
+      sorterEventer(prisEv, 'pris-synkende').map(e => e.pris), [350,200,199,50,0,null]);
+    test('null alltid sist (stigende)', sorterEventer(prisEv,'pris-stigende').at(-1).pris, null);
+    test('null alltid sist (synkende)', sorterEventer(prisEv,'pris-synkende').at(-1).pris, null);
+
+    const likhPris = [
+      lagE('b2', '2026-07-19T10:00:00+02:00', 100, 'BB'),
+      lagE('a2', '2026-07-18T10:00:00+02:00', 100, 'AA'),
+    ];
+    test('lik pris: tie-breaker start stigende',
+      sorterEventer(likhPris,'pris-stigende').map(e=>e.id), ['a2','b2']);
+    const origPris = [...prisEv];
+    sorterEventer(prisEv, 'pris-stigende');
+    test('original array muteres ikke (pris)', prisEv.map(e=>e.id), origPris.map(e=>e.id));
+
+
+    /* ══════════════════════════════════════
+       11. SORTERING — AVSTAND
+       ══════════════════════════════════════ */
+    gruppe('11. Sortering — avstand');
+
+    const avEv = [
+      lagE('d3', '2026-07-18T10:00:00+02:00', 0, 'D3', 3.8),
+      lagE('d1', '2026-07-18T10:00:00+02:00', 0, 'D1', 0.35),
+      lagE('d2', '2026-07-18T10:00:00+02:00', 0, 'D2', 1.2),
+      lagE('dN', '2026-07-18T10:00:00+02:00', 0, 'DN', null),
+    ];
+    test('avstand-stigende: 0.35 1.2 3.8 null',
+      sorterEventer(avEv,'avstand-stigende').map(e=>e._avstand), [0.35,1.2,3.8,null]);
+    test('avstand-synkende: 3.8 1.2 0.35 null',
+      sorterEventer(avEv,'avstand-synkende').map(e=>e._avstand), [3.8,1.2,0.35,null]);
+    test('null alltid sist (stigende)', sorterEventer(avEv,'avstand-stigende').at(-1)._avstand, null);
+    test('null alltid sist (synkende)', sorterEventer(avEv,'avstand-synkende').at(-1)._avstand, null);
+    const likhAv = [
+      lagE('b3','2026-07-19T10:00:00+02:00', 0, 'BB', 1.5),
+      lagE('a3','2026-07-18T10:00:00+02:00', 0, 'AA', 1.5),
+    ];
+    test('lik avstand: tie-breaker start stigende',
+      sorterEventer(likhAv,'avstand-stigende').map(e=>e.id), ['a3','b3']);
+    const origAv = [...avEv];
+    sorterEventer(avEv, 'avstand-stigende');
+    test('original array muteres ikke (avstand)', avEv.map(e=>e.id), origAv.map(e=>e.id));
+
+
+    /* ══════════════════════════════════════
+       12. HAVERSINE OG KOORDINATVALIDERING
+       ══════════════════════════════════════ */
+    gruppe('12. Haversine og koordinatvalidering');
+
+    const oslo = { lat: 59.9139, lng: 10.7522 };
+    const blaa = { lat: 59.9228, lng: 10.7503 };
+
+    const sammeK = kalkulerAvstand(oslo, oslo);
+    testTrue('same koordinat ≈ 0 km', sammeK !== null && sammeK < 0.001);
+    const osloBlaa = kalkulerAvstand(oslo, blaa);
+    testTrue('Oslo → Blå ≈ 0.8–1.2 km', osloBlaa !== null && osloBlaa > 0.8 && osloBlaa < 1.2);
+    test('ugyldig lat → null', kalkulerAvstand({ lat: 999, lng: 10 }, oslo), null);
+    test('ugyldig lng → null', kalkulerAvstand(oslo, { lat: 59, lng: 999 }), null);
+    test('null input → null', kalkulerAvstand(null, oslo), null);
+    test('manglende verdi → null', kalkulerAvstand({ lat: undefined, lng: 10 }, oslo), null);
+    testTrue('erGyldigeKoordinater: oslo OK', erGyldigeKoordinater(oslo));
+    testFalse('erGyldigeKoordinater: lat 91', erGyldigeKoordinater({ lat: 91, lng: 10 }));
+    testFalse('erGyldigeKoordinater: null', erGyldigeKoordinater(null));
+
+
+    /* ══════════════════════════════════════
+       13. AVSTANDSFORMATERING
+       ══════════════════════════════════════ */
+    gruppe('13. Avstandsformatering');
+
+    test('null → tom streng',       formaterAvstand(null),  '');
+    test('NaN → tom streng',        formaterAvstand(NaN),   '');
+    test('0 → under 100 m unna',    formaterAvstand(0),     'under 100 m unna');
+    test('0.05 → under 100 m unna', formaterAvstand(0.05),  'under 100 m unna');
+    test('0.1 → 100 m unna',        formaterAvstand(0.1),   '100 m unna');
+    test('0.35 → 350 m unna',       formaterAvstand(0.35),  '350 m unna');
+    test('0.65 → 650 m unna',       formaterAvstand(0.65),  '650 m unna');
+    test('1 → 1 km unna',           formaterAvstand(1),     '1 km unna');
+    test('1.24 → 1,2 km unna',      formaterAvstand(1.24),  '1,2 km unna');
+    test('2.38 → 2,4 km unna',      formaterAvstand(2.38),  '2,4 km unna');
+    test('10 → 10 km unna',         formaterAvstand(10),    '10 km unna');
+
+
+    /* ══════════════════════════════════════
+       14. FILTERKOMBINASJONER MED SORTERING
+       ══════════════════════════════════════ */
+    gruppe('14. Filter + sortering');
+
+    const blandSort = [
+      lagE('ms1','2026-07-20T20:00:00+02:00', 0,   'M1', undefined),
+      lagE('ms2','2026-07-20T18:00:00+02:00', 199, 'M2', undefined),
+      { ...lagE('ms3','2026-07-20T10:00:00+02:00', 0), kategori:'mat' },
+    ];
+
+    const filt = filtrerEventer(blandSort, { kategori:['musikk'], tid:null, pris:null, naerhet:false }, null);
+    test('kategori-filter utføres før sortering', filt.length, 2);
+    test('kategori+pris+sortering: musikk, pris-stigende → 0→199',
+      sorterEventer(filt,'pris-stigende').map(e=>e.pris), [0,199]);
+
+    const medMix = [
+      lagE('x1','2026-07-20T10:00:00+02:00', 0, 'X1', 1.0),
+      lagE('x2','2026-07-20T10:00:00+02:00', 0, 'X2', null),
+      lagE('x3','2026-07-20T10:00:00+02:00', 0, 'X3', 2.0),
+    ];
+    test('event uten avstand beholdes og havner sist',
+      sorterEventer(medMix,'avstand-stigende').map(e=>e.id), ['x1','x3','x2']);
+
+    const medNull = [
+      lagE('n1','2026-07-20T10:00:00+02:00',  50),
+      lagE('n2','2026-07-20T10:00:00+02:00', null),
+      lagE('n3','2026-07-20T10:00:00+02:00', 100),
+    ];
+    test('ukjent pris beholdes og havner sist ved prissortering',
+      sorterEventer(medNull,'pris-stigende').map(e=>e.id), ['n1','n3','n2']);
 
 
     /* ══════════════════════════════════════

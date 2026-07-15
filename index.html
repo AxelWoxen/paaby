@@ -98,9 +98,21 @@
         </div>
 
       </nav>
-      <button id="nullstill-knapp" class="nullstill-knapp skjult" aria-label="Nullstill alle filtre">
-        Nullstill
-      </button>
+
+      <div class="filter-bunn-rad">
+        <button
+          id="vis-avstand"
+          class="chip"
+          aria-pressed="false"
+          aria-label="Vis avstand til arrangementer"
+        >Vis avstand</button>
+        <button id="nullstill-knapp" class="nullstill-knapp skjult" aria-label="Nullstill alle filtre">
+          Nullstill
+        </button>
+      </div>
+
+      <p id="posisjon-status" class="posisjon-status skjult" aria-live="polite" aria-atomic="true"></p>
+
     </aside>
 
 
@@ -112,6 +124,17 @@
         <button id="vis-alle" class="tilbake-knapp skjult" aria-label="Tilbake til alle arrangementer">
           ← alle arrangementer
         </button>
+        <div class="sortering-kontroll">
+          <label for="sortering" class="sortering-label">Sorter</label>
+          <select id="sortering" class="sortering-select" aria-label="Sorter arrangementer">
+            <option value="tid-stigende">Snart først</option>
+            <option value="tid-synkende">Senest først</option>
+            <option value="pris-stigende">Lavest pris</option>
+            <option value="pris-synkende">Høyest pris</option>
+            <option value="avstand-stigende">Nærmest</option>
+            <option value="avstand-synkende">Lengst unna</option>
+          </select>
+        </div>
       </div>
 
       <main id="feed" class="feed" aria-label="Arrangement-feed">

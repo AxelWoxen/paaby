@@ -1,7 +1,11 @@
-/* gruppering.js — dag-inndeling og sorteringslogikk.
-   Rene funksjoner: ingen DOM, ingen fetch, ingen side-effekter. */
+/* gruppering.js — dag-inndeling av arrangementslisten.
+   Rene funksjoner: ingen DOM, ingen fetch, ingen side-effekter.
 
-import { lagDagLabel }   from './formatering.js';
+   Sortering skjer nå utenfor denne filen (se sortering.js).
+   grupperEtterDag() forventer et allerede sortert array og bevarer
+   rekkefølgen fra inndata — både for dager og for arrangementer innad. */
+
+import { lagDagLabel }    from './formatering.js';
 import { osloDataNokkel } from './oslo-tid.js';
 
 /* Standard varighet når slutt mangler (4 timer i millisekunder). */
@@ -37,40 +41,27 @@ export function skjulPasserte(eventer, nå = new Date()) {
 }
 
 /**
- * Sorterer eventer innad i én dag.
- *   - Nærhetssortering aktiv + posisjon kjent → nærmest først
- *   - Ellers → tidligst start først
- */
-function sorterInnenDag(eventer, posisjon, naerhet) {
-  if (naerhet && posisjon) {
-    return [...eventer].sort((a, b) => (a._avstand ?? Infinity) - (b._avstand ?? Infinity));
-  }
-  return [...eventer].sort((a, b) => new Date(a.start) - new Date(b.start));
-}
-
-/**
- * Grupperer eventer etter kalenderdag i Oslo-tid og sorterer dem.
+ * Grupperer et allerede sortert eventer-array etter kalenderdag i Oslo-tid.
+ * Rekkefølgen på dagene og arrangementene innad bevares fra inndata.
  *
- * @param {Array}        eventer  - Filtrerte, ikke-passerte arrangementer
- * @param {Object|null}  posisjon - { lat, lng } eller null
- * @param {boolean}      naerhet  - Om nærhetssortering er aktiv
- * @returns {Array}  [{ nokkel, label, eventer }, …] sortert kronologisk
+ * Kalles etter sorterEventer() — ikke sorter internt her.
+ *
+ * @param {Array} eventer - Filtrerte, sorterte arrangementer
+ * @returns {Array}  [{ nokkel, label, eventer }, …] i inndata-rekkefølge
  */
-export function grupperEtterDag(eventer, posisjon, naerhet) {
+export function grupperEtterDag(eventer) {
   const dagMap = new Map();
 
   for (const event of eventer) {
-    /* Hent Oslo-lokal YYYY-MM-DD fra ISO-strengen (forutsetter Oslo-offset) */
     const nokkel = osloDataNokkel(event.start);
     if (!dagMap.has(nokkel)) dagMap.set(nokkel, []);
     dagMap.get(nokkel).push(event);
   }
 
-  return [...dagMap.keys()]
-    .sort()
-    .map((nokkel) => ({
-      nokkel,
-      label:   lagDagLabel(nokkel),
-      eventer: sorterInnenDag(dagMap.get(nokkel), posisjon, naerhet),
-    }));
+  /* Map bevarer innsettingsrekkefølge — dager og events er allerede i riktig rekkefølge */
+  return [...dagMap.entries()].map(([nokkel, dagEventer]) => ({
+    nokkel,
+    label:   lagDagLabel(nokkel),
+    eventer: dagEventer,
+  }));
 }

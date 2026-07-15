@@ -700,3 +700,96 @@ body.modal-aapen {
 .kort-bilde-placeholder.kategori-musikk { background: rgba(200, 255, 77, 0.08); }
 .kort-bilde-placeholder.kategori-mat    { background: rgba(255, 77, 94, 0.08);  }
 .kort-bilde-placeholder.kategori-klubb  { background: rgba(244, 241, 234, 0.06); }
+
+
+/* === FILTER BUNNRAD (Vis avstand + Nullstill) === */
+
+.filter-bunn-rad {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-s);
+  margin-top: var(--gap-s);
+  flex-wrap: wrap;
+}
+
+#vis-avstand.aktiv {
+  background: rgba(200, 255, 77, 0.15);
+  border-color: var(--lime);
+  color: var(--lime);
+}
+
+#vis-avstand:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+
+/* === POSISJONSSTATUS === */
+
+.posisjon-status {
+  font-size: 0.8rem;
+  margin-top: var(--gap-s);
+  line-height: 1.4;
+}
+
+.posisjon-info { color: var(--graa); }
+.posisjon-feil { color: var(--korall); }
+
+
+/* === SORTERINGSKONTROLL ===
+   Plasseres i .treff-linje — legg til flex-wrap for mobilstøtte. */
+
+.treff-linje {
+  flex-wrap: wrap;
+  gap: var(--gap-s);
+}
+
+.sortering-kontroll {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+
+.sortering-label {
+  font-size: 0.8rem;
+  color: var(--graa);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.sortering-select {
+  font-family: var(--font-tekst);
+  font-size: 0.8rem;
+  color: var(--paper);
+  background: var(--flate-2);
+  border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-s);
+  padding: 0.25rem 1.6rem 0.25rem 0.5rem;
+  cursor: pointer;
+  outline-offset: 2px;
+  transition: border-color 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239994A2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.4rem center;
+  background-size: 8px 5px;
+}
+
+.sortering-select:hover {
+  border-color: var(--graa);
+}
+
+.sortering-select:focus-visible {
+  outline: 2px solid var(--korall);
+  outline-offset: 2px;
+  border-color: var(--graa);
+}
+
+@media (max-width: 380px) {
+  .sortering-kontroll {
+    margin-left: 0;
+    width: 100%;
+  }
+}

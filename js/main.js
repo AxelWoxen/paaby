@@ -1,12 +1,16 @@
 /* main.js — appens inngangspunkt og orkestrator.
    Koordinerer de tre lagene. */
 
-import { hentEventer }                   from './network/events-api.js';
-import { filtrerEventer }                from './application/filtre.js';
-import { skjulPasserte, grupperEtterDag } from './application/gruppering.js';
-import { hentLagredeIder }               from './application/lagret.js';
-import { visEventer }                    from './presentation/feed.js';
-import { initModal, åpneModal, lukkModal, hentÅpenEvent } from './presentation/modal.js';
+import { hentEventer }                             from './network/events-api.js';
+import { filtrerEventer }                          from './application/filtre.js';
+import { skjulPasserte, grupperEtterDag }          from './application/gruppering.js';
+import { sorterEventer, erAvstandsSortering,
+         erTidsSortering }                         from './application/sortering.js';
+import { hentPosisjon, kalkulerAvstand }           from './application/posisjon.js';
+import { hentLagredeIder }                         from './application/lagret.js';
+import { visEventer }                              from './presentation/feed.js';
+import { initModal, åpneModal, lukkModal,
+         hentÅpenEvent }                           from './presentation/modal.js';
 
 
 /* ========================
@@ -20,10 +24,13 @@ const tilstand = {
     kategori: [],    /* Array — ELLER-logikk, multi-select */
     tid:      null,  /* string | null — enkeltvalg */
     pris:     null,  /* string | null — enkeltvalg */
-    naerhet:  false,
+    naerhet:  false, /* ubrukt — ingen chip i HTML, men beholdes for bakoverkompatibilitet */
   },
 
-  brukerPosisjon: null,
+  sortering:      'tid-stigende',  /* Standardsortering */
+  brukerPosisjon: null,            /* { lat, lng } eller null — aldri satt ved sidelast */
+  visAvstand:     false,           /* Viser avstand på kort og i modal */
+  posisjonLastes: false,           /* Mutex — hindrer samtidige geolocation-forespørsler */
   visLagret:      false,
 };
 
@@ -38,18 +45,44 @@ function oppdaterFeed() {
   if (tilstand.visLagret) {
     const lagredeIder = hentLagredeIder(tilstand.alleEventer.map((e) => e.id));
     eventer = tilstand.alleEventer.filter((e) => lagredeIder.includes(e.id));
-    /* I lagret-visning: skjul passerte */
     eventer = skjulPasserte(eventer);
   } else {
     const aktive = skjulPasserte(tilstand.alleEventer);
     eventer = filtrerEventer(aktive, tilstand.aktivFiltre, tilstand.brukerPosisjon);
   }
 
-  const dagGrupper   = grupperEtterDag(eventer, tilstand.brukerPosisjon, tilstand.aktivFiltre.naerhet);
-  const totaltAntall = dagGrupper.reduce((sum, g) => sum + g.eventer.length, 0);
+  /* Legg til _avstand (internt felt i km) på hvert event dersom avstand er aktiv.
+     _avstand = null betyr at arrangementet mangler koordinater. */
+  if (tilstand.visAvstand && tilstand.brukerPosisjon) {
+    eventer = eventer.map((e) => {
+      if (e.lat == null || e.lng == null) return { ...e, _avstand: null };
+      const km = kalkulerAvstand(tilstand.brukerPosisjon, { lat: e.lat, lng: e.lng });
+      return { ...e, _avstand: km };
+    });
+  }
+  /* Dersom visAvstand er false fjernes _avstand implisitt —
+     dataene fra tilstand.alleEventer har aldri _avstand satt. */
+
+  /* Fallback: bruk tidssortering dersom avstandssortering er valgt men avstand er av.
+     Endrer ikke tilstand.sortering — kun intern override for denne rendringen. */
+  const effektivSortering =
+    erAvstandsSortering(tilstand.sortering) && !tilstand.visAvstand
+      ? 'tid-stigende'
+      : tilstand.sortering;
+
+  const sorterte = sorterEventer(eventer, effektivSortering);
+
+  /* Vis med daggruppering for tidssortering, flat liste for pris/avstand */
+  let dagGrupper;
+  if (erTidsSortering(effektivSortering)) {
+    dagGrupper = grupperEtterDag(sorterte);
+  } else {
+    /* Ingen dagoverskrift — label: null signaliserer til feed.js at den skal hoppes over */
+    dagGrupper = [{ nokkel: 'global', label: null, eventer: sorterte }];
+  }
 
   visEventer(dagGrupper, tilstand.visLagret);
-  oppdaterTreffLinje(totaltAntall);
+  oppdaterTreffLinje(sorterte.length);
 }
 
 function oppdaterTreffLinje(antall) {
@@ -77,13 +110,11 @@ function initFiltre() {
       const verdi = chip.dataset.verdi;
 
       if (type === 'naerhet') {
-        /* Nærhets-filter: enkel toggle */
         tilstand.aktivFiltre.naerhet = !tilstand.aktivFiltre.naerhet;
         chip.classList.toggle('aktiv', tilstand.aktivFiltre.naerhet);
         chip.setAttribute('aria-pressed', String(tilstand.aktivFiltre.naerhet));
 
       } else if (type === 'kategori') {
-        /* Kategori: multi-select (ELLER) */
         const liste  = tilstand.aktivFiltre.kategori;
         const indeks = liste.indexOf(verdi);
         if (indeks >= 0) {
@@ -95,12 +126,11 @@ function initFiltre() {
         }
 
       } else if (type === 'tid' || type === 'pris') {
-        /* Tid og pris: enkeltvalg — klikk på aktiv fjerner den, klikk på annen bytter */
         const erAktivNå = tilstand.aktivFiltre[type] === verdi;
 
-        /* Deaktiver eventuelle andre chips i samme gruppe */
         document.querySelectorAll(`[data-filter="${type}"]`).forEach((c) => {
           c.classList.remove('aktiv');
+          c.setAttribute('aria-pressed', 'false');
         });
 
         if (erAktivNå) {
@@ -108,6 +138,7 @@ function initFiltre() {
         } else {
           tilstand.aktivFiltre[type] = verdi;
           chip.classList.add('aktiv');
+          chip.setAttribute('aria-pressed', 'true');
         }
       }
 
@@ -121,8 +152,7 @@ function oppdaterNullstillKnapp() {
   const harAktive =
     tilstand.aktivFiltre.kategori.length > 0 ||
     tilstand.aktivFiltre.tid   !== null  ||
-    tilstand.aktivFiltre.pris  !== null  ||
-    tilstand.aktivFiltre.naerhet;
+    tilstand.aktivFiltre.pris  !== null;
 
   document.getElementById('nullstill-knapp').classList.toggle('skjult', !harAktive);
 }
@@ -133,12 +163,132 @@ function initNullstillKnapp() {
 
     document.querySelectorAll('.chip').forEach((c) => {
       c.classList.remove('aktiv');
-      if (c.dataset.filter === 'naerhet') c.setAttribute('aria-pressed', 'false');
+      if (c.dataset.filter === 'tid' || c.dataset.filter === 'pris') {
+        c.setAttribute('aria-pressed', 'false');
+      }
     });
 
     oppdaterNullstillKnapp();
     oppdaterFeed();
   });
+}
+
+
+/* ========================
+   POSISJON OG AVSTAND
+   ======================== */
+
+/**
+ * Delt posisjonsflyt — brukes av både «Vis avstand»-knappen og sorteringsdropdown.
+ * Bruker cachet posisjon fra tilstand dersom tilgjengelig (brukeren trenger ikke godkjenne igjen).
+ * Returnerer posisjon ved suksess, null ved avslag/feil.
+ */
+async function hentEllerBrukPosisjon() {
+  if (tilstand.posisjonLastes) return null;
+  if (tilstand.brukerPosisjon) return tilstand.brukerPosisjon;
+
+  tilstand.posisjonLastes = true;
+  const pos = await hentPosisjon();
+  tilstand.posisjonLastes = false;
+
+  return pos;
+}
+
+function initVisAvstandKnapp() {
+  const knapp    = document.getElementById('vis-avstand');
+  const statusEl = document.getElementById('posisjon-status');
+
+  knapp.addEventListener('click', async () => {
+    if (tilstand.visAvstand) {
+      /* Slå av avstandsvisning */
+      tilstand.visAvstand = false;
+      knapp.setAttribute('aria-pressed', 'false');
+      knapp.classList.remove('aktiv');
+      skjulStatus(statusEl);
+
+      /* Bytt fra avstandssortering til tidssortering */
+      if (erAvstandsSortering(tilstand.sortering)) {
+        tilstand.sortering = 'tid-stigende';
+        document.getElementById('sortering').value = 'tid-stigende';
+      }
+
+      oppdaterFeed();
+      return;
+    }
+
+    /* Slå på — be om posisjon (eller bruk cachet) */
+    if (tilstand.posisjonLastes) return;
+
+    knapp.disabled = true;
+    visStatus(statusEl, 'Henter posisjon …');
+
+    const pos = await hentEllerBrukPosisjon();
+
+    knapp.disabled = false;
+
+    if (!pos) {
+      visStatus(statusEl, 'Vi trenger posisjonen din for å vise avstand.', true);
+      return;
+    }
+
+    tilstand.brukerPosisjon = pos;
+    tilstand.visAvstand     = true;
+    knapp.setAttribute('aria-pressed', 'true');
+    knapp.classList.add('aktiv');
+    skjulStatus(statusEl);
+    oppdaterFeed();
+  });
+}
+
+function initSortering() {
+  const select   = document.getElementById('sortering');
+  const statusEl = document.getElementById('posisjon-status');
+
+  select.addEventListener('change', async () => {
+    const nyVerdi      = select.value;
+    const forrigeVerdi = tilstand.sortering;
+
+    if (erAvstandsSortering(nyVerdi) && !tilstand.visAvstand) {
+      /* Brukeren vil sortere etter avstand — be om posisjon */
+      if (tilstand.posisjonLastes) {
+        select.value = forrigeVerdi;
+        return;
+      }
+
+      visStatus(statusEl, 'Henter posisjon …');
+
+      const pos = await hentEllerBrukPosisjon();
+
+      if (!pos) {
+        visStatus(statusEl, 'Vi trenger posisjonen din for å vise avstand.', true);
+        select.value = forrigeVerdi; /* reverter til forrige gyldige verdi */
+        return;
+      }
+
+      tilstand.brukerPosisjon = pos;
+      tilstand.visAvstand     = true;
+
+      const visAvstandKnapp = document.getElementById('vis-avstand');
+      visAvstandKnapp.setAttribute('aria-pressed', 'true');
+      visAvstandKnapp.classList.add('aktiv');
+      skjulStatus(statusEl);
+    }
+
+    tilstand.sortering = nyVerdi;
+    oppdaterFeed();
+  });
+}
+
+function visStatus(el, tekst, erFeil = false) {
+  el.textContent = tekst;
+  el.classList.remove('skjult');
+  el.classList.toggle('posisjon-feil', erFeil);
+  el.classList.toggle('posisjon-info', !erFeil);
+}
+
+function skjulStatus(el) {
+  el.textContent = '';
+  el.classList.add('skjult');
 }
 
 
@@ -174,7 +324,6 @@ function initLagretSync() {
       modalHjerte.textContent = lagret ? '♥ lagret' : '♡ lagre';
       modalHjerte.setAttribute('aria-pressed', String(lagret));
     }
-    /* Oppdater feeden dersom vi er i lagret-visning */
     if (tilstand.visLagret) oppdaterFeed();
   });
 }
@@ -184,7 +333,6 @@ function initLagretSync() {
    HASH-RUTING
    ======================== */
 
-/* Åpner riktig modal dersom URL inneholder #event/<id>. */
 function håndterHash() {
   const match = window.location.hash.match(/^#event\/(.+)$/);
   if (!match) return;
@@ -193,7 +341,7 @@ function håndterHash() {
   try {
     id = decodeURIComponent(match[1]);
   } catch {
-    return; /* ugyldig URL-koding — ignorer */
+    return;
   }
 
   const event = tilstand.alleEventer.find((e) => e.id === id);
@@ -202,7 +350,6 @@ function håndterHash() {
 
 function initHashRuting() {
   window.addEventListener('hashchange', () => {
-    /* Lukk modal hvis hash er fjernet */
     if (!window.location.hash.startsWith('#event/')) {
       if (hentÅpenEvent()) lukkModal();
       return;
@@ -223,11 +370,12 @@ async function startApp() {
   initLagretKnapp();
   initLagretSync();
   initHashRuting();
+  initVisAvstandKnapp();
+  initSortering();
 
   try {
     tilstand.alleEventer = await hentEventer();
     oppdaterFeed();
-    /* Sjekk hash etter at eventer er lastet */
     håndterHash();
   } catch (feil) {
     const melding = document.createElement('p');

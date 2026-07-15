@@ -36,11 +36,15 @@ export function hentPosisjon() {
  * at jorda er kuleformet, noe som betyr mye ved lange avstander,
  * og ganske lite i Oslo (men vi bruker den for korrekthetens skyld).
  *
+ * Returnerer null hvis ett eller begge koordinatene er ugyldige.
+ *
  * @param {Object} fra - { lat, lng }
  * @param {Object} til - { lat, lng }
- * @returns {number} Avstand i km
+ * @returns {number|null} Avstand i km, eller null ved ugyldige koordinater
  */
 export function kalkulerAvstand(fra, til) {
+  if (!erGyldigeKoordinater(fra) || !erGyldigeKoordinater(til)) return null;
+
   const R = 6371; /* Jordens gjennomsnittsradius i km */
 
   /* Vi må konvertere grader til radianer for Math.sin/cos */
@@ -59,6 +63,21 @@ export function kalkulerAvstand(fra, til) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c;
+}
+
+/**
+ * Validerer at et koordinatobjekt har gyldige lat/lng-verdier.
+ * lat: -90 til 90, lng: -180 til 180.
+ *
+ * @param {any} k
+ * @returns {boolean}
+ */
+export function erGyldigeKoordinater(k) {
+  return (
+    k != null &&
+    typeof k.lat === 'number' && isFinite(k.lat) && k.lat >= -90  && k.lat <= 90 &&
+    typeof k.lng === 'number' && isFinite(k.lng) && k.lng >= -180 && k.lng <= 180
+  );
 }
 
 /* Hjelpefunksjon: konverterer grader til radianer */
