@@ -2,3 +2,5 @@ node_modules/
 .DS_Store
 .claude/settings.local.json
 package-lock.json
+package.json
+server.js
