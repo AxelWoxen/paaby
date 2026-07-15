@@ -122,6 +122,18 @@ export function kapitaliser(str) {
   return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+/** Korrekt visningsnavn for kategori — håndterer ASCII-interne verdier (f.eks. pafunn → Påfunn). */
+const KATEGORI_NAVN = Object.freeze({
+  musikk: 'Musikk',
+  mat:    'Mat',
+  klubb:  'Klubb',
+  pafunn: 'Påfunn',
+});
+
+export function kategoriVisningsnavn(kategori) {
+  return KATEGORI_NAVN[kategori] ?? kapitaliser(kategori ?? '');
+}
+
 /* Nuller-pad til to siffer. */
 function pad(n) {
   return String(n).padStart(2, '0');

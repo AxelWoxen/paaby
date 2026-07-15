@@ -1,0 +1,65 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#141318"/>
+
+  <!-- Vinylplate: stor sirkel, litt til venstre -->
+  <circle cx="620" cy="480" r="320" fill="#1E1C24"/>
+  <!-- Vinyl-riller -->
+  <circle cx="620" cy="480" r="300" fill="none" stroke="#28252F" stroke-width="2"/>
+  <circle cx="620" cy="480" r="268" fill="none" stroke="#28252F" stroke-width="1.5"/>
+  <circle cx="620" cy="480" r="236" fill="none" stroke="#28252F" stroke-width="1.5"/>
+  <circle cx="620" cy="480" r="204" fill="none" stroke="#28252F" stroke-width="1.5"/>
+  <circle cx="620" cy="480" r="172" fill="none" stroke="#28252F" stroke-width="1.5"/>
+  <circle cx="620" cy="480" r="140" fill="none" stroke="#28252F" stroke-width="1.5"/>
+  <!-- Label-sirkelen i midten -->
+  <circle cx="620" cy="480" r="100" fill="#28252F"/>
+  <circle cx="620" cy="480" r="100" fill="none" stroke="#FF4D5E" stroke-width="2" opacity="0.6"/>
+  <!-- Senter-hull -->
+  <circle cx="620" cy="480" r="18" fill="#141318"/>
+  <circle cx="620" cy="480" r="6"  fill="#9994A2" opacity="0.6"/>
+
+  <!-- Stjerner i lime — 4-puntede -->
+  <!-- Stjerne: to kryssende rektangler -->
+  <g transform="translate(1100,200) rotate(15)">
+    <rect x="-5" y="-28" width="10" height="56" rx="5" fill="#C8FF4D" opacity="0.9"/>
+    <rect x="-28" y="-5" width="56" height="10" rx="5" fill="#C8FF4D" opacity="0.9"/>
+  </g>
+  <g transform="translate(1320,380) rotate(-10)">
+    <rect x="-3" y="-18" width="6" height="36" rx="3" fill="#C8FF4D" opacity="0.7"/>
+    <rect x="-18" y="-3" width="36" height="6" rx="3" fill="#C8FF4D" opacity="0.7"/>
+  </g>
+  <g transform="translate(1250,650) rotate(22)">
+    <rect x="-4" y="-22" width="8" height="44" rx="4" fill="#C8FF4D" opacity="0.8"/>
+    <rect x="-22" y="-4" width="44" height="8" rx="4" fill="#C8FF4D" opacity="0.8"/>
+  </g>
+  <g transform="translate(980,720) rotate(-5)">
+    <rect x="-3" y="-16" width="6" height="32" rx="3" fill="#C8FF4D" opacity="0.6"/>
+    <rect x="-16" y="-3" width="32" height="6" rx="3" fill="#C8FF4D" opacity="0.6"/>
+  </g>
+  <g transform="translate(1450,550) rotate(8)">
+    <rect x="-2" y="-12" width="4" height="24" rx="2" fill="#C8FF4D" opacity="0.5"/>
+    <rect x="-12" y="-2" width="24" height="4" rx="2" fill="#C8FF4D" opacity="0.5"/>
+  </g>
+  <g transform="translate(1050,420) rotate(-18)">
+    <rect x="-3" y="-14" width="6" height="28" rx="3" fill="#F4F1EA" opacity="0.35"/>
+    <rect x="-14" y="-3" width="28" height="6" rx="3" fill="#F4F1EA" opacity="0.35"/>
+  </g>
+
+  <!-- Totebag / poseform til høyre -->
+  <rect x="1120" y="300" width="180" height="200" rx="14" fill="#28252F" stroke="#9994A2" stroke-width="2" opacity="0.7"/>
+  <!-- Håndtak -->
+  <path d="M1150,300 Q1150,248 1180,248 Q1210,248 1210,300" fill="none" stroke="#9994A2" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
+  <path d="M1190,300 Q1190,248 1220,248 Q1250,248 1250,300" fill="none" stroke="#9994A2" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
+  <!-- Liten lime-detalj på pose -->
+  <rect x="1175" y="370" width="70" height="4" rx="2" fill="#C8FF4D" opacity="0.6"/>
+  <rect x="1175" y="384" width="50" height="4" rx="2" fill="#C8FF4D" opacity="0.4"/>
+
+  <!-- Prikkete mønster øverst til høyre -->
+  <circle cx="1480" cy="160" r="6" fill="#FF4D5E" opacity="0.5"/>
+  <circle cx="1520" cy="200" r="4" fill="#C8FF4D" opacity="0.4"/>
+  <circle cx="1460" cy="220" r="5" fill="#F4F1EA" opacity="0.3"/>
+  <circle cx="1510" cy="140" r="3" fill="#FF4D5E" opacity="0.35"/>
+
+  <!-- Små prikkmarkeder langs kanten -->
+  <circle cx="380" cy="200" r="5" fill="#FF4D5E" opacity="0.3"/>
+  <circle cx="340" cy="750" r="4" fill="#C8FF4D" opacity="0.25"/>
+</svg>

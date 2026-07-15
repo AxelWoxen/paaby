@@ -2,7 +2,7 @@
    Filtrerer bort ugyldige arrangementer og logger én advarsel per problem.
    Ingen DOM, ingen fetch. */
 
-const TILLATTE_KATEGORIER = new Set(['musikk', 'mat', 'klubb']);
+const TILLATTE_KATEGORIER = new Set(['musikk', 'mat', 'klubb', 'pafunn']);
 
 /**
  * Filtrerer en liste med arrangementer.
@@ -58,9 +58,12 @@ function validerEnkelt(e, seneIder) {
     if (typeof e.pris !== 'number' || e.pris < 0) return `ugyldig pris: ${e.pris}`;
   }
 
-  /* koordinater */
-  if (e.lat != null && (typeof e.lat !== 'number' || e.lat < -90  || e.lat > 90))  return 'ugyldig lat';
-  if (e.lng != null && (typeof e.lng !== 'number' || e.lng < -180 || e.lng > 180)) return 'ugyldig lng';
+  /* koordinater — begge null, eller begge gyldige tall */
+  const harLat = e.lat != null;
+  const harLng = e.lng != null;
+  if (harLat !== harLng) return 'lat og lng må begge være satt eller begge null';
+  if (harLat && (typeof e.lat !== 'number' || e.lat < -90  || e.lat > 90))  return 'ugyldig lat';
+  if (harLng && (typeof e.lng !== 'number' || e.lng < -180 || e.lng > 180)) return 'ugyldig lng';
 
   /* lenker */
   if (e.lenke          != null && !erGyldigUrl(e.lenke))          return 'ugyldig lenke';

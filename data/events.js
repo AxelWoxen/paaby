@@ -1,6 +1,6 @@
 /*
  * ================================================================
- * events.js — demoarrangementer for påby
+ * events.js — kuraterte lanseringsarrangementer for påby
  * ================================================================
  *
  * Slik legger du til et arrangement:
@@ -13,171 +13,408 @@
  * MAL:
  *
  * {
- *   id:            'sted-slug-YYYY-MM-DD-HHMM',     // PÅKREVD — unik, stabil
- *   tittel:        'Navn på arrangementet',           // PÅKREVD
- *   kategori:      'musikk',                          // PÅKREVD — 'musikk' | 'mat' | 'klubb'
- *   sted:          'Venuenavn',                       // PÅKREVD
- *   adresse:       'Gateadresse, Oslo',               // valgfri
- *   lat:           59.9133,                           // valgfri
- *   lng:           10.7388,                           // valgfri
- *   start:         '2026-07-18T20:00:00+02:00',      // PÅKREVD — ISO 8601 med Oslo-offset
- *   slutt:         '2026-07-18T23:30:00+02:00',      // valgfri — mangler = start + 4 timer
- *   pris:          0,                                 // PÅKREVD — tall i kr, 0 = gratis, null = ukjent
- *   prisTekst:     'Gratis',                          // valgfri — vises til bruker
- *   beskrivelse:   'En setning eller to.',            // valgfri
- *   kuratortekst:  'Kort redaksjonell begrunnelse.',  // valgfri
- *   lenke:         'https://...',                     // valgfri — billett / mer info
- *   bilde:         'https://...',                     // valgfri — URL eller lokal sti
- *   sistVerifisert: '2026-07-15T18:00:00+02:00',     // valgfri — tillitssignal
+ *   id:            'sted-slug-YYYY-MM-DD',               // PÅKREVD — unik, stabil
+ *   tittel:        'Navn på arrangementet',               // PÅKREVD
+ *   kategori:      'musikk',                              // PÅKREVD — 'musikk' | 'mat' | 'klubb' | 'pafunn'
+ *   sted:          'Venuenavn',                           // PÅKREVD
+ *   adresse:       'Gateadresse, postnummer Oslo',        // valgfri
+ *   lat:           59.9228,                               // valgfri — geokodede koordinater
+ *   lng:           10.7503,                               // valgfri — geokodede koordinater
+ *   start:         '2026-07-18T20:00:00+02:00',          // PÅKREVD — ISO 8601 med Oslo-offset
+ *   slutt:         '2026-07-18T23:30:00+02:00',          // valgfri — null = start + 4 timer
+ *   pris:          0,                                     // PÅKREVD — tall i kr, 0 = gratis, null = ukjent
+ *   prisTekst:     'Gratis',                              // valgfri — vises til bruker
+ *   beskrivelse:   'En setning eller to.',                // valgfri
+ *   kuratortekst:  'Kort redaksjonell begrunnelse.',      // valgfri
+ *   lenke:         'https://...',                         // valgfri — billett / mer info
+ *   bilde:         null,                                  // valgfri — URL eller lokal sti; null = bruk kategoribilde
+ *   sistVerifisert: '2026-07-15T04:00:00+02:00',         // valgfri — tillitssignal
  * }
  *
  * Tips:
  *   - Oslo sommertid: +02:00 (mars–oktober)
  *   - Oslo vintertid: +01:00 (oktober–mars)
  *   - Filtrering bruker pris (tall), ikke prisTekst
+ *   - pris: null = ukjent, matches ikke av prisfiltre
+ *   - lat/lng: begge null eller begge tall — aldri bare én av dem
+ *   - bilde: null = automatisk kategoribilde
  *   - Passerte arrangementer skjules automatisk (se slutt-feltet)
  * ================================================================
  */
 
+/*
+ * Geokodede venue-koordinater (Nominatim / OpenStreetMap, 2026-07-15):
+ *
+ * Brenneriveien 9C, 0182 Oslo (BLÅ)             → 59.9228,  10.7503
+ * Hausmanns gate 34, 0182 Oslo (Kafé Hærverk)   → 59.91915, 10.75198
+ * Bernt Ankers gate 39, 0179 Oslo (Gehør)        → 59.91713, 10.75009
+ * Grensen 9, 0159 Oslo (Jaeger)                  → 59.9133,  10.7388
+ * Møllergata 23, 0179 Oslo (The Villa)            → 59.91564, 10.74856
+ * Vulkan 5, 0178 Oslo (Mathallen)                → 59.92225, 10.75175
+ * Christian Krohgs gate 15, 0186 Oslo (Prindsen) → 59.91473, 10.75804
+ * Torggata 16, 0181 Oslo (Oslo Street Food)      → 59.9167,  10.7508
+ * Brenneriveien 9, 0182 Oslo (Ingensteds)        → 59.92035, 10.75279
+ * Storgata 36, 0182 Oslo (Folk i Storgata)       → 59.91508, 10.75527
+ */
+
 export const EVENTER = [
+
+  // --------------------------------------------------
+  // MUSIKK
+  // --------------------------------------------------
+
   {
-    id:            'blaa-jazzkvelder-2026-07-16-2000',
-    tittel:        'Blå Jazzkvelder',
+    id:            'frank-znort-blaa-2026-07-19',
+    tittel:        'Frank Znort Quartet',
     kategori:      'musikk',
-    sted:          'Blå',
-    adresse:       'Brenneriveien 9C, Oslo',
+    sted:          'BLÅ',
+    adresse:       'Brenneriveien 9C, 0182 Oslo',
     lat:           59.9228,
     lng:           10.7503,
-    start:         '2026-07-16T20:00:00+02:00',
-    slutt:         '2026-07-16T23:30:00+02:00',
-    pris:          0,
-    prisTekst:     'Gratis',
-    beskrivelse:   'Åpen scene med ukens beste jazz-talenter. Intim stemning, billig øl, og ingen som later som om de forstår musikken bedre enn deg.',
-    kuratortekst:  'Lav terskel, god musikk og ingen pretensiøs stemning.',
-    lenke:         'https://blaaoslo.no',
-    bilde:         'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&q=80',
-    sistVerifisert: '2026-07-15T18:00:00+02:00',
+    start:         '2026-07-19T16:30:00+02:00',
+    slutt:         '2026-07-20T00:00:00+02:00',
+    pris:          null,
+    prisTekst:     'Pris ikke oppgitt',
+    beskrivelse:   'Søndagskonsert med et stort ensemble som blander funk, soul og jazz. Først et kort akustisk sett, deretter elektriske sett utover kvelden.',
+    kuratortekst:  'Et av de sikreste Oslo-tipsene når du ikke er klar for at helga skal være over.',
+    lenke:         'https://www.blaaoslo.no/events/frank-znort-quartet/0PjwRoGFq6',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
   },
+
   {
-    id:            'vippa-streetfood-2026-07-17-1200',
-    tittel:        'Vippa Streetfood',
-    kategori:      'mat',
-    sted:          'Vippa',
-    adresse:       'Akershusstranda 25, Oslo',
-    lat:           59.9066,
-    lng:           10.7461,
-    start:         '2026-07-17T12:00:00+02:00',
-    slutt:         '2026-07-17T21:00:00+02:00',
-    pris:          0,
-    prisTekst:     'Gratis inn',
-    beskrivelse:   'Streetfood fra alle verdenshjørner i en gammel fergekai ved fjorden. Ta med venner, spis for mye, angre ingenting.',
-    kuratortekst:  'Perfekt fredag-spot — gratis inngang, mange valgmuligheter.',
-    lenke:         'https://vippa.no',
-    bilde:         'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=800&q=80',
-    sistVerifisert: '2026-07-15T18:00:00+02:00',
-  },
-  {
-    id:            'palace-grill-popup-2026-07-17-1800',
-    tittel:        'Palace Grill Pop-up',
-    kategori:      'mat',
-    sted:          'Palace Grill',
-    adresse:       'Solligata 2, Oslo',
-    lat:           59.9133,
-    lng:           10.7285,
-    start:         '2026-07-17T18:00:00+02:00',
-    slutt:         '2026-07-17T22:00:00+02:00',
-    pris:          0,
-    prisTekst:     'Gratis',
-    beskrivelse:   'Oslos minste restaurant tar utekjøkkenet ut i solen. Ingen booking, førstemann til mølla, og køen er verdt det.',
-    lenke:         'https://palacegrill.no',
-    bilde:         'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=800&q=80',
-    sistVerifisert: '2026-07-15T18:00:00+02:00',
-  },
-  {
-    id:            'john-olav-nilsen-2026-07-18-2000',
-    tittel:        'John Olav Nilsen & Gjengen',
+    id:            'xstalker-superspaz-haerverk-2026-07-23',
+    tittel:        'xSTALKERx / Superspaz',
     kategori:      'musikk',
-    sted:          'Rockefeller',
-    adresse:       'Torggata 16, Oslo',
-    lat:           59.9167,
-    lng:           10.7508,
-    start:         '2026-07-18T20:00:00+02:00',
-    slutt:         '2026-07-18T23:00:00+02:00',
-    pris:          350,
-    prisTekst:     '350 kr',
-    beskrivelse:   'Norsk rock som faktisk betyr noe. Mosh pit, lettøl og folk som kan hvert eneste vers. En av Oslos beste livescener.',
-    lenke:         'https://rockefeller.no',
-    bilde:         'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&q=80',
-    sistVerifisert: '2026-07-15T18:00:00+02:00',
+    sted:          'Kafé Hærverk',
+    adresse:       'Hausmanns gate 34, 0182 Oslo',
+    lat:           59.91915,
+    lng:           10.75198,
+    start:         '2026-07-23T20:00:00+02:00',
+    slutt:         '2026-07-23T23:00:00+02:00',
+    pris:          150,
+    prisTekst:     '150 kr + gebyr',
+    beskrivelse:   'En kompakt kveld med hardcore, elektropunk og rap. xSTALKERx kommer fra Trondheims hardcoremiljø, mens Superspaz blander hard elektronika og rap.',
+    kuratortekst:  'Lite, røft og akkurat passe under radaren.',
+    lenke:         'https://tikkio.com/events/64937-xstalkerx-superspaz-tba-kafe-haerverk',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
   },
+
   {
-    id:            'smakfest-oslo-2026-07-18-1100',
-    tittel:        'Smakfest Oslo',
-    kategori:      'mat',
-    sted:          'Youngstorget',
-    adresse:       'Youngstorget, Oslo',
-    lat:           59.9133,
-    lng:           10.7499,
-    start:         '2026-07-18T11:00:00+02:00',
-    slutt:         '2026-07-18T20:00:00+02:00',
-    pris:          0,
-    prisTekst:     'Gratis inn',
-    beskrivelse:   '40+ matboder midt i sentrum. Norske råvarer, globale smaker og nok samplings til at du kan kalle det lunsj med god samvittighet.',
-    kuratortekst:  'Spent lørdag-aktivitet for hele dagen.',
-    lenke:         'https://smakfest.no',
-    bilde:         'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=800&q=80',
-    sistVerifisert: '2026-07-15T18:00:00+02:00',
+    id:            'utflod-haerverk-2026-07-24',
+    tittel:        'Utflod',
+    kategori:      'musikk',
+    sted:          'Kafé Hærverk',
+    adresse:       'Hausmanns gate 34, 0182 Oslo',
+    lat:           59.91915,
+    lng:           10.75198,
+    start:         '2026-07-24T20:00:00+02:00',
+    slutt:         '2026-07-24T23:00:00+02:00',
+    pris:          250,
+    prisTekst:     '250 kr + gebyr',
+    beskrivelse:   'Bergensbandet Utflod spiller en intens blanding av punk, hardcore og metal, med materiale fra debutalbumet Efterdønn.',
+    kuratortekst:  'For deg som vil ha svette, volum og null polering.',
+    lenke:         'https://tikkio.com/events/61802-utflod',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
   },
+
+  // --------------------------------------------------
+  // KLUBB
+  // --------------------------------------------------
+
   {
-    id:            'nattskift-jaeger-2026-07-18-2300',
-    tittel:        'Nattskift',
+    id:            'lyst-gehor-2026-07-16',
+    tittel:        'Lyst: Harald Björk b2b Pavlo Plastikk',
     kategori:      'klubb',
-    sted:          'Jaeger',
-    adresse:       'Grensen 9, Oslo',
-    lat:           59.9133,
-    lng:           10.7388,
-    start:         '2026-07-18T23:00:00+02:00',
-    slutt:         '2026-07-19T06:00:00+02:00',
-    pris:          200,
-    prisTekst:     '200 kr',
-    beskrivelse:   'Jaeger gjør det de er best på: fire etasjer med hard techno og folk som fortsatt danser når renholdet kommer. Kom seint.',
-    lenke:         'https://jaeger.no',
-    bilde:         'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80',
-    sistVerifisert: '2026-07-15T18:00:00+02:00',
+    sted:          'Gehør',
+    adresse:       'Bernt Ankers gate 39, 0179 Oslo',
+    lat:           59.91713,
+    lng:           10.75009,
+    start:         '2026-07-16T21:00:00+02:00',
+    slutt:         '2026-07-17T01:00:00+02:00',
+    pris:          null,
+    prisTekst:     'Pris ikke oppgitt',
+    beskrivelse:   'Harald Björk og Pavlo Plastikk spiller back-to-back gjennom torsdagskvelden, med elektronika i et lite lyttebar- og klubbformat.',
+    kuratortekst:  'En liten torsdag som fort kan bli lengre enn planlagt.',
+    lenke:         'https://ra.co/events/2483172',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
   },
+
   {
-    id:            'haerverk-warehouse-2026-07-19-2200',
-    tittel:        'Hærverk Warehouse',
+    id:            'dj-ibon-suvatne-blaa-2026-07-17',
+    tittel:        'DJ Ibon & Suvatne',
     kategori:      'klubb',
-    sted:          'Hærverk',
-    adresse:       'Maridalsveien 17, Oslo',
-    lat:           59.9094,
-    lng:           10.7537,
-    start:         '2026-07-19T22:00:00+02:00',
-    slutt:         '2026-07-20T05:00:00+02:00',
+    sted:          'BLÅ',
+    adresse:       'Brenneriveien 9C, 0182 Oslo',
+    lat:           59.9228,
+    lng:           10.7503,
+    start:         '2026-07-17T21:00:00+02:00',
+    slutt:         '2026-07-18T01:00:00+02:00',
     pris:          150,
     prisTekst:     '150 kr',
-    beskrivelse:   'Underground techno i et gammelt lagerbygg. Lydanlegget er latterlig bra og dørpolitikken er menneskelig. Kom i god tid.',
-    lenke:         'https://haerverk.no',
-    bilde:         'https://images.unsplash.com/photo-1571266028243-d220c6a3baa8?w=800&q=80',
-    sistVerifisert: '2026-07-15T18:00:00+02:00',
+    beskrivelse:   'DJ Ibon og Suvatne fyller BLÅ med techno og trance. Arrangementet har 20-årsgrense.',
+    kuratortekst:  'Mørkt, raskt og lite polert.',
+    lenke:         'https://www.blaaoslo.no/events/dj-ibon-and-suvatne/GMXgzVFuQO',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
   },
+
   {
-    id:            'tim-wendelboe-kaffemote-2026-07-20-1000',
-    tittel:        'Tim Wendelboe Kaffemøte',
-    kategori:      'mat',
-    sted:          'Tim Wendelboe',
-    adresse:       'Grüners gate 1, Oslo',
-    lat:           59.9261,
-    lng:           10.7428,
-    start:         '2026-07-20T10:00:00+02:00',
-    slutt:         '2026-07-20T12:00:00+02:00',
+    id:            'klub-kepler-ing-loft-gehor-2026-07-17',
+    tittel:        'Klub Kepler / ing_loft',
+    kategori:      'klubb',
+    sted:          'Gehør',
+    adresse:       'Bernt Ankers gate 39, 0179 Oslo',
+    lat:           59.91713,
+    lng:           10.75009,
+    start:         '2026-07-17T22:00:00+02:00',
+    slutt:         '2026-07-18T03:00:00+02:00',
     pris:          100,
     prisTekst:     '100 kr',
-    beskrivelse:   'Verdens beste kaffebar arrangerer smaksøkt med tre single-origin espressoer. Du vet ikke du er snobb før du har vært her.',
-    kuratortekst:  'For den nysgjerrige — ikke nødvendig å kunne noe om kaffe på forhånd.',
-    lenke:         'https://timwendelboe.no',
-    bilde:         'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=800&q=80',
-    sistVerifisert: '2026-07-15T18:00:00+02:00',
+    beskrivelse:   'En klubbkveld med hypnotisk techno, minimal, Detroit-elementer, dub, electro og acid. 20-årsgrense.',
+    kuratortekst:  'Billig, smalt og midt i påby-kilen.',
+    lenke:         'https://ra.co/events/2487312',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
   },
+
+  {
+    id:            'fraedag-schmooze-brus-jaeger-2026-07-17',
+    tittel:        'Frædag: Schmooze & Brus',
+    kategori:      'klubb',
+    sted:          'Jaeger',
+    adresse:       'Grensen 9, 0159 Oslo',
+    lat:           59.9133,
+    lng:           10.7388,
+    start:         '2026-07-17T22:00:00+02:00',
+    slutt:         '2026-07-18T03:00:00+02:00',
+    pris:          null,
+    prisTekst:     'Pris ikke oppgitt',
+    beskrivelse:   'Jaegers residenter tar over bakgården og kjelleren med lengre DJ-sett gjennom fredagsnatta.',
+    kuratortekst:  'Et trygt valg når du vil danse, men ikke orker å overtenke hvor.',
+    lenke:         'https://ra.co/events/2474152',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  {
+    id:            'bjorn-torske-the-villa-2026-07-18',
+    tittel:        'Bjørn Torske – all night long',
+    kategori:      'klubb',
+    sted:          'The Villa',
+    adresse:       'Møllergata 23–25, 0179 Oslo',
+    lat:           59.91564,
+    lng:           10.74856,
+    start:         '2026-07-18T23:00:00+02:00',
+    slutt:         '2026-07-19T03:00:00+02:00',
+    pris:          150,
+    prisTekst:     '150 kr',
+    beskrivelse:   'Bjørn Torske spiller hele kvelden i hovedrommet, mens Finn og Ole HK tar et av de andre rommene.',
+    kuratortekst:  'Norsk klubbhistorie i et lite og mørkt rom.',
+    lenke:         'https://www.thevilla.no/event-details/bjorn-torske-all-night-long-finn-uk-ole-hk',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  {
+    id:            'frantzvaag-blaa-2026-07-24',
+    tittel:        'Frantzvaag',
+    kategori:      'klubb',
+    sted:          'BLÅ',
+    adresse:       'Brenneriveien 9C, 0182 Oslo',
+    lat:           59.9228,
+    lng:           10.7503,
+    start:         '2026-07-24T21:00:00+02:00',
+    slutt:         '2026-07-25T01:00:00+02:00',
+    pris:          150,
+    prisTekst:     '150 kr',
+    beskrivelse:   'Frantzvaag spiller en sommerlig blanding av house, breakbeat og dub. Arrangementet har 20-årsgrense.',
+    kuratortekst:  'Sommerlig og stødig uten festivalmas.',
+    lenke:         'https://www.blaaoslo.no/events/frantzvaag/gIXFHMAOJc',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  {
+    id:            'dj-fett-burger-the-villa-2026-07-25',
+    tittel:        'DJ Fett Burger + Manwell & Hakeem',
+    kategori:      'klubb',
+    sted:          'The Villa',
+    adresse:       'Møllergata 23–25, 0179 Oslo',
+    lat:           59.91564,
+    lng:           10.74856,
+    start:         '2026-07-25T23:00:00+02:00',
+    slutt:         '2026-07-26T03:00:00+02:00',
+    pris:          150,
+    prisTekst:     '150 kr',
+    beskrivelse:   'DJ Fett Burger tar hovedrommet, med Manwell og Hakeem i siderommet og Schmooze & Brus i hagen. House, techno og disco.',
+    kuratortekst:  'Sterk lineup og flere rom å bevege seg mellom.',
+    lenke:         'https://www.thevilla.no/event-details/dj-fett-burger-manwell-us-hakeem-us-madrigal-nora-teslo-snurrebassen-og-issix',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  // --------------------------------------------------
+  // MAT
+  // --------------------------------------------------
+
+  {
+    id:            'sauser-til-selskap-mathallen-2026-07-16',
+    tittel:        'Sauser til selskap',
+    kategori:      'mat',
+    sted:          'Kulinarisk Akademi, Mathallen',
+    adresse:       'Vulkan 5, 0178 Oslo',
+    lat:           59.92225,
+    lng:           10.75175,
+    start:         '2026-07-16T17:00:00+02:00',
+    slutt:         '2026-07-16T20:00:00+02:00',
+    pris:          1750,
+    prisTekst:     '1750 kr',
+    beskrivelse:   'Et praktisk kokkekurs om teknikkene bak seks klassiske sauser og hvordan de bygges opp og brukes.',
+    kuratortekst:  'Dyrt, men konkret og faktisk noe du kan bli bedre av.',
+    lenke:         'https://mathallenoslo.no/hva-skjer/sauser-til-selskap-9-2/',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  {
+    id:            'mexicanske-tacos-mathallen-2026-07-17',
+    tittel:        'Mexicanske tacos',
+    kategori:      'mat',
+    sted:          'Kulinarisk Akademi, Mathallen',
+    adresse:       'Vulkan 5, 0178 Oslo',
+    lat:           59.92225,
+    lng:           10.75175,
+    start:         '2026-07-17T17:00:00+02:00',
+    slutt:         '2026-07-17T21:00:00+02:00',
+    pris:          1750,
+    prisTekst:     '1750 kr',
+    beskrivelse:   'Lag tortillas, krydder, tilbehør og fem ulike typer taco fra bunnen av sammen med kokkene på Kulinarisk Akademi.',
+    kuratortekst:  'En hel fredagskveld for deg som tar taco litt mer seriøst enn resten.',
+    lenke:         'https://mathallenoslo.no/hva-skjer/mexicanske-tacos-11-01/',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  {
+    id:            'norwegian-lunch-course-mathallen-2026-07-24',
+    tittel:        'Norwegian Lunch Course',
+    kategori:      'mat',
+    sted:          'Kulinarisk Akademi, Mathallen',
+    adresse:       'Vulkan 5, 0178 Oslo',
+    lat:           59.92225,
+    lng:           10.75175,
+    start:         '2026-07-24T11:30:00+02:00',
+    slutt:         '2026-07-24T13:30:00+02:00',
+    pris:          950,
+    prisTekst:     '950 kr',
+    beskrivelse:   'Et engelskspråklig, praktisk lunsjkurs med norske retter, råvarer og litt mathistorie.',
+    kuratortekst:  'Fin aktivitet med en utenlandsk venn som vil gjøre mer enn å spise brunost.',
+    lenke:         'https://mathallenoslo.no/hva-skjer/norwegian-lunch-course-5/',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  {
+    id:            'sushikurs-mathallen-2026-07-25',
+    tittel:        'Sushikurs',
+    kategori:      'mat',
+    sted:          'Kulinarisk Akademi, Mathallen',
+    adresse:       'Vulkan 5, 0178 Oslo',
+    lat:           59.92225,
+    lng:           10.75175,
+    start:         '2026-07-25T13:00:00+02:00',
+    slutt:         '2026-07-25T16:00:00+02:00',
+    pris:          1750,
+    prisTekst:     '1750 kr',
+    beskrivelse:   'Et praktisk kurs i råvarer, ris, kutting og teknikkene som trengs for å lykkes med sushi hjemme.',
+    kuratortekst:  'En konkret lørdagsaktivitet som også gir deg en ny ferdighet.',
+    lenke:         'https://mathallenoslo.no/hva-skjer/sushikurs-8-01/',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  // --------------------------------------------------
+  // PÅFUNN
+  // --------------------------------------------------
+
+  {
+    id:            'floke-sommermarked-prindsen-2026-07-19',
+    tittel:        'Flokes sommermarked',
+    kategori:      'pafunn',
+    sted:          'Prindsen Hage',
+    adresse:       'Christian Krohgs gate 15, 0186 Oslo',
+    lat:           59.91473,
+    lng:           10.75804,
+    start:         '2026-07-19T12:00:00+02:00',
+    slutt:         '2026-07-19T17:00:00+02:00',
+    pris:          null,
+    prisTekst:     'Pris ikke oppgitt',
+    beskrivelse:   'Over 50 lokale aktører fyller hagen med vintage, redesign, keramikk, smykker, kunst og trykk.',
+    kuratortekst:  'Det mest påby-aktige arrangementet i hele denne listen.',
+    lenke:         'https://www.facebook.com/events/prindsen-hage/flokes-sommermarked-/419587221082179/',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  {
+    id:            'vm-finale-oslo-street-food-2026-07-19',
+    tittel:        'VM-finalen på Oslo Street Food',
+    kategori:      'pafunn',
+    sted:          'Oslo Street Food',
+    adresse:       'Torggata 16, 0181 Oslo',
+    lat:           59.9167,
+    lng:           10.7508,
+    start:         '2026-07-19T21:00:00+02:00',
+    slutt:         null,
+    pris:          0,
+    prisTekst:     'Gratis drop-in',
+    beskrivelse:   'Se fotball-VM-finalen innendørs på storskjerm, med matbodene åpne rundt deg. Gratis drop-in-plasser er tilgjengelige, men stedet anbefaler å komme tidlig. 20-årsgrense.',
+    kuratortekst:  'Finalestemning og mat under samme tak, uten inngangsbillett.',
+    lenke:         'https://www.oslo-streetfood.no/en/fotballvm',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  {
+    id:            'sommerkvissen-ingensteds-2026-07-21',
+    tittel:        'Sommerkvissen på Ingensteds',
+    kategori:      'pafunn',
+    sted:          'Ingensteds',
+    adresse:       'Brenneriveien 9, 0182 Oslo',
+    lat:           59.92035,
+    lng:           10.75279,
+    start:         '2026-07-21T20:00:00+02:00',
+    slutt:         '2026-07-21T22:00:00+02:00',
+    pris:          null,
+    prisTekst:     'Pris ikke oppgitt',
+    beskrivelse:   'Petrusquiz flytter sommerquizen til Ingensteds for en uformell tirsdagskveld ved Akerselva.',
+    kuratortekst:  'Lav terskel og en god grunn til å gjøre noe på en tirsdag.',
+    lenke:         'https://www.facebook.com/events/ingensteds/sommerkvissen-p%C3%A5-ingensteds/1306024228255054/',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
+  {
+    id:            'prinsen-platemesse-folk-2026-07-26',
+    tittel:        'Prinsen platemesse',
+    kategori:      'pafunn',
+    sted:          'Folk i Storgata',
+    adresse:       'Storgata 36J, 0182 Oslo',
+    lat:           59.91508,
+    lng:           10.75527,
+    start:         '2026-07-26T13:00:00+02:00',
+    slutt:         '2026-07-26T17:00:00+02:00',
+    pris:          null,
+    prisTekst:     'Pris ikke oppgitt',
+    beskrivelse:   'Platemesse med selgere som tar med vinyl og musikk fra mer enn fem tiår.',
+    kuratortekst:  'Bra søndagssyssel selv om du egentlig bare skulle titte.',
+    lenke:         'https://somo.social/no/e/prinsen-platemesse-pa-folk-726',
+    bilde:         null,
+    sistVerifisert: '2026-07-15T04:00:00+02:00',
+  },
+
 ];

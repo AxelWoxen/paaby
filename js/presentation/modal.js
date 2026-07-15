@@ -5,8 +5,9 @@
 import { erLagret, veksleLagret }                     from '../application/lagret.js';
 import { formaterPrisTekst, formaterTidKort,
          formaterAvstand, formaterVerifisert,
-         kapitaliser }                                 from '../application/formatering.js';
+         kategoriVisningsnavn }                        from '../application/formatering.js';
 import { erGyldigUrl }                                 from '../application/validering.js';
+import { hentEventbilde, KATEGORI_BILDER }             from '../application/kategori-bilder.js';
 import { synkroniserKortHjerte }                       from './feed.js';
 
 /* Konfigurasjon — fyll inn produksjonsdomene og evt. feedback-URL. */
@@ -81,14 +82,25 @@ export function hentÅpenEvent() {
 function byggModalInnhold(event) {
   const fragment = document.createDocumentFragment();
 
-  /* Bilde */
-  if (event.bilde) {
+  /* Bilde — viser alltid kategoribilde som standard, event.bilde overstyrer */
+  {
     const img = document.createElement('img');
-    img.src       = event.bilde;
+    img.src       = hentEventbilde(event);
     img.alt       = '';
     img.className = 'modal-bilde';
-    /* Fjern ødelagt bilde gracefully */
-    img.addEventListener('error', () => img.remove(), { once: true });
+
+    const harEgetBilde  = Boolean(event.bilde);
+    const kategoriFallback = KATEGORI_BILDER[event.kategori];
+
+    if (harEgetBilde && kategoriFallback) {
+      img.addEventListener('error', () => {
+        img.src = kategoriFallback;
+        img.addEventListener('error', () => img.remove(), { once: true });
+      }, { once: true });
+    } else {
+      img.addEventListener('error', () => img.remove(), { once: true });
+    }
+
     fragment.appendChild(img);
   }
 
@@ -99,7 +111,7 @@ function byggModalInnhold(event) {
   /* Kategori */
   const kategoriSpan = document.createElement('span');
   kategoriSpan.className   = `modal-kategori kategori-${event.kategori}`;
-  kategoriSpan.textContent = kapitaliser(event.kategori);
+  kategoriSpan.textContent = kategoriVisningsnavn(event.kategori);
   body.appendChild(kategoriSpan);
 
   /* Tittel */

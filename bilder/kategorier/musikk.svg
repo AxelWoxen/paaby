@@ -1,0 +1,36 @@
+<svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1600" height="900" fill="#141318"/>
+
+  <!-- Bakgrunnslag -->
+  <rect width="1600" height="900" fill="#1E1C24" opacity="0.4"/>
+
+  <!-- Stor lydbølge i lime -->
+  <path d="M0,450 C100,200 300,700 400,450 C500,200 700,700 800,450 C900,200 1100,700 1200,450 C1300,200 1500,700 1600,450"
+        fill="none" stroke="#C8FF4D" stroke-width="3.5" opacity="0.88"/>
+
+  <!-- Andre bølge, nedover-fase, lime tynn -->
+  <path d="M0,420 C100,630 300,210 400,420 C500,630 700,210 800,420 C900,630 1100,210 1200,420 C1300,630 1500,210 1600,420"
+        fill="none" stroke="#C8FF4D" stroke-width="1.2" opacity="0.22"/>
+
+  <!-- Korall-bølge, liten amplitude -->
+  <path d="M0,490 C100,360 300,620 400,490 C500,360 700,620 800,490 C900,360 1100,620 1200,490 C1300,360 1500,620 1600,490"
+        fill="none" stroke="#FF4D5E" stroke-width="2" opacity="0.45"/>
+
+  <!-- Svak høy bølge for dybde -->
+  <path d="M0,300 C100,140 300,460 400,300 C500,140 700,460 800,300 C900,140 1100,460 1200,300 C1300,140 1500,460 1600,300"
+        fill="none" stroke="#C8FF4D" stroke-width="1" opacity="0.12"/>
+
+  <!-- Senter-puls: tre konsentriske sirkler -->
+  <circle cx="800" cy="450" r="180" fill="none" stroke="#F4F1EA" stroke-width="0.8" opacity="0.07"/>
+  <circle cx="800" cy="450" r="100" fill="none" stroke="#F4F1EA" stroke-width="0.8" opacity="0.07"/>
+  <circle cx="800" cy="450" r="40"  fill="none" stroke="#FF4D5E" stroke-width="1.5" opacity="0.4"/>
+
+  <!-- Notepunkter langs bølgen -->
+  <circle cx="400"  cy="450" r="7" fill="#FF4D5E" opacity="0.7"/>
+  <circle cx="800"  cy="450" r="9" fill="#C8FF4D" opacity="0.8"/>
+  <circle cx="1200" cy="450" r="7" fill="#FF4D5E" opacity="0.7"/>
+  <circle cx="200"  cy="450" r="4" fill="#9994A2" opacity="0.4"/>
+  <circle cx="600"  cy="450" r="4" fill="#9994A2" opacity="0.4"/>
+  <circle cx="1000" cy="450" r="4" fill="#9994A2" opacity="0.4"/>
+  <circle cx="1400" cy="450" r="4" fill="#9994A2" opacity="0.4"/>
+</svg>

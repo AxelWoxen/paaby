@@ -1,0 +1,27 @@
+/* kategori-bilder.js — sentral sannhetskilde for standardbilder per kategori.
+   Stier er relative til dokument-roten (index.html). */
+
+export const KATEGORI_BILDER = Object.freeze({
+  musikk: 'bilder/kategorier/musikk.svg',
+  mat:    'bilder/kategorier/mat.svg',
+  klubb:  'bilder/kategorier/klubb.svg',
+  pafunn: 'bilder/kategorier/pafunn.svg',
+});
+
+const GENERELL_FALLBACK = 'bilder/kategorier/musikk.svg';
+
+/**
+ * Returnerer bilde-URL for et event:
+ *   1. event.bilde  — dersom satt og ikke tom streng
+ *   2. Kategoriens standardbilde
+ *   3. Generell fallback dersom kategori er ukjent
+ *
+ * @param {Object} event
+ * @returns {string}
+ */
+export function hentEventbilde(event) {
+  if (event.bilde && typeof event.bilde === 'string' && event.bilde.trim() !== '') {
+    return event.bilde;
+  }
+  return KATEGORI_BILDER[event.kategori] ?? GENERELL_FALLBACK;
+}

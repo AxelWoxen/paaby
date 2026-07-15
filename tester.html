@@ -25,10 +25,13 @@
     import { filtrerEventer, erIHelga }                     from './js/application/filtre.js';
     import { hentLagredeIder, lagreEvent,
              fjernEvent, veksleLagret }                     from './js/application/lagret.js';
-    import { formaterVerifisert, formaterAvstand }          from './js/application/formatering.js';
+    import { formaterVerifisert, formaterAvstand,
+             kategoriVisningsnavn }                         from './js/application/formatering.js';
     import { sorterEventer, erAvstandsSortering,
              erTidsSortering }                              from './js/application/sortering.js';
     import { kalkulerAvstand, erGyldigeKoordinater }        from './js/application/posisjon.js';
+    import { KATEGORI_BILDER, hentEventbilde }              from './js/application/kategori-bilder.js';
+    import { EVENTER }                                      from './data/events.js';
 
     /* ─── Mini testrammeverk ─── */
     let bestått = 0, feilet = 0;
@@ -448,6 +451,122 @@
     ];
     test('ukjent pris beholdes og havner sist ved prissortering',
       sorterEventer(medNull,'pris-stigende').map(e=>e.id), ['n1','n3','n2']);
+
+
+    /* ══════════════════════════════════════
+       15. KATEGORI — PÅFUNN
+       ══════════════════════════════════════ */
+    gruppe('15. Kategori — pafunn');
+
+    test('pafunn godtas av validator',
+      validerEventer([{ ...GYLDIG, kategori: 'pafunn' }]).length, 1);
+
+    test('ukjent kategori avvises',
+      validerEventer([{ ...GYLDIG, kategori: 'sport' }]).length, 0);
+
+    test('visningsnavn musikk', kategoriVisningsnavn('musikk'), 'Musikk');
+    test('visningsnavn mat',    kategoriVisningsnavn('mat'),    'Mat');
+    test('visningsnavn klubb',  kategoriVisningsnavn('klubb'),  'Klubb');
+    test('visningsnavn pafunn returnerer Påfunn', kategoriVisningsnavn('pafunn'), 'Påfunn');
+
+    const pafunnEventer = [
+      { id:'pf1', tittel:'A', kategori:'pafunn', sted:'X', start:'2026-07-20T10:00:00+02:00', pris:null },
+      { id:'pf2', tittel:'B', kategori:'pafunn', sted:'X', start:'2026-07-21T10:00:00+02:00', pris:0   },
+      { id:'pf3', tittel:'C', kategori:'musikk', sted:'X', start:'2026-07-20T10:00:00+02:00', pris:100 },
+    ];
+    const fPafunn = (kat) => filtrerEventer(pafunnEventer, { kategori: kat, tid: null, pris: null, naerhet: false }, null);
+
+    test('bare pafunn-filter: 2 treff', fPafunn(['pafunn']).length, 2);
+    test('pafunn + musikk: 3 treff',   fPafunn(['pafunn','musikk']).length, 3);
+    test('ingen filter: alle 3',        fPafunn([]).length, 3);
+    test('musikk alene: 1 treff',       fPafunn(['musikk']).length, 1);
+
+
+    /* ══════════════════════════════════════
+       16. KATEGORIBILDER
+       ══════════════════════════════════════ */
+    gruppe('16. Kategoribilder');
+
+    test('musikk-bilde slutter på musikk.svg',
+      KATEGORI_BILDER.musikk.endsWith('musikk.svg'), true);
+    test('mat-bilde slutter på mat.svg',
+      KATEGORI_BILDER.mat.endsWith('mat.svg'), true);
+    test('klubb-bilde slutter på klubb.svg',
+      KATEGORI_BILDER.klubb.endsWith('klubb.svg'), true);
+    test('pafunn-bilde slutter på pafunn.svg',
+      KATEGORI_BILDER.pafunn.endsWith('pafunn.svg'), true);
+
+    const eUtenBilde = { id:'x', tittel:'T', kategori:'musikk', sted:'S', start:'2026-07-20T10:00:00+02:00', pris:0, bilde: null };
+    const eUtenBilde2 = { ...eUtenBilde, kategori:'pafunn' };
+    const eMedBilde  = { ...eUtenBilde, bilde: 'https://example.com/bilde.jpg' };
+    const eMedTom    = { ...eUtenBilde, bilde: '' };
+    const eUkjentKat = { ...eUtenBilde, kategori: 'sport', bilde: null };
+
+    test('null bilde → musikk-kategoribilde',
+      hentEventbilde(eUtenBilde), KATEGORI_BILDER.musikk);
+    test('null bilde pafunn → pafunn-kategoribilde',
+      hentEventbilde(eUtenBilde2), KATEGORI_BILDER.pafunn);
+    test('satt bilde → returnerer event.bilde',
+      hentEventbilde(eMedBilde), 'https://example.com/bilde.jpg');
+    test('tom streng bilde → kategoribilde (ikke tom streng)',
+      hentEventbilde(eMedTom) !== '', true);
+    test('ukjent kategori → generell fallback (ikke tom)',
+      hentEventbilde(eUkjentKat).length > 0, true);
+
+
+    /* ══════════════════════════════════════
+       17. LANSERINGSDATA — 18 ARRANGEMENTER
+       ══════════════════════════════════════ */
+    gruppe('17. Lanseringsdata');
+
+    const gyldige = validerEventer(EVENTER);
+
+    test('nøyaktig 18 arrangementer valideres', gyldige.length, 18);
+
+    const idListe = gyldige.map(e => e.id);
+    test('alle ID-er er unike', new Set(idListe).size, 18);
+
+    const kategorier = gyldige.map(e => e.kategori);
+    test('musikk-arrangementer: 3',  kategorier.filter(k => k === 'musikk').length,  3);
+    test('klubb-arrangementer: 7',   kategorier.filter(k => k === 'klubb').length,   7);
+    test('mat-arrangementer: 4',     kategorier.filter(k => k === 'mat').length,     4);
+    test('pafunn-arrangementer: 4',  kategorier.filter(k => k === 'pafunn').length,  4);
+
+    const medKoord = gyldige.filter(e => e.lat != null && e.lng != null);
+    test('alle 18 har koordinater', medKoord.length, 18);
+
+    const medKjentPris = gyldige.filter(e => e.pris !== null);
+    const ukjentPris   = gyldige.filter(e => e.pris === null);
+    test('arrangementer med kjent pris: 12', medKjentPris.length, 12);
+    test('arrangementer med ukjent pris: 6', ukjentPris.length, 6);
+
+    test('alle bilde-felt er null (lansering bruker kategoribilder)',
+      gyldige.every(e => e.bilde === null), true);
+
+    const alleHttps = gyldige.filter(e => e.lenke != null).every(e => e.lenke.startsWith('https://'));
+    test('alle lenker bruker HTTPS', alleHttps, true);
+
+    const alleHarTidssone = gyldige.every(e => /[+-]\d{2}:\d{2}$/.test(e.start));
+    test('alle start-tidspunkt har tidssone', alleHarTidssone, true);
+
+    const gratis = gyldige.filter(e => e.pris === 0);
+    test('gratis-filter finner VM-finale', gratis.some(e => e.id === 'vm-finale-oslo-street-food-2026-07-19'), true);
+
+    const under200 = gyldige.filter(e => e.pris != null && e.pris < 200);
+    test('under-200-filter finner 100-kr Klub Kepler', under200.some(e => e.pris === 100), true);
+    test('under-200-filter finner 150-kr events', under200.some(e => e.pris === 150), true);
+
+    const over200 = gyldige.filter(e => e.pris != null && e.pris >= 200);
+    test('200kr+-filter finner Utflod (250 kr)', over200.some(e => e.id === 'utflod-haerverk-2026-07-24'), true);
+    test('200kr+-filter finner matkursene (1750 kr)', over200.some(e => e.pris === 1750), true);
+
+    const nullKoordTest = { ...GYLDIG, lat: null, lng: null };
+    test('null-koordinater godtas parvis',
+      validerEventer([nullKoordTest]).length, 1);
+
+    const enKoord = { ...GYLDIG, id: 'en-koord', lat: 59.9, lng: null };
+    test('lat uten lng avvises (parvis sjekk)',
+      validerEventer([enKoord]).length, 0);
 
 
     /* ══════════════════════════════════════

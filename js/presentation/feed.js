@@ -1,23 +1,46 @@
 /* feed.js — presentasjonslaget for kortlisten.
    Bygger DOM-elementer direkte (ingen innerHTML med brukerdata) for å unngå XSS. */
 
-import { erLagret, veksleLagret }              from '../application/lagret.js';
-import { formaterPrisTekst, formaterTid, formaterAvstand } from '../application/formatering.js';
-import { åpneModal }                           from './modal.js';
+import { erLagret, veksleLagret }                               from '../application/lagret.js';
+import { formaterPrisTekst, formaterTid, formaterAvstand,
+         kategoriVisningsnavn }                                  from '../application/formatering.js';
+import { hentEventbilde, KATEGORI_BILDER }                       from '../application/kategori-bilder.js';
+import { åpneModal }                                             from './modal.js';
 
 
 /* ========================
    BILDE-FALLBACK
    ======================== */
 
-/* Erstatter ødelagt bilde med en kategori-farget placeholder.
-   { once: true } hindrer uendelig onerror-loop. */
-function leggTilBildeFallback(img, kategori) {
+function lagPlaceholder(kategori) {
+  const div = document.createElement('div');
+  div.className = `kort-bilde-placeholder kategori-${kategori}`;
+  return div;
+}
+
+/* Laster bildet for et event med to-trinns fallback:
+   event.bilde → kategoribilde → placeholder-div.
+   { once: true } på hvert trinn hindrer uendelig error-loop. */
+function lagBildeEllement(event) {
+  const img = document.createElement('img');
+  img.src       = hentEventbilde(event);
+  img.alt       = '';
+  img.className = 'kort-bilde';
+  img.loading   = 'lazy';
+
+  const harEgetBilde = Boolean(event.bilde);
+
   img.addEventListener('error', () => {
-    const placeholder = document.createElement('div');
-    placeholder.className = `kort-bilde-placeholder kategori-${kategori}`;
-    img.replaceWith(placeholder);
+    const kategoriSrc = KATEGORI_BILDER[event.kategori];
+    if (harEgetBilde && kategoriSrc) {
+      img.src = kategoriSrc;
+      img.addEventListener('error', () => img.replaceWith(lagPlaceholder(event.kategori)), { once: true });
+    } else {
+      img.replaceWith(lagPlaceholder(event.kategori));
+    }
   }, { once: true });
+
+  return img;
 }
 
 
@@ -39,24 +62,12 @@ function lagKort(event) {
   const bildeWrapper = document.createElement('div');
   bildeWrapper.className = 'kort-bilde-wrapper';
 
-  if (event.bilde) {
-    const img = document.createElement('img');
-    img.src      = event.bilde;
-    img.alt      = '';           /* dekorativt bilde — tittel er i h2 */
-    img.className = 'kort-bilde';
-    img.loading  = 'lazy';
-    leggTilBildeFallback(img, event.kategori);
-    bildeWrapper.appendChild(img);
-  } else {
-    const placeholder = document.createElement('div');
-    placeholder.className = `kort-bilde-placeholder kategori-${event.kategori}`;
-    bildeWrapper.appendChild(placeholder);
-  }
+  bildeWrapper.appendChild(lagBildeEllement(event));
 
   /* Kategori-badge */
   const badge = document.createElement('span');
   badge.className = `kort-kategori kategori-${event.kategori}`;
-  badge.textContent = event.kategori;
+  badge.textContent = kategoriVisningsnavn(event.kategori);
   bildeWrapper.appendChild(badge);
 
   /* Hjerte-knapp */
