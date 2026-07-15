@@ -2,17 +2,21 @@
    Rene funksjoner: ingen DOM, ingen fetch, ingen side-effekter.
 
    Filterlogikk:
-   - Innad i gruppe  = ELLER  (Musikk + Klubb viser begge)
-   - Mellom grupper  = OG     (Musikk OG Gratis = gratis musikkeventer)
-   - Tom gruppe      = vis alt (ingen kategorifilter = vis alle kategorier) */
+   - Kategori:  ELLER innad i gruppen  (Musikk + Klubb → viser begge)
+   - Tid:       enkeltvalg (i-kveld ELLER i-helga, ikke begge)
+   - Pris:      enkeltvalg
+   - Mellom grupper: OG  (Musikk OG Gratis → gratis musikkarrangementer)
+   - Tom gruppe: vis alt */
+
+import { osloKomponenter, lagOsloDato } from './oslo-tid.js';
 
 /**
- * Filtrerer en liste med eventer basert på aktive filtre.
+ * Filtrerer en liste med arrangementer basert på aktive filtre.
  *
- * @param {Array}  eventer  - Alle eventer (ufiltrerte)
- * @param {Object} filtre   - { kategori: [], tid: [], pris: [], naerhet: false }
- * @param {Object} posisjon - Brukerens posisjon { lat, lng } eller null
- * @returns {Array} Filtrert liste
+ * @param {Array}  eventer   - Alle arrangementer (ufiltrerte)
+ * @param {Object} filtre    - { kategori: [], tid: string|null, pris: string|null, naerhet: false }
+ * @param {Object} posisjon  - { lat, lng } eller null
+ * @returns {Array}
  */
 export function filtrerEventer(eventer, filtre, posisjon) {
   let resultat = [...eventer];
@@ -22,57 +26,87 @@ export function filtrerEventer(eventer, filtre, posisjon) {
     resultat = resultat.filter((e) => filtre.kategori.includes(e.kategori));
   }
 
-  /* --- TID (ELLER) --- */
-  if (filtre.tid.length > 0) {
+  /* --- TID (enkeltvalg) --- */
+  if (filtre.tid) {
     resultat = resultat.filter((e) => {
       const start = new Date(e.start);
-      return filtre.tid.some((t) => {
-        if (t === 'i-kveld') return erIDag(start);
-        if (t === 'i-helga') return erKommendeHelg(start);
-        return false;
-      });
+      if (filtre.tid === 'i-kveld') return erIDag(start);
+      if (filtre.tid === 'i-helga') return erIHelga(start);
+      return false;
     });
   }
 
-  /* --- PRIS (ELLER) --- */
-  if (filtre.pris.length > 0) {
+  /* --- PRIS (enkeltvalg) ---
+     Gratis:    pris === 0
+     Under 200: pris < 200 (inkluderer gratis)
+     200 kr+:   pris >= 200
+     null pris matcher ingen prisfiltre */
+  if (filtre.pris) {
     resultat = resultat.filter((e) => {
-      const pris = e.pris ?? 0;
-      return filtre.pris.some((p) => {
-        if (p === 'gratis')    return pris === 0;
-        if (p === 'under-200') return pris > 0 && pris < 200;
-        if (p === 'over-200')  return pris >= 200;
-        return false;
-      });
+      const pris = e.pris;
+      if (pris === null || pris === undefined) return false;
+      if (filtre.pris === 'gratis')    return pris === 0;
+      if (filtre.pris === 'under-200') return pris < 200;
+      if (filtre.pris === 'over-200')  return pris >= 200;
+      return false;
     });
   }
 
   return resultat;
 }
 
-/* Sjekker om en dato er i dag (lokal kalenderdag). */
-function erIDag(dato) {
-  return dato.toDateString() === new Date().toDateString();
+/* Sjekker om et tidspunkt er i dag i Oslo-tid. */
+function erIDag(dato, nå = new Date()) {
+  const k  = osloKomponenter(dato);
+  const kN = osloKomponenter(nå);
+  return k.år === kN.år && k.maned === kN.maned && k.dag === kN.dag;
 }
 
 /**
- * Sjekker om en dato faller på kommende lørdag eller søndag.
- * "Kommende" = fra og med nærmeste lørdag til slutten av søndagen.
+ * Sjekker om et tidspunkt faller innenfor helgevinduet for "nå".
+ *
+ * Helg = fredag kl. 16:00 til søndag kl. 23:59:59 i Europe/Oslo.
+ *
+ * Hvilken helg:
+ *   Man–tor:         kommende helg (neste fre–søn)
+ *   Fre (før 16:00): denne helgen (fre 16:00 → søn 23:59:59)
+ *   Fre (≥ 16:00), lør, søn: pågående helg
+ *   Etter søn 23:59: neste helg
+ *
+ * @param {Date} dato   - arrangementsstart (UTC)
+ * @param {Date} [nå]   - nåværende tidspunkt (valgfri, for testing)
  */
-function erKommendeHelg(dato) {
-  const iDag = new Date();
-  iDag.setHours(0, 0, 0, 0);
+export function erIHelga(dato, nå = new Date()) {
+  const nåK = osloKomponenter(nå);
 
-  /* Finn neste lørdag (getDay: 0=søn, 6=lør) */
-  const dagensDag      = iDag.getDay();
-  const dagerTilLordag = dagensDag === 6 ? 0 : (6 - dagensDag);
+  /* Finn antall dager til/fra fredagen som starter "vår" helg.
+     ukedag: 0=søn, 1=man … 5=fre, 6=lør */
+  const DAGER_TIL_FREDAG = [
+    -2,  /* søn → forrige fre */
+    4,   /* man → neste fre */
+    3,   /* tir → neste fre */
+    2,   /* ons → neste fre */
+    1,   /* tor → neste fre */
+    0,   /* fre → denne fre */
+    -1,  /* lør → forrige fre */
+  ];
+  const dagerTilFre = DAGER_TIL_FREDAG[nåK.ukedag];
 
-  const lordag = new Date(iDag);
-  lordag.setDate(iDag.getDate() + dagerTilLordag);
+  /* Finn Oslo-midnatt for "i dag", legg til dager for å nå fredagen */
+  const midnattIDag = lagOsloDato(nåK.år, nåK.maned, nåK.dag, 0, 0, 0);
+  const fredagMidnatt = new Date(midnattIDag.getTime() + dagerTilFre * 86_400_000);
+  const fredagK = osloKomponenter(fredagMidnatt);
 
-  const sondag = new Date(lordag);
-  sondag.setDate(lordag.getDate() + 1);
-  sondag.setHours(23, 59, 59, 999);
+  /* Helgstart: fredag kl. 16:00 i Oslo */
+  const helgStart = lagOsloDato(fredagK.år, fredagK.maned, fredagK.dag, 16, 0, 0);
 
-  return dato >= lordag && dato <= sondag;
+  /* Helgslutt: søndag (fredag + 2 dager) kl. 23:59:59 i Oslo */
+  const søndagMidnatt = new Date(fredagMidnatt.getTime() + 2 * 86_400_000);
+  const søndagK = osloKomponenter(søndagMidnatt);
+  const helgSlutt = lagOsloDato(søndagK.år, søndagK.maned, søndagK.dag, 23, 59, 59);
+
+  /* Fredag før 16:00: helgen har ikke startet ennå */
+  if (nåK.ukedag === 5 && nå < helgStart) return false;
+
+  return dato >= helgStart && dato <= helgSlutt;
 }

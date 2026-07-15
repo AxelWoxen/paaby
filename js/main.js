@@ -1,15 +1,12 @@
 /* main.js — appens inngangspunkt og orkestrator.
-   Koordinerer de tre lagene. Lagene importerer IKKE fra hverandre
-   (unntatt presentation → application, som er tillatt). */
+   Koordinerer de tre lagene. */
 
-import { hentEventer }                    from './network/events-api.js';
-import { filtrerEventer }                  from './application/filtre.js';
-import { skjulPasserte, grupperEtterDag }  from './application/gruppering.js';
-import { hentPosisjon, kalkulerAvstand }   from './application/posisjon.js';
-import { hentLagredeIder }                 from './application/lagret.js';
-import { visEventer }                      from './presentation/feed.js';
-import { initModal }                       from './presentation/modal.js';
-import { initKart, visKart, skjulKart }    from './presentation/kart.js';
+import { hentEventer }                   from './network/events-api.js';
+import { filtrerEventer }                from './application/filtre.js';
+import { skjulPasserte, grupperEtterDag } from './application/gruppering.js';
+import { hentLagredeIder }               from './application/lagret.js';
+import { visEventer }                    from './presentation/feed.js';
+import { initModal, åpneModal, lukkModal, hentÅpenEvent } from './presentation/modal.js';
 
 
 /* ========================
@@ -20,9 +17,9 @@ const tilstand = {
   alleEventer: [],
 
   aktivFiltre: {
-    kategori: [],   /* Array: [] = vis alle, ['musikk','klubb'] = vis begge */
-    tid:      [],   /* Array: [] = vis alle, ['i-kveld'] = kun i dag */
-    pris:     [],   /* Array: [] = vis alle, ['gratis','under-200'] = billig */
+    kategori: [],    /* Array — ELLER-logikk, multi-select */
+    tid:      null,  /* string | null — enkeltvalg */
+    pris:     null,  /* string | null — enkeltvalg */
     naerhet:  false,
   },
 
@@ -39,11 +36,11 @@ function oppdaterFeed() {
   let eventer;
 
   if (tilstand.visLagret) {
-    const lagredeIder = hentLagredeIder();
-    /* I lagret-visning viser vi alle lagrede eventer, inkludert passerte */
+    const lagredeIder = hentLagredeIder(tilstand.alleEventer.map((e) => e.id));
     eventer = tilstand.alleEventer.filter((e) => lagredeIder.includes(e.id));
+    /* I lagret-visning: skjul passerte */
+    eventer = skjulPasserte(eventer);
   } else {
-    /* Skjul passerte, kjør så gjennom filtrene */
     const aktive = skjulPasserte(tilstand.alleEventer);
     eventer = filtrerEventer(aktive, tilstand.aktivFiltre, tilstand.brukerPosisjon);
   }
@@ -80,20 +77,36 @@ function initFiltre() {
       const verdi = chip.dataset.verdi;
 
       if (type === 'naerhet') {
-        /* Nærhets-filter er en enkel on/off-toggle */
+        /* Nærhets-filter: enkel toggle */
         tilstand.aktivFiltre.naerhet = !tilstand.aktivFiltre.naerhet;
         chip.classList.toggle('aktiv', tilstand.aktivFiltre.naerhet);
         chip.setAttribute('aria-pressed', String(tilstand.aktivFiltre.naerhet));
-      } else {
-        /* Kategori, tid, pris: legg til/fjern fra array (multi-select) */
-        const liste  = tilstand.aktivFiltre[type];
-        const indeks = liste.indexOf(verdi);
 
+      } else if (type === 'kategori') {
+        /* Kategori: multi-select (ELLER) */
+        const liste  = tilstand.aktivFiltre.kategori;
+        const indeks = liste.indexOf(verdi);
         if (indeks >= 0) {
           liste.splice(indeks, 1);
           chip.classList.remove('aktiv');
         } else {
           liste.push(verdi);
+          chip.classList.add('aktiv');
+        }
+
+      } else if (type === 'tid' || type === 'pris') {
+        /* Tid og pris: enkeltvalg — klikk på aktiv fjerner den, klikk på annen bytter */
+        const erAktivNå = tilstand.aktivFiltre[type] === verdi;
+
+        /* Deaktiver eventuelle andre chips i samme gruppe */
+        document.querySelectorAll(`[data-filter="${type}"]`).forEach((c) => {
+          c.classList.remove('aktiv');
+        });
+
+        if (erAktivNå) {
+          tilstand.aktivFiltre[type] = null;
+        } else {
+          tilstand.aktivFiltre[type] = verdi;
           chip.classList.add('aktiv');
         }
       }
@@ -107,8 +120,8 @@ function initFiltre() {
 function oppdaterNullstillKnapp() {
   const harAktive =
     tilstand.aktivFiltre.kategori.length > 0 ||
-    tilstand.aktivFiltre.tid.length > 0 ||
-    tilstand.aktivFiltre.pris.length > 0 ||
+    tilstand.aktivFiltre.tid   !== null  ||
+    tilstand.aktivFiltre.pris  !== null  ||
     tilstand.aktivFiltre.naerhet;
 
   document.getElementById('nullstill-knapp').classList.toggle('skjult', !harAktive);
@@ -116,7 +129,7 @@ function oppdaterNullstillKnapp() {
 
 function initNullstillKnapp() {
   document.getElementById('nullstill-knapp').addEventListener('click', () => {
-    tilstand.aktivFiltre = { kategori: [], tid: [], pris: [], naerhet: false };
+    tilstand.aktivFiltre = { kategori: [], tid: null, pris: null, naerhet: false };
 
     document.querySelectorAll('.chip').forEach((c) => {
       c.classList.remove('aktiv');
@@ -152,22 +165,50 @@ function initLagretKnapp() {
   });
 }
 
+/* Lytter til lagret-endringer fra feed.js og modal.js */
+function initLagretSync() {
+  document.addEventListener('paaby:lagret-endret', ({ detail: { id, lagret } }) => {
+    /* Oppdater modal-hjertet dersom modalen er åpen og viser dette arrangementet */
+    const modalHjerte = document.querySelector('.modal-hjerte[data-id]');
+    if (modalHjerte?.dataset.id === id) {
+      modalHjerte.textContent = lagret ? '♥ lagret' : '♡ lagre';
+      modalHjerte.setAttribute('aria-pressed', String(lagret));
+    }
+    /* Oppdater feeden dersom vi er i lagret-visning */
+    if (tilstand.visLagret) oppdaterFeed();
+  });
+}
+
 
 /* ========================
-   KART (valgfritt)
+   HASH-RUTING
    ======================== */
 
-function initKartKnapp() {
-  const kartKnapp     = document.getElementById('vis-kart');
-  const lukkKartKnapp = document.getElementById('lukk-kart');
+/* Åpner riktig modal dersom URL inneholder #event/<id>. */
+function håndterHash() {
+  const match = window.location.hash.match(/^#event\/(.+)$/);
+  if (!match) return;
 
-  if (!kartKnapp) return;
-
-  kartKnapp.addEventListener('click', () => visKart());
-
-  if (lukkKartKnapp) {
-    lukkKartKnapp.addEventListener('click', () => skjulKart());
+  let id;
+  try {
+    id = decodeURIComponent(match[1]);
+  } catch {
+    return; /* ugyldig URL-koding — ignorer */
   }
+
+  const event = tilstand.alleEventer.find((e) => e.id === id);
+  if (event) åpneModal(event);
+}
+
+function initHashRuting() {
+  window.addEventListener('hashchange', () => {
+    /* Lukk modal hvis hash er fjernet */
+    if (!window.location.hash.startsWith('#event/')) {
+      if (hentÅpenEvent()) lukkModal();
+      return;
+    }
+    håndterHash();
+  });
 }
 
 
@@ -180,35 +221,21 @@ async function startApp() {
   initFiltre();
   initNullstillKnapp();
   initLagretKnapp();
-  initKartKnapp();
+  initLagretSync();
+  initHashRuting();
 
   try {
     tilstand.alleEventer = await hentEventer();
     oppdaterFeed();
-    initKart(tilstand.alleEventer);
+    /* Sjekk hash etter at eventer er lastet */
+    håndterHash();
   } catch (feil) {
-    document.getElementById('feed').innerHTML =
-      '<p class="tom-feed">klarte ikke laste eventer. er du koblet til internett?</p>';
+    const melding = document.createElement('p');
+    melding.className   = 'tom-feed';
+    melding.textContent = 'klarte ikke laste eventer. er du koblet til internett?';
+    document.getElementById('feed').appendChild(melding);
     console.error('Påby: feil ved henting av eventer:', feil);
-    return;
   }
-
-  /* Hent posisjon i bakgrunnen — appen er allerede synlig og brukbar */
-  hentPosisjon().then((posisjon) => {
-    if (!posisjon) return;
-
-    tilstand.brukerPosisjon = posisjon;
-
-    /* Legg _avstand på eventer som har koordinater */
-    tilstand.alleEventer = tilstand.alleEventer.map((event) => ({
-      ...event,
-      _avstand: (event.lat != null && event.lng != null)
-        ? kalkulerAvstand(posisjon, { lat: event.lat, lng: event.lng })
-        : null,
-    }));
-
-    oppdaterFeed();
-  });
 }
 
 startApp();

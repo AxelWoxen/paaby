@@ -1,64 +1,45 @@
 /* gruppering.js — dag-inndeling og sorteringslogikk.
    Rene funksjoner: ingen DOM, ingen fetch, ingen side-effekter. */
 
-const UKEDAGER = ['søndag', 'mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag'];
-const MÅNEDER  = ['januar', 'februar', 'mars', 'april', 'mai', 'juni', 'juli', 'august', 'september', 'oktober', 'november', 'desember'];
+import { lagDagLabel }   from './formatering.js';
+import { osloDataNokkel } from './oslo-tid.js';
+
+/* Standard varighet når slutt mangler (4 timer i millisekunder). */
+const STANDARD_VARIGHET_MS = 4 * 60 * 60 * 1000;
 
 /**
- * Lokal YYYY-MM-DD-nøkkel for et Date-objekt.
- * Bruker lokaltid (ikke UTC) slik at datoen stemmer for norske brukere.
- */
-function lokalDatoNokkel(dato) {
-  const year  = dato.getFullYear();
-  const month = String(dato.getMonth() + 1).padStart(2, '0');
-  const day   = String(dato.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-/**
- * Fjerner eventer der start-tidspunktet allerede har passert.
+ * Fjerner arrangementer som er ferdig (slutttidspunktet har passert).
+ *
+ * Regler:
+ *   - Har arrangementet gyldig slutt → aktivt frem til sluttidspunktet.
+ *   - Mangler slutt → antas å vare 4 timer etter start.
  *
  * @param {Array} eventer
+ * @param {Date}  [nå]   - Valgfri "nå"-referanse (gjør funksjonen testbar).
  * @returns {Array}
  */
-export function skjulPasserte(eventer) {
-  const nå = new Date();
-  return eventer.filter((e) => new Date(e.start) > nå);
-}
+export function skjulPasserte(eventer, nå = new Date()) {
+  return eventer.filter((e) => {
+    const start = new Date(e.start);
+    if (isNaN(start.getTime())) return false; /* ugyldig dato → skjul */
 
-/**
- * Bygger en leserbar overskrift for en dag.
- *   Dagens dato   → "I dag · mandag 22. juni"
- *   Andre datoer  → "Tirsdag 23. juni"
- *
- * @param {string} datoNokkel - "YYYY-MM-DD"
- * @returns {string}
- */
-export function lagDagLabel(datoNokkel) {
-  /* Konstruer datoobjekt i lokaltid ved å legge til T00:00:00 */
-  const dato        = new Date(datoNokkel + 'T00:00:00');
-  const iDagNokkel  = lokalDatoNokkel(new Date());
-  const ukedag      = UKEDAGER[dato.getDay()];
-  const dag         = dato.getDate();
-  const måned       = MÅNEDER[dato.getMonth()];
+    let slutt;
+    if (e.slutt) {
+      const sluttDato = new Date(e.slutt);
+      /* Ugyldig slutt → fall tilbake til standard varighet */
+      slutt = isNaN(sluttDato.getTime()) ? new Date(start.getTime() + STANDARD_VARIGHET_MS) : sluttDato;
+    } else {
+      slutt = new Date(start.getTime() + STANDARD_VARIGHET_MS);
+    }
 
-  if (datoNokkel === iDagNokkel) {
-    return `I dag · ${ukedag} ${dag}. ${måned}`;
-  }
-
-  /* Stor forbokstav på ukedagen */
-  return `${ukedag.charAt(0).toUpperCase()}${ukedag.slice(1)} ${dag}. ${måned}`;
+    return slutt > nå;
+  });
 }
 
 /**
  * Sorterer eventer innad i én dag.
- *   - Nærhetssortering aktiv + posisjon kjent → sorter på avstand (nærmest først)
- *   - Ellers → sorter på starttid (tidligst først)
- *
- * @param {Array}       eventer
- * @param {Object|null} posisjon - { lat, lng } eller null
- * @param {boolean}     naerhet  - Er nærhetssortering aktiv?
- * @returns {Array} ny, sortert liste (muterer ikke originalen)
+ *   - Nærhetssortering aktiv + posisjon kjent → nærmest først
+ *   - Ellers → tidligst start først
  */
 function sorterInnenDag(eventer, posisjon, naerhet) {
   if (naerhet && posisjon) {
@@ -68,21 +49,19 @@ function sorterInnenDag(eventer, posisjon, naerhet) {
 }
 
 /**
- * Grupperer eventer etter kalenderdag og sorterer dem.
- * Dager uten eventer hoppes over.
- * Returner array sortert kronologisk: [{ nokkel, label, eventer }, ...]
+ * Grupperer eventer etter kalenderdag i Oslo-tid og sorterer dem.
  *
- * @param {Array}       eventer  - Filtrerte, ikke-passerte eventer
- * @param {Object|null} posisjon - Brukerens posisjon eller null
- * @param {boolean}     naerhet  - Om nærhetssortering er aktiv
- * @returns {Array}
+ * @param {Array}        eventer  - Filtrerte, ikke-passerte arrangementer
+ * @param {Object|null}  posisjon - { lat, lng } eller null
+ * @param {boolean}      naerhet  - Om nærhetssortering er aktiv
+ * @returns {Array}  [{ nokkel, label, eventer }, …] sortert kronologisk
  */
 export function grupperEtterDag(eventer, posisjon, naerhet) {
   const dagMap = new Map();
 
   for (const event of eventer) {
-    /* Hent YYYY-MM-DD fra start-feltet direkte (de første 10 tegnene) */
-    const nokkel = event.start.slice(0, 10);
+    /* Hent Oslo-lokal YYYY-MM-DD fra ISO-strengen (forutsetter Oslo-offset) */
+    const nokkel = osloDataNokkel(event.start);
     if (!dagMap.has(nokkel)) dagMap.set(nokkel, []);
     dagMap.get(nokkel).push(event);
   }

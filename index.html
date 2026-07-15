@@ -3,8 +3,23 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <meta name="description" content="Hyperlokalt oppdagelsesverktøy for Oslo. Finn noe å gjøre i kveld." />
   <title>påby — oslo</title>
+  <meta name="description" content="Håndplukkede konserter, matopplevelser og klubbkvelder i Oslo." />
+  <meta name="theme-color" content="#141318" />
+
+  <!-- Open Graph (legg til absolutt produksjons-URL på og:url og og:image ved deployment) -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:title"       content="påby – håndplukkede ting som skjer i Oslo" />
+  <meta property="og:description" content="Finn håndplukkede konserter, matopplevelser og klubbkvelder i Oslo." />
+  <meta property="og:image"       content="bilder/og-bilde.svg" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="påby – håndplukkede ting som skjer i Oslo" />
+  <meta name="twitter:description" content="Finn håndplukkede konserter, matopplevelser og klubbkvelder i Oslo." />
+  <meta name="twitter:image"       content="bilder/og-bilde.svg" />
+
+  <link rel="icon" type="image/svg+xml" href="bilder/favicon.svg" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -22,7 +37,7 @@
 
   <!-- ==============================
        TOPBAR — slank, kun logo + tagline + hjerte
-       Filtrene er flyttet ut herfra.
+       Filtrene er i hoveddelen nedenfor.
        ============================== -->
   <div class="topbar">
     <header class="topptekst topbar-innhold">
@@ -36,9 +51,9 @@
         </span>by
       </div>
 
-      <p class="tagline">påby skal føles som den ene kompisen som alltid vet hva som skjer</p>
+      <p class="tagline">kjeder du deg? på by.</p>
 
-      <button id="vis-lagret" class="lagret-knapp" aria-label="Vis lagrede eventer" aria-pressed="false">
+      <button id="vis-lagret" class="lagret-knapp" aria-label="Vis lagrede arrangementer" aria-pressed="false">
         ♡
       </button>
     </header>
@@ -47,14 +62,14 @@
 
   <!-- ==============================
        HOVEDDEL
-       Mobil:   én kolonne (sidestolpe over feedkolonne)
-       Desktop: to kolonner (sidestolpe til venstre, feed til høyre)
+       Mobil:   én kolonne (filtre over feed)
+       Desktop: to kolonner (filtre til venstre, feed til høyre)
        ============================== -->
   <div class="hoveddel">
 
     <!-- Venstre kolonne / mobil-topp: filtre -->
     <aside class="sidestolpe" aria-label="Filtre">
-      <nav class="filtre" aria-label="Filtrer eventer">
+      <nav class="filtre" aria-label="Filtrer arrangementer">
 
         <div class="filter-gruppe">
           <span class="filter-etikett" aria-hidden="true">Type</span>
@@ -68,30 +83,24 @@
         <div class="filter-gruppe">
           <span class="filter-etikett" aria-hidden="true">Tid</span>
           <div class="filter-chips" role="group" aria-label="Tidspunkt">
-            <button class="chip" data-filter="tid" data-verdi="i-kveld">I kveld</button>
-            <button class="chip" data-filter="tid" data-verdi="i-helga">I helga</button>
+            <button class="chip" data-filter="tid" data-verdi="i-kveld" aria-pressed="false">I kveld</button>
+            <button class="chip" data-filter="tid" data-verdi="i-helga" aria-pressed="false">I helga</button>
           </div>
         </div>
 
         <div class="filter-gruppe">
           <span class="filter-etikett" aria-hidden="true">Pris</span>
           <div class="filter-chips" role="group" aria-label="Pris">
-            <button class="chip" data-filter="pris" data-verdi="gratis">Gratis</button>
-            <button class="chip" data-filter="pris" data-verdi="under-200">Under 200</button>
-            <button class="chip" data-filter="pris" data-verdi="over-200">200 kr+</button>
+            <button class="chip" data-filter="pris" data-verdi="gratis"    aria-pressed="false">Gratis</button>
+            <button class="chip" data-filter="pris" data-verdi="under-200" aria-pressed="false">Under 200</button>
+            <button class="chip" data-filter="pris" data-verdi="over-200"  aria-pressed="false">200 kr+</button>
           </div>
         </div>
 
-        <!-- 
-        <div class="filter-bunn-rad">
-          <span class="filter-etikett" aria-hidden="true">Lokasjon</span>
-          <button class="chip" data-filter="naerhet" data-verdi="nærheten">I nærheten</button>
-        </div>
-        -->
       </nav>
       <button id="nullstill-knapp" class="nullstill-knapp skjult" aria-label="Nullstill alle filtre">
-            Nullstill
-          </button>
+        Nullstill
+      </button>
     </aside>
 
 
@@ -100,34 +109,18 @@
 
       <div class="treff-linje">
         <span id="treff-teller" aria-live="polite">henter hva som skjer...</span>
-        <button id="vis-alle" class="tilbake-knapp skjult" aria-label="Tilbake til alle eventer">
-          ← alle eventer
+        <button id="vis-alle" class="tilbake-knapp skjult" aria-label="Tilbake til alle arrangementer">
+          ← alle arrangementer
         </button>
       </div>
 
-      <main id="feed" class="feed" aria-label="Event-feed">
+      <main id="feed" class="feed" aria-label="Arrangement-feed">
         <p class="laster">henter hva som skjer...</p>
       </main>
 
     </div>
 
   </div>
-
-
-  <!-- ==============================
-       KART-VISNING (valgfritt)
-       ============================== -->
-  <section id="kart-visning" class="skjult" aria-label="Kartvisning" style="
-    position: fixed; inset: 0; z-index: 50;
-    background: var(--ink);
-    display: flex; flex-direction: column;
-  ">
-    <div style="padding: var(--gap-m); display: flex; justify-content: space-between; align-items: center;">
-      <span style="font-family: var(--font-tittel); font-weight: 600;">kart</span>
-      <button id="lukk-kart" class="knapp-ghost">× lukk</button>
-    </div>
-    <div id="kart-container" style="flex: 1;"></div>
-  </section>
 
 
   <!-- ==============================

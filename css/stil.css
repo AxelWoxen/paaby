@@ -78,7 +78,6 @@ body {
   flex: 1;
   font-size: 0.8rem;
   color: var(--graa);
-  white-space: nowrap;
 }
 
 .lagret-knapp {
@@ -656,3 +655,48 @@ body.modal-aapen {
     padding-bottom: var(--gap-s);
   }
 }
+
+
+/* === KURATORTEKST === */
+
+.modal-kuratortekst {
+  font-size: 0.875rem;
+  color: var(--graa);
+  font-style: italic;
+  line-height: 1.55;
+}
+
+
+/* === TILLITSSIGNALER === */
+
+.modal-tillit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--gap-s);
+  padding-top: var(--gap-s);
+  border-top: 1px solid var(--flate-2);
+  font-size: 0.8rem;
+}
+
+.tillit-verifisert {
+  color: var(--graa);
+}
+
+.tillit-feedback {
+  color: var(--graa);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.tillit-feedback:hover {
+  color: var(--paper);
+}
+
+
+/* === BILDE-PLACEHOLDER MED KATEGORIIDENTITET === */
+
+.kort-bilde-placeholder.kategori-musikk { background: rgba(200, 255, 77, 0.08); }
+.kort-bilde-placeholder.kategori-mat    { background: rgba(255, 77, 94, 0.08);  }
+.kort-bilde-placeholder.kategori-klubb  { background: rgba(244, 241, 234, 0.06); }

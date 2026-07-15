@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <title>påby — tester</title>
+  <style>
+    body   { font-family: monospace; background: #141318; color: #F4F1EA; padding: 2rem; line-height: 1.6; }
+    h1     { color: #F4F1EA; margin-bottom: 0.5rem; }
+    h2     { color: #9994A2; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em;
+             margin: 2rem 0 0.5rem; border-bottom: 1px solid #28252F; padding-bottom: 0.25rem; }
+    .ok    { color: #C8FF4D; }
+    .feil  { color: #FF4D5E; }
+    .sammendrag { margin-top: 2rem; font-size: 1.1rem; padding: 1rem; background: #1E1C24;
+                  border-radius: 8px; }
+    pre    { margin: 0; }
+  </style>
+</head>
+<body>
+  <h1>påby — testresultater</h1>
+  <div id="ut"></div>
+
+  <script type="module">
+    import { validerEventer, erGyldigUrl } from './js/application/validering.js';
+    import { skjulPasserte }               from './js/application/gruppering.js';
+    import { filtrerEventer, erIHelga }    from './js/application/filtre.js';
+    import { hentLagredeIder, lagreEvent,
+             fjernEvent, veksleLagret }    from './js/application/lagret.js';
+    import { formaterVerifisert }          from './js/application/formatering.js';
+
+    /* ─── Mini testrammeverk ─── */
+    let bestått = 0, feilet = 0;
+    const ut = document.getElementById('ut');
+
+    function gruppe(navn) {
+      const h = document.createElement('h2');
+      h.textContent = navn;
+      ut.appendChild(h);
+    }
+
+    function test(beskrivelse, faktisk, forventet) {
+      const ok  = JSON.stringify(faktisk) === JSON.stringify(forventet);
+      const div = document.createElement('pre');
+      if (ok) {
+        div.className   = 'ok';
+        div.textContent = `✓ ${beskrivelse}`;
+        bestått++;
+      } else {
+        div.className   = 'feil';
+        div.textContent = `✗ ${beskrivelse}\n  forventet: ${JSON.stringify(forventet)}\n  fikk:      ${JSON.stringify(faktisk)}`;
+        feilet++;
+      }
+      ut.appendChild(div);
+    }
+
+    function testTrue(beskrivelse, verdi) { test(beskrivelse, !!verdi, true); }
+    function testFalse(beskrivelse, verdi) { test(beskrivelse, !!verdi, false); }
+
+    /* ─── Hjelpedata ─── */
+    const GYLDIG = {
+      id: 'test-event-2026-07-18-2000',
+      tittel: 'Testarrangement',
+      kategori: 'musikk',
+      sted: 'Et sted',
+      start: '2026-07-18T20:00:00+02:00',
+      pris: 0,
+    };
+
+    /* ══════════════════════════════════════
+       1. DATAVALIDERING
+       ══════════════════════════════════════ */
+    gruppe('1. Datavalidering');
+
+    test('gyldig arrangement godtas',
+      validerEventer([GYLDIG]).length, 1);
+
+    test('manglende id avvises',
+      validerEventer([{ ...GYLDIG, id: undefined }]).length, 0);
+
+    test('duplikat id avvises',
+      validerEventer([GYLDIG, { ...GYLDIG }]).length, 1);
+
+    test('ugyldig kategori avvises',
+      validerEventer([{ ...GYLDIG, kategori: 'sport' }]).length, 0);
+
+    test('manglende start avvises',
+      validerEventer([{ ...GYLDIG, start: undefined }]).length, 0);
+
+    test('start uten tidssone avvises',
+      validerEventer([{ ...GYLDIG, start: '2026-07-18T20:00' }]).length, 0);
+
+    test('start med Z godtas',
+      validerEventer([{ ...GYLDIG, start: '2026-07-18T18:00:00Z' }]).length, 1);
+
+    test('slutt før start avvises',
+      validerEventer([{ ...GYLDIG, slutt: '2026-07-18T19:00:00+02:00' }]).length, 0);
+
+    test('negativ pris avvises',
+      validerEventer([{ ...GYLDIG, pris: -10 }]).length, 0);
+
+    test('pris null godtas',
+      validerEventer([{ ...GYLDIG, pris: null }]).length, 1);
+
+    test('ugyldig lenke avvises',
+      validerEventer([{ ...GYLDIG, lenke: 'javascript:alert(1)' }]).length, 0);
+
+    test('manglende valgfrie felt godtas',
+      validerEventer([{ id:'x', tittel:'T', kategori:'mat', sted:'S', start:'2026-07-18T10:00:00+02:00', pris:0 }]).length, 1);
+
+
+    /* ══════════════════════════════════════
+       2. URL-VALIDERING
+       ══════════════════════════════════════ */
+    gruppe('2. URL-validering');
+
+    testTrue ('https: godtas',       erGyldigUrl('https://blaaoslo.no'));
+    testTrue ('http: godtas',        erGyldigUrl('http://eksempel.no'));
+    testFalse('javascript: avvises', erGyldigUrl('javascript:alert(1)'));
+    testFalse('data: avvises',       erGyldigUrl('data:text/html,<h1>xss</h1>'));
+    testFalse('tom streng avvises',  erGyldigUrl(''));
+    testFalse('null avvises',        erGyldigUrl(null));
+    testFalse('ugyldig URL avvises', erGyldigUrl('ikke-en-url'));
+
+
+    /* ══════════════════════════════════════
+       3. PASSERTE ARRANGEMENTER
+       ══════════════════════════════════════ */
+    gruppe('3. Passerte arrangementer');
+
+    const nå = new Date('2026-07-18T15:00:00+02:00');
+
+    const fremtidig  = { ...GYLDIG, start: '2026-07-18T20:00:00+02:00' };
+    const pågående   = { ...GYLDIG, id: 'p1', start: '2026-07-18T14:30:00+02:00', slutt: '2026-07-18T17:00:00+02:00' };
+    const avsluttet  = { ...GYLDIG, id: 'p2', start: '2026-07-18T10:00:00+02:00', slutt: '2026-07-18T13:00:00+02:00' };
+    const ingenSlutt = { ...GYLDIG, id: 'p3', start: '2026-07-18T10:00:00+02:00' }; /* 10:00 + 4t = 14:00 < 15:00 → skjult */
+    const ingenSlutt2 = { ...GYLDIG, id: 'p4', start: '2026-07-18T13:00:00+02:00' }; /* 13:00 + 4t = 17:00 > 15:00 → vises */
+
+    testTrue ('fremtidig vises',                      skjulPasserte([fremtidig],  nå).length === 1);
+    testTrue ('pågående vises (har slutt)',            skjulPasserte([pågående],   nå).length === 1);
+    testFalse('avsluttet skjules (har slutt)',         skjulPasserte([avsluttet],  nå).length === 1);
+    testFalse('5t siden uten slutt skjules (4t regel)', skjulPasserte([ingenSlutt], nå).length === 1);
+    testTrue ('2t siden uten slutt vises (4t regel)', skjulPasserte([ingenSlutt2], nå).length === 1);
+
+    const ugyldigSlutt = { ...GYLDIG, id: 'p5', start: '2026-07-18T14:00:00+02:00', slutt: 'ugyldig' };
+    testTrue('ugyldig slutt faller tilbake til 4t-regel og vises', skjulPasserte([ugyldigSlutt], nå).length === 1);
+
+
+    /* ══════════════════════════════════════
+       4. HELGELOGIKK
+       ══════════════════════════════════════ */
+    gruppe('4. Helgelogikk (erIHelga)');
+
+    /* Referansepunkter */
+    const mandag   = new Date('2026-07-13T10:00:00+02:00');
+    const torsdagK = new Date('2026-07-16T22:00:00+02:00');
+    const fredagFør = new Date('2026-07-17T15:59:00+02:00');
+    const fredagEtt = new Date('2026-07-17T16:01:00+02:00');
+    const fredag23  = new Date('2026-07-17T23:00:00+02:00');
+    const lørdag    = new Date('2026-07-18T14:00:00+02:00');
+    const søndag    = new Date('2026-07-19T10:00:00+02:00');
+
+    /* Arrangement fredag 17. jul 18:00 */
+    const freHelgArr = new Date('2026-07-17T18:00:00+02:00');
+    /* Arrangement lørdag 18. jul 20:00 */
+    const lørHelgArr = new Date('2026-07-18T20:00:00+02:00');
+    /* Arrangement mandag 20. jul → ikke helg */
+    const mandagArr  = new Date('2026-07-20T10:00:00+02:00');
+
+    testTrue ('mandag: fredag-arrangement i kommende helg vises',    erIHelga(freHelgArr, mandag));
+    testTrue ('mandag: lørdag-arrangement i kommende helg vises',    erIHelga(lørHelgArr, mandag));
+    testFalse('mandag: mandags-arrangement er ikke helg',            erIHelga(mandagArr, mandag));
+
+    testTrue ('torsdag kveld: kommende helg-arrangement vises',      erIHelga(lørHelgArr, torsdagK));
+
+    testFalse('fredag 15:59: fre 18:00-arr vises IKKE (helg fra 16)', erIHelga(freHelgArr, fredagFør));
+    testTrue ('fredag 16:01: fre 18:00-arr vises (helg startet)',     erIHelga(freHelgArr, fredagEtt));
+    testTrue ('fredag 23:00: lørdag-arr vises',                       erIHelga(lørHelgArr, fredag23));
+
+    testTrue ('lørdag: helg-arrangement vises',                       erIHelga(lørHelgArr, lørdag));
+    testFalse('lørdag: mandags-arr vises ikke',                       erIHelga(mandagArr, lørdag));
+
+    testTrue ('søndag: helg-arrangement vises',                       erIHelga(lørHelgArr, søndag));
+    testFalse('søndag: mandags-arr vises ikke',                       erIHelga(mandagArr, søndag));
+
+    /* Månedsskifte: søndag 2. august, helg = fre 31. jul – søn 2. aug */
+    const månedsskifteNå    = new Date('2026-08-02T10:00:00+02:00');
+    const månedsskifteHelgArr = new Date('2026-07-31T20:00:00+02:00'); /* fredag i forrige måned */
+    testTrue('månedsskifte: fre i forrige mnd er del av helgen', erIHelga(månedsskifteHelgArr, månedsskifteNå));
+
+    /* Årsskifte: mandag 4. jan 2027 ser fremover mot fre 8.–søn 10. jan.
+       Lørdagen 2. jan tilhørte FORRIGE helg og skal ikke vises. */
+    const nyttårNå     = new Date('2027-01-04T10:00:00+01:00');
+    const nyttårHelgArr = new Date('2027-01-02T20:00:00+01:00'); /* lørdag i forrige helg */
+    testFalse('mandag 4. jan: lørdag 2. jan (forrige helg) vises ikke', erIHelga(nyttårHelgArr, nyttårNå));
+
+
+    /* ══════════════════════════════════════
+       5. PRISFILTER
+       ══════════════════════════════════════ */
+    gruppe('5. Prisfilter');
+
+    const lagEventer = (priser) => priser.map((p, i) => ({
+      id: `e${i}`, tittel: `E${i}`, kategori: 'musikk', sted: 'X',
+      start: '2026-07-20T10:00:00+02:00', pris: p,
+    }));
+
+    const priser = lagEventer([0, 1, 199, 200, 201, null]);
+    const F = (pris) => filtrerEventer(priser, { kategori: [], tid: null, pris, naerhet: false }, null);
+
+    test('gratis: kun 0 kr', F('gratis').map(e=>e.pris), [0]);
+    test('under-200: 0, 1, 199 (inkl. gratis)', F('under-200').map(e=>e.pris), [0, 1, 199]);
+    test('over-200: 200 og 201', F('over-200').map(e=>e.pris), [200, 201]);
+    test('null-pris matcher ingen prisfiltre', F('gratis').find(e=>e.pris===null), undefined);
+    test('ingen filter: alle inkl. null', filtrerEventer(priser, {kategori:[],tid:null,pris:null,naerhet:false}, null).length, 6);
+
+
+    /* ══════════════════════════════════════
+       6. FILTERKOMBINASJONER
+       ══════════════════════════════════════ */
+    gruppe('6. Filterkombinasjoner');
+
+    const blandede = [
+      { id:'a', tittel:'A', kategori:'musikk', sted:'X', start:'2026-07-20T10:00:00+02:00', pris:0 },
+      { id:'b', tittel:'B', kategori:'mat',    sted:'X', start:'2026-07-20T10:00:00+02:00', pris:0 },
+      { id:'c', tittel:'C', kategori:'klubb',  sted:'X', start:'2026-07-20T10:00:00+02:00', pris:300 },
+    ];
+
+    test('kategori ELLER: musikk+mat gir 2 resultater',
+      filtrerEventer(blandede, {kategori:['musikk','mat'], tid:null, pris:null, naerhet:false}, null).length, 2);
+
+    test('kategori OG pris: musikk+gratis gir 1 resultat',
+      filtrerEventer(blandede, {kategori:['musikk'], tid:null, pris:'gratis', naerhet:false}, null).length, 1);
+
+    test('ingen filter: alle 3 vises',
+      filtrerEventer(blandede, {kategori:[], tid:null, pris:null, naerhet:false}, null).length, 3);
+
+
+    /* ══════════════════════════════════════
+       7. LAGRING
+       ══════════════════════════════════════ */
+    gruppe('7. Lagring (localStorage)');
+
+    /* Rens opp fra forrige kjøring */
+    try { localStorage.removeItem('paaby-lagret'); } catch {}
+
+    lagreEvent('abc');
+    test('lagre id',  hentLagredeIder().includes('abc'), true);
+
+    lagreEvent('abc');
+    test('duplikat ignoreres', hentLagredeIder().filter(x=>x==='abc').length, 1);
+
+    fjernEvent('abc');
+    test('fjerne id', hentLagredeIder().includes('abc'), false);
+
+    lagreEvent('x1');
+    const toggle1 = veksleLagret('x1');
+    test('veksle fra lagret → fjerner, returnerer false', toggle1, false);
+
+    const toggle2 = veksleLagret('x2');
+    test('veksle fra ikke-lagret → lagrer, returnerer true', toggle2, true);
+
+    /* Korrupt JSON */
+    try { localStorage.setItem('paaby-lagret', 'UGYLDIG{JSON'); } catch {}
+    test('korrupt JSON krasjer ikke', hentLagredeIder().length, 0);
+
+    /* Opprydding */
+    try { localStorage.removeItem('paaby-lagret'); } catch {}
+
+
+    /* ══════════════════════════════════════
+       8. VERIFISERINGSTEKST
+       ══════════════════════════════════════ */
+    gruppe('8. formaterVerifisert');
+
+    const refNå = new Date('2026-07-15T20:00:00+02:00');
+    test('i dag',   formaterVerifisert('2026-07-15T10:00:00+02:00', refNå), 'Sjekket i dag');
+    test('i går',   formaterVerifisert('2026-07-14T10:00:00+02:00', refNå), 'Sjekket i går');
+    test('dato',    formaterVerifisert('2026-07-10T10:00:00+02:00', refNå), 'Sjekket 10. jul');
+    test('null',    formaterVerifisert(null,     refNå), null);
+    test('ugyldig', formaterVerifisert('ugyldig', refNå), null);
+
+
+    /* ══════════════════════════════════════
+       SAMMENDRAG
+       ══════════════════════════════════════ */
+    const sum = document.createElement('div');
+    sum.className = 'sammendrag';
+    const totalt = bestått + feilet;
+    sum.innerHTML = feilet === 0
+      ? `<span class="ok">✓ Alle ${totalt} tester bestod</span>`
+      : `<span class="feil">✗ ${feilet} av ${totalt} tester feilet</span>`;
+    ut.appendChild(sum);
+  </script>
+</body>
+</html>

@@ -1,23 +1,47 @@
 /* lagret.js — localStorage-laget.
-   Eneste ansvar: lagre og hente hvilke event-IDer brukeren har "hjertet".
-   Ingen DOM, ingen fetch — ren logikk mot nettleserens localStorage. */
+   Eneste ansvar: lagre og hente hvilke arrangement-ID-er brukeren har hjertet.
+   All lesing og skriving er pakket i try/catch — appen krasjer ikke ved korrupt lagring.
+   Ingen DOM, ingen fetch. */
 
-/* Nøkkelen vi bruker i localStorage. Konstant så vi aldri skriver den feil. */
-const LAGRET_NOKKEL = 'paby-lagret';
+const LAGRET_NOKKEL = 'paaby-lagret';
 
 /**
- * Henter lista med lagrede event-IDer fra localStorage.
- * Returnerer alltid en liste — tom liste hvis ingenting er lagret.
+ * Henter lista med lagrede arrangement-ID-er fra localStorage.
+ * Returnerer alltid en liste — tom liste ved feil eller tom lagring.
+ * Rensker automatisk bort duplikater og ikke-streng-verdier.
+ *
+ * @param {string[]} [gyldigeIder]  - Valgfri liste over kjente ID-er. Brukes til å rydde bort foreldreløse.
+ * @returns {string[]}
  */
-export function hentLagredeIder() {
-  const lagret = localStorage.getItem(LAGRET_NOKKEL);
-  /* JSON.parse konverterer JSON-strengen tilbake til en JS-liste.
-     Hvis ingenting er lagret er lagret null, og vi returnerer tom liste. */
-  return lagret ? JSON.parse(lagret) : [];
+export function hentLagredeIder(gyldigeIder = null) {
+  try {
+    const rå = localStorage.getItem(LAGRET_NOKKEL);
+    if (!rå) return [];
+
+    const parset = JSON.parse(rå);
+    if (!Array.isArray(parset)) {
+      console.warn('Påby lagring: ugyldig format i localStorage — starter med tom liste');
+      return [];
+    }
+
+    /* Behold bare strenger og fjern duplikater */
+    let ider = [...new Set(parset.filter((id) => typeof id === 'string'))];
+
+    /* Rens foreldreløse ID-er dersom vi vet hvilke som er gyldige */
+    if (gyldigeIder) {
+      const kjent = new Set(gyldigeIder);
+      ider = ider.filter((id) => kjent.has(id));
+    }
+
+    return ider;
+  } catch {
+    console.warn('Påby lagring: kunne ikke lese localStorage');
+    return [];
+  }
 }
 
 /**
- * Sjekker om et event med gitt ID er lagret.
+ * Sjekker om et arrangement med gitt ID er lagret.
  * @returns {boolean}
  */
 export function erLagret(id) {
@@ -25,35 +49,41 @@ export function erLagret(id) {
 }
 
 /**
- * Lagrer et event. Gjør ingenting hvis det allerede er lagret.
+ * Lagrer et arrangement. Gjør ingenting hvis det allerede er lagret.
  */
 export function lagreEvent(id) {
-  const ider = hentLagredeIder();
-  if (!ider.includes(id)) {
-    ider.push(id);
-    /* JSON.stringify konverterer lista tilbake til en streng for lagring */
-    localStorage.setItem(LAGRET_NOKKEL, JSON.stringify(ider));
+  try {
+    const ider = hentLagredeIder();
+    if (!ider.includes(id)) {
+      ider.push(id);
+      localStorage.setItem(LAGRET_NOKKEL, JSON.stringify(ider));
+    }
+  } catch {
+    console.warn('Påby lagring: kunne ikke skrive til localStorage');
   }
 }
 
 /**
- * Fjerner et event fra lagret.
+ * Fjerner et arrangement fra lagret.
  */
 export function fjernEvent(id) {
-  const ider = hentLagredeIder().filter((i) => i !== id);
-  localStorage.setItem(LAGRET_NOKKEL, JSON.stringify(ider));
+  try {
+    const ider = hentLagredeIder().filter((i) => i !== id);
+    localStorage.setItem(LAGRET_NOKKEL, JSON.stringify(ider));
+  } catch {
+    console.warn('Påby lagring: kunne ikke skrive til localStorage');
+  }
 }
 
 /**
  * Veksler lagret-status: lagret → fjern, ikke lagret → lagre.
- * @returns {boolean} true hvis eventet NÅ er lagret, false hvis det ble fjernet.
+ * @returns {boolean}  true hvis arrangementet NÅ er lagret
  */
 export function veksleLagret(id) {
   if (erLagret(id)) {
     fjernEvent(id);
     return false;
-  } else {
-    lagreEvent(id);
-    return true;
   }
+  lagreEvent(id);
+  return true;
 }
