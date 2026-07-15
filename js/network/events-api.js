@@ -1,16 +1,17 @@
 /* events-api.js — datahentingslaget.
-   Importerer fra data/events.js og kjører validering.
-   Grensesnittet: hentEventer() returnerer et Promise med gyldige arrangementer. */
+   Henter eventer fra data/events.json og kjører validering.
+   Bytt fetch-URLen til en Supabase-forespørsel for å koble til database —
+   resten av appen trenger ingen endringer. */
 
-import { EVENTER }         from '../../data/events.js';
-import { validerEventer }  from '../application/validering.js';
+import { validerEventer } from '../application/validering.js';
 
-/**
- * Returnerer alle gyldige arrangementer fra data/events.js.
- * Ugyldige arrangementer logges og hoppes over — appen krasjer ikke.
- *
- * @returns {Promise<Array>}
- */
-export function hentEventer() {
-  return Promise.resolve(validerEventer(EVENTER));
+export async function hentEventer() {
+  const response = await fetch('./data/events.json');
+
+  if (!response.ok) {
+    throw new Error(`Kunne ikke hente eventer: ${response.status}`);
+  }
+
+  const eventer = await response.json();
+  return validerEventer(eventer);
 }

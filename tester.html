@@ -31,7 +31,9 @@
              erTidsSortering }                              from './js/application/sortering.js';
     import { kalkulerAvstand, erGyldigeKoordinater }        from './js/application/posisjon.js';
     import { KATEGORI_BILDER, hentEventbilde }              from './js/application/kategori-bilder.js';
-    import { EVENTER }                                      from './data/events.js';
+
+    const _evRes = await fetch('./data/events.json');
+    const EVENTER = await _evRes.json();
 
     /* ─── Mini testrammeverk ─── */
     let bestått = 0, feilet = 0;
