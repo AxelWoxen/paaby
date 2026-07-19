@@ -484,5 +484,41 @@
     "lenke": null,
     "bilde": null,
     "sistVerifisert": "2026-07-19T23:17:10.709Z"
+  },
+  {
+    "id": "bla-egyptian-lover-us-2026-08-28",
+    "tittel": "Egyptian Lover (US)",
+    "kategori": "klubb",
+    "sted": "BLÅ",
+    "adresse": "Brenneriveien 9c, 0182 Oslo",
+    "lat": 59.92035,
+    "lng": 10.75279,
+    "start": "2026-08-28T23:00:00+02:00",
+    "slutt": "2026-08-29T03:00:00+02:00",
+    "pris": 200,
+    "prisTekst": "200 kr",
+    "beskrivelse": "The \"King of the 808\" er tilbake til Blå! Los Angeles baserte Egyptian Lover startet karrieren sin som DJ for Ice-T en av de første gangster-rapperne i gruppen deres The Radio Crew. Han slo seg virkelig opp i hip-hop/electro scenen i 1984 med låten Egypt Egypt på Freak Beat labelet sitt, som etter fem utgivelser ble til Egyptian Empire Records. Han var også medlem av electro/hip-hop gruppen Uncle",
+    "kuratortekst": null,
+    "lenke": "https://www.ticketmaster.no/event/1521956928",
+    "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_usNFbxhhV/tr:w-750",
+    "sistVerifisert": "2026-07-19T23:45:04.309Z"
+  },
+  {
+    "id": "bla-veps-2026-09-04",
+    "tittel": "Veps",
+    "kategori": "musikk",
+    "sted": "BLÅ",
+    "adresse": "Brenneriveien 9c, 0182 Oslo",
+    "lat": 59.92035,
+    "lng": 10.75279,
+    "start": "2026-09-04T19:00:00+02:00",
+    "slutt": "2026-09-04T23:00:00+02:00",
+    "pris": 250,
+    "prisTekst": "250 kr",
+    "beskrivelse": "Utsatt fra 17. juni til 4. september.\n\nDen Oslo-baserte kvartetten Veps har siden de bare var 17 år gamle fått strålende kritikker både internasjonalt og her hjemme for sin bråmodne låtskriving og unike uttrykk.\n\nDe fire jentene har kjent hverandre siden barneskolen, og Helena, Laura, June og Maja startet Veps allerede som 14-åringer. Og bare tre år senere var de signert til amerikanske Kanine Rec",
+    "kuratortekst": null,
+    "lenke": "https://www.ticketmaster.no/event/745320542",
+    "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_gNWgaL9Bw/tr:w-750",
+    "sistVerifisert": "2026-07-19T23:45:11.770Z"
   }
 ]
