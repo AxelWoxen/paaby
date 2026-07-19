@@ -322,5 +322,23 @@
     "lenke": "https://somo.social/no/e/prinsen-platemesse-pa-folk-726",
     "bilde": null,
     "sistVerifisert": "2026-07-15T04:00:00+02:00"
+  },
+  {
+    "id": "bla-gatefest-2026-08-08",
+    "tittel": "GATEFEST",
+    "kategori": "klubb",
+    "sted": "BLÅ",
+    "adresse": "Brenneriveien 9c, 0182 Oslo",
+    "lat": 59.92035,
+    "lng": 10.75279,
+    "start": "2026-08-08T15:00:00+02:00",
+    "slutt": "2026-08-08T23:00:00+02:00",
+    "pris": 0,
+    "prisTekst": "Gratis",
+    "beskrivelse": "Vi gjentar suksessen fra musikkens dag, og arrangerer en gratis gatefest i Brenneriveien og på uteserveringen.\n\n15:00-23:00\n\nid: 18+\n\nGratis inngang",
+    "kuratortekst": null,
+    "lenke": "https://www.blaaoslo.no",
+    "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_Va1wMH4Qe/tr:w-750",
+    "sistVerifisert": "2026-07-19T22:26:58.204Z"
   }
 ]
