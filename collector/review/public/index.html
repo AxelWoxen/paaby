@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>påby · review</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bakgrunn:  #141318;
+      --flate:     #1E1C24;
+      --flate2:    #2A2830;
+      --flate3:    #332F3E;
+      --tekst:     #F0EEF8;
+      --dempet:    #9896A4;
+      --lime:      #C8FF4D;
+      --korall:    #FF6B5B;
+      --font:      'Inter', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bakgrunn);
+      color: var(--tekst);
+      font-family: var(--font);
+      font-size: 15px;
+      line-height: 1.5;
+      padding: 2rem 1rem 6rem;
+    }
+
+    /* ──��� TOPBAR ─────────────────────────────────────────────────── */
+    .topbar {
+      max-width: 780px;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .topbar-logo { font-size: 1rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    #teller { color: var(--dempet); font-size: .85rem; }
+
+    /* ─── TABS ───────────────────────────────────────────────────── */
+    .tabs {
+      max-width: 780px;
+      margin: 0 auto 1.5rem;
+      display: flex;
+      gap: .5rem;
+      border-bottom: 1px solid var(--flate2);
+      padding-bottom: .75rem;
+    }
+    .tab {
+      background: none;
+      border: 1px solid var(--flate2);
+      border-radius: 8px;
+      color: var(--dempet);
+      cursor: pointer;
+      font-size: .85rem;
+      padding: .4rem .9rem;
+      transition: all .15s;
+    }
+    .tab.aktiv { background: var(--flate2); color: var(--tekst); border-color: var(--flate3); }
+
+    /* ─── FILTRE ──────────────────────────────────────────────────── */
+    .filtre {
+      max-width: 780px;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: .5rem;
+      align-items: center;
+    }
+    .filter-chip {
+      background: var(--flate);
+      border: 1px solid var(--flate2);
+      border-radius: 20px;
+      color: var(--dempet);
+      cursor: pointer;
+      font-size: .8rem;
+      padding: .3rem .85rem;
+      transition: all .15s;
+    }
+    .filter-chip.aktiv { background: var(--flate3); color: var(--tekst); border-color: var(--flate3); }
+    .filter-chip.aktiv.musikk { color: var(--lime); border-color: var(--lime); background: rgba(200,255,77,.1); }
+    .filter-chip.aktiv.klubb  { color: var(--korall); border-color: var(--korall); background: rgba(255,107,91,.1); }
+
+    .skjul-passerte {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: .4rem;
+      font-size: .8rem;
+      color: var(--dempet);
+      cursor: pointer;
+    }
+    .skjul-passerte input { cursor: pointer; accent-color: var(--lime); }
+
+    /* ─── FEED ───────────────────────────────────────────────────── */
+    #feed {
+      max-width: 780px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ─── KORT ───────────────────────────────────────────────────── */
+    .kort { background: var(--flate); border-radius: 12px; overflow: hidden; }
+
+    .kort-bilde { width: 100%; height: 180px; object-fit: cover; display: block; background: var(--flate2); }
+
+    .kort-kropp { padding: 1.1rem; }
+
+    .kort-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; flex-wrap: wrap; }
+
+    .badge {
+      font-size: .7rem; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; padding: .2em .6em; border-radius: 4px;
+      background: var(--flate2); color: var(--dempet);
+    }
+    .badge.musikk { background: rgba(200,255,77,.15); color: var(--lime); }
+    .badge.klubb  { background: rgba(255,107,91,.15); color: var(--korall); }
+    .badge.mat    { background: rgba(255,200,77,.15); color: #ffc84d; }
+    .badge.pafunn { background: rgba(150,77,255,.15); color: #b44dff; }
+    .badge.manuell { background: rgba(77,180,255,.15); color: #4db4ff; font-size: .65rem; }
+
+    .kort-tittel { font-size: 1.1rem; font-weight: 700; margin-bottom: .2rem; }
+
+    .kort-info {
+      color: var(--dempet); font-size: .85rem;
+      display: flex; flex-wrap: wrap; gap: .2rem .75rem; margin-bottom: .65rem;
+    }
+    .kort-info a { color: var(--lime); }
+
+    .kort-beskrivelse {
+      font-size: .85rem; color: var(--dempet); margin-bottom: .85rem;
+      max-height: 72px; overflow: hidden;
+    }
+    .kort-beskrivelse.vis-mer { max-height: none; }
+    .les-mer {
+      background: none; border: none; color: var(--lime); cursor: pointer;
+      font-size: .78rem; padding: 0; margin-bottom: .85rem; display: block;
+    }
+
+    .felt-label {
+      display: block; font-size: .75rem; color: var(--dempet);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: .3rem;
+    }
+    textarea, input[type=text] {
+      width: 100%; background: var(--flate2); border: 1px solid var(--flate2);
+      border-radius: 8px; color: var(--tekst); font-family: var(--font);
+      font-size: .875rem; padding: .55rem .75rem; outline: none; margin-bottom: .85rem;
+      transition: border-color .15s;
+    }
+    textarea { resize: vertical; min-height: 56px; }
+    textarea:focus, input[type=text]:focus { border-color: var(--lime); }
+
+    .knapp-rad { display: flex; gap: .65rem; }
+    .knapp {
+      flex: 1; padding: .55rem 1rem; border: none; border-radius: 8px;
+      font-size: .875rem; font-weight: 600; cursor: pointer; transition: opacity .15s;
+    }
+    .knapp:hover { opacity: .85; }
+    .knapp:disabled { opacity: .4; cursor: default; }
+    .knapp-godkjenn { background: var(--lime);   color: #141318; }
+    .knapp-avslaa   { background: var(--flate2); color: var(--dempet); }
+
+    .git-melding {
+      margin-top: .85rem; padding: .65rem .85rem; background: var(--flate2);
+      border-radius: 8px; font-size: .8rem; color: var(--lime);
+    }
+    .git-melding strong { display: block; margin-bottom: .3rem; color: var(--tekst); }
+    .git-kommando {
+      font-family: monospace; word-break: break-all; cursor: pointer;
+      border: none; background: none; color: var(--lime); font-size: .78rem;
+      text-align: left; padding: 0; width: 100%;
+    }
+    .git-kommando:hover { text-decoration: underline; }
+
+    .tom {
+      text-align: center; padding: 3rem 1rem; color: var(--dempet);
+    }
+    .tom strong { display: block; color: var(--tekst); font-size: 1.05rem; margin-bottom: .4rem; }
+
+    /* ─── MANUELT SKJEMA ─────────────────────────────────────────── */
+    #skjema-panel {
+      max-width: 780px;
+      margin: 0 auto;
+      background: var(--flate);
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: none;
+    }
+    #skjema-panel h2 { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; }
+
+    .skjema-rad { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+    @media (max-width: 540px) { .skjema-rad { grid-template-columns: 1fr; } }
+
+    .skjema-gruppe { margin-bottom: .1rem; }
+
+    .kategori-velger {
+      display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .85rem;
+    }
+    .kategori-knapp {
+      background: var(--flate2); border: 1px solid var(--flate2); border-radius: 8px;
+      color: var(--dempet); cursor: pointer; font-size: .85rem; padding: .4rem .85rem;
+      transition: all .15s;
+    }
+    .kategori-knapp.aktiv { background: var(--flate3); color: var(--tekst); border-color: var(--flate3); }
+
+    .skjema-submit {
+      width: 100%; padding: .7rem; border: none; border-radius: 8px;
+      background: var(--lime); color: #141318; font-size: .95rem;
+      font-weight: 700; cursor: pointer; margin-top: .5rem; transition: opacity .15s;
+    }
+    .skjema-submit:hover { opacity: .87; }
+    .skjema-submit:disabled { opacity: .4; cursor: default; }
+
+    .skjema-feil {
+      margin-top: .75rem; padding: .55rem .85rem; background: rgba(255,107,91,.15);
+      color: var(--korall); border-radius: 8px; font-size: .85rem; display: none;
+    }
+    .skjema-ok {
+      margin-top: .75rem; padding: .55rem .85rem; background: rgba(200,255,77,.12);
+      color: var(--lime); border-radius: 8px; font-size: .85rem; display: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ─── TOPBAR ──────────────────────────────────────────────────────────── -->
+<div class="topbar">
+  <span class="topbar-logo">påby · review</span>
+  <span id="teller">laster…</span>
+</div>
+
+<!-- ─── TABS ────────────────────────────────────────────────────────────── -->
+<div class="tabs">
+  <button class="tab aktiv" data-tab="review" onclick="byttTab('review', this)">Review</button>
+  <button class="tab" data-tab="legg-til" onclick="byttTab('legg-til', this)">+ Legg til manuelt</button>
+</div>
+
+<!-- ─── FILTRE ───────────────────────────────────────────────────────────── -->
+<div id="filtre-panel" class="filtre">
+  <button class="filter-chip aktiv" data-filter="alle" onclick="velgFilter(this)">Alle</button>
+  <button class="filter-chip musikk" data-filter="musikk" onclick="velgFilter(this)">Musikk</button>
+  <button class="filter-chip klubb"  data-filter="klubb"  onclick="velgFilter(this)">Klubb</button>
+  <button class="filter-chip"        data-filter="mat"    onclick="velgFilter(this)">Mat</button>
+  <button class="filter-chip"        data-filter="pafunn" onclick="velgFilter(this)">Påfunn</button>
+
+  <label class="skjul-passerte">
+    <input type="checkbox" id="skjul-passerte" onchange="oppdaterVisning()" /> Skjul passerte
+  </label>
+</div>
+
+<!-- ─── REVIEW FEED ──────────────────────────────────────────────────────── -->
+<div id="feed"></div>
+
+<!-- ─── MANUELT SKJEMA ──────────────────────────────────────────────────── -->
+<div id="skjema-panel">
+  <h2>Legg til event manuelt</h2>
+
+  <label class="felt-label">Kategori</label>
+  <div class="kategori-velger" id="kategori-velger">
+    <button class="kategori-knapp aktiv" data-kat="musikk" onclick="velgKategori(this)">Musikk</button>
+    <button class="kategori-knapp" data-kat="klubb"  onclick="velgKategori(this)">Klubb</button>
+    <button class="kategori-knapp" data-kat="mat"    onclick="velgKategori(this)">Mat</button>
+    <button class="kategori-knapp" data-kat="pafunn" onclick="velgKategori(this)">Påfunn</button>
+  </div>
+
+  <label class="felt-label">Tittel *</label>
+  <input type="text" id="f-tittel" placeholder="Arrangementsnavn" />
+
+  <div class="skjema-rad">
+    <div class="skjema-gruppe">
+      <label class="felt-label">Start (dato og tid) *</label>
+      <input type="text" id="f-start" placeholder="2026-08-15T20:00" />
+    </div>
+    <div class="skjema-gruppe">
+      <label class="felt-label">Slutt (valgfritt)</label>
+      <input type="text" id="f-slutt" placeholder="2026-08-15T23:00" />
+    </div>
+  </div>
+
+  <label class="felt-label">Sted *</label>
+  <input type="text" id="f-sted" placeholder="Venuenavn" />
+
+  <label class="felt-label">Adresse</label>
+  <input type="text" id="f-adresse" placeholder="Gateadresse, postnummer Oslo" />
+
+  <div class="skjema-rad">
+    <div class="skjema-gruppe">
+      <label class="felt-label">Pris (kr, 0 = gratis, tom = ukjent)</label>
+      <input type="text" id="f-pris" placeholder="150" />
+    </div>
+    <div class="skjema-gruppe">
+      <label class="felt-label">Prisvisning (valgfritt)</label>
+      <input type="text" id="f-pristekst" placeholder="150 kr + gebyr" />
+    </div>
+  </div>
+
+  <label class="felt-label">Beskrivelse</label>
+  <textarea id="f-besk" placeholder="Kort beskrivelse av eventet…" rows="3"></textarea>
+
+  <label class="felt-label">Lenke (billett / mer info)</label>
+  <input type="text" id="f-lenke" placeholder="https://…" />
+
+  <label class="felt-label">Bilde-URL (valgfritt)</label>
+  <input type="text" id="f-bilde" placeholder="https://…" />
+
+  <button class="skjema-submit" id="skjema-submit" onclick="sendSkjema()">Legg til i candidates</button>
+  <div class="skjema-feil" id="skjema-feil"></div>
+  <div class="skjema-ok"   id="skjema-ok"></div>
+</div>
+
+<script>
+// ─── Tilstand ────────────────────────────────────────────────────────────────
+
+let alleEvents     = [];
+let aktivFilter    = 'alle';
+let skjulPasserte  = false;
+let antallSynlig   = 0;
+
+// ─── Tabs ────────────────────────────────────────────────────────────────────
+
+function byttTab(tab, knapp) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('aktiv'));
+  knapp.classList.add('aktiv');
+
+  document.getElementById('feed').style.display          = tab === 'review'   ? '' : 'none';
+  document.getElementById('filtre-panel').style.display  = tab === 'review'   ? '' : 'none';
+  document.getElementById('skjema-panel').style.display  = tab === 'legg-til' ? 'block' : 'none';
+}
+
+// ─── Filtre ──────────────────────────────────────────────────────────────────
+
+function velgFilter(knapp) {
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('aktiv'));
+  knapp.classList.add('aktiv');
+  aktivFilter = knapp.dataset.filter;
+  oppdaterVisning();
+}
+
+function erPassert(event) {
+  if (!event.start) return false;
+  return new Date(event.start) < new Date();
+}
+
+function skalVises(event) {
+  if (event._status !== 'pending') return false;
+  if (skjulPasserte && erPassert(event)) return false;
+  if (aktivFilter !== 'alle' && event.kategori !== aktivFilter) return false;
+  return true;
+}
+
+function oppdaterVisning() {
+  skjulPasserte = document.getElementById('skjul-passerte').checked;
+  antallSynlig  = 0;
+
+  document.querySelectorAll('.kort[data-id]').forEach(kort => {
+    const event = alleEvents.find(e => e.id === kort.dataset.id);
+    if (!event) return;
+    const vis = skalVises(event);
+    kort.style.display = vis ? '' : 'none';
+    if (vis) antallSynlig++;
+  });
+
+  oppdaterTeller();
+}
+
+// ─── Teller ──────────────────────────────────────────────────────────────────
+
+function oppdaterTeller(delta = 0) {
+  antallSynlig += delta;
+  if (antallSynlig < 0) antallSynlig = 0;
+  const totalt  = alleEvents.filter(e => e._status === 'pending').length;
+  const el      = document.getElementById('teller');
+  el.textContent = antallSynlig === totalt
+    ? `${totalt} pending`
+    : `${antallSynlig} av ${totalt} pending`;
+
+  const feed = document.getElementById('feed');
+  const harSynlige = feed.querySelectorAll('.kort[data-id]:not([style*="none"])').length;
+  const tomDiv = feed.querySelector('.tom');
+  if (harSynlige === 0 && totalt > 0) {
+    if (!tomDiv) {
+      feed.insertAdjacentHTML('beforeend',
+        '<div class="tom"><strong>Ingen events matcher filteret</strong>Endre filteret eller skru av «Skjul passerte».</div>');
+    }
+  } else {
+    if (tomDiv) tomDiv.remove();
+  }
+}
+
+// ─── Formater ────────────────────────────────────────────────────────────────
+
+function formaterDato(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('nb-NO', {
+    weekday: 'short', day: 'numeric', month: 'short',
+    hour: '2-digit', minute: '2-digit',
+  });
+}
+
+function formaterPris(pris, prisTekst) {
+  if (prisTekst) return prisTekst;
+  if (pris === 0) return 'Gratis';
+  if (pris != null) return `${pris} kr`;
+  return 'Pris ukjent';
+}
+
+// ─── Bygg kort ───────────────────────────────────────────────────────────────
+
+function lagKort(event) {
+  const kort = document.createElement('article');
+  kort.className = 'kort';
+  kort.dataset.id = event.id;
+
+  if (event.bilde) {
+    const img = document.createElement('img');
+    img.src = event.bilde; img.className = 'kort-bilde'; img.alt = '';
+    img.addEventListener('error', () => img.remove(), { once: true });
+    kort.appendChild(img);
+  }
+
+  const kropp = document.createElement('div');
+  kropp.className = 'kort-kropp';
+
+  // Meta
+  const meta = document.createElement('div');
+  meta.className = 'kort-meta';
+  const badge = document.createElement('span');
+  badge.className = `badge ${event.kategori}`; badge.textContent = event.kategori;
+  const dato  = document.createElement('span');
+  dato.style.cssText = 'color:var(--dempet);font-size:.8rem';
+  dato.textContent = formaterDato(event.start);
+  meta.appendChild(badge);
+  if (event._broadcastId === undefined) {
+    const m = document.createElement('span');
+    m.className = 'badge manuell'; m.textContent = 'manuell';
+    meta.appendChild(m);
+  }
+  if (erPassert(event)) {
+    const p = document.createElement('span');
+    p.style.cssText = 'color:var(--korall);font-size:.75rem'; p.textContent = 'passert';
+    meta.appendChild(p);
+  }
+  meta.appendChild(dato);
+  kropp.appendChild(meta);
+
+  // Tittel
+  const tittel = document.createElement('h2');
+  tittel.className = 'kort-tittel'; tittel.textContent = event.tittel;
+  kropp.appendChild(tittel);
+
+  // Info-rad
+  const info = document.createElement('div');
+  info.className = 'kort-info';
+  info.innerHTML = `
+    <span>${event.sted ?? '—'}</span>
+    <span>${formaterPris(event.pris, event.prisTekst)}</span>
+    ${event.lenke ? `<a href="${event.lenke}" target="_blank" rel="noopener">billett / info ↗</a>` : ''}
+  `;
+  kropp.appendChild(info);
+
+  // Beskrivelse
+  if (event.beskrivelse) {
+    const besk = document.createElement('p');
+    besk.className = 'kort-beskrivelse'; besk.textContent = event.beskrivelse;
+    kropp.appendChild(besk);
+    if (event.beskrivelse.length > 120) {
+      const lm = document.createElement('button');
+      lm.className = 'les-mer'; lm.textContent = 'les mer';
+      lm.onclick = () => {
+        besk.classList.toggle('vis-mer');
+        lm.textContent = besk.classList.contains('vis-mer') ? 'vis mindre' : 'les mer';
+      };
+      kropp.appendChild(lm);
+    }
+  }
+
+  // Kuratortekst
+  const ktLabel = document.createElement('label');
+  ktLabel.className = 'felt-label'; ktLabel.textContent = 'Kuratortekst (vises i kortet)';
+  const ta = document.createElement('textarea');
+  ta.placeholder = 'Skriv en kort redaksjonell begrunnelse…'; ta.rows = 2;
+  kropp.appendChild(ktLabel); kropp.appendChild(ta);
+
+  // Knapper
+  const rad = document.createElement('div');
+  rad.className = 'knapp-rad';
+  const gKnapp = document.createElement('button');
+  gKnapp.className = 'knapp knapp-godkjenn'; gKnapp.textContent = '✓ Godkjenn';
+  const aKnapp = document.createElement('button');
+  aKnapp.className = 'knapp knapp-avslaa'; aKnapp.textContent = '✕ Avslå';
+  rad.appendChild(gKnapp); rad.appendChild(aKnapp);
+  kropp.appendChild(rad);
+  kort.appendChild(kropp);
+
+  // Godkjenn
+  gKnapp.onclick = async () => {
+    gKnapp.disabled = aKnapp.disabled = true; gKnapp.textContent = '…';
+    const res  = await fetch(`/api/godkjenn/${encodeURIComponent(event.id)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kuratortekst: ta.value }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      rad.remove();
+      const div = document.createElement('div');
+      div.className = 'git-melding';
+      div.innerHTML = '<strong>✓ Godkjent — klar til publisering</strong>Kjør fra paaby/-roten:';
+      const btn = document.createElement('button');
+      btn.className = 'git-kommando'; btn.textContent = data.gitKommando;
+      btn.onclick = async () => { await navigator.clipboard.writeText(data.gitKommando); btn.textContent = '✓ kopiert!'; setTimeout(() => btn.textContent = data.gitKommando, 2000); };
+      div.appendChild(btn); kropp.appendChild(div);
+      event._status = 'godkjent';
+      oppdaterVisning();
+    } else { gKnapp.disabled = aKnapp.disabled = false; gKnapp.textContent = '✓ Godkjenn'; alert(data.feil); }
+  };
+
+  // Avslå
+  aKnapp.onclick = async () => {
+    gKnapp.disabled = aKnapp.disabled = true; aKnapp.textContent = '…';
+    const res  = await fetch(`/api/avslaa/${encodeURIComponent(event.id)}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      kort.style.transition = 'opacity .25s'; kort.style.opacity = '0';
+      setTimeout(() => { kort.remove(); event._status = 'avslatt'; oppdaterVisning(); }, 250);
+    } else { gKnapp.disabled = aKnapp.disabled = false; aKnapp.textContent = '✕ Avslå'; }
+  };
+
+  return kort;
+}
+
+// ─── Last inn ────────────────────────────────────────────────────────────────
+
+async function lastInn() {
+  const res    = await fetch('/api/candidates');
+  alleEvents   = await res.json();
+
+  // Sorter på startdato, tidligst først
+  alleEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '';
+  alleEvents.forEach(e => feed.appendChild(lagKort(e)));
+  oppdaterVisning();
+}
+
+// ─── Manuelt skjema ──────────────────────────────────────────────────────────
+
+function velgKategori(knapp) {
+  document.querySelectorAll('.kategori-knapp').forEach(k => k.classList.remove('aktiv'));
+  knapp.classList.add('aktiv');
+}
+
+async function sendSkjema() {
+  const feil = document.getElementById('skjema-feil');
+  const ok   = document.getElementById('skjema-ok');
+  feil.style.display = ok.style.display = 'none';
+
+  const kategori = document.querySelector('.kategori-knapp.aktiv')?.dataset.kat ?? 'musikk';
+  const tittel   = document.getElementById('f-tittel').value.trim();
+  const start    = document.getElementById('f-start').value.trim();
+
+  if (!tittel || !start) {
+    feil.textContent = 'Tittel og starttidspunkt er påkrevd.';
+    feil.style.display = 'block'; return;
+  }
+
+  const submit = document.getElementById('skjema-submit');
+  submit.disabled = true; submit.textContent = '…';
+
+  const res  = await fetch('/api/manuell', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      tittel, kategori, start,
+      slutt:     document.getElementById('f-slutt').value.trim()    || null,
+      sted:      document.getElementById('f-sted').value.trim()     || null,
+      adresse:   document.getElementById('f-adresse').value.trim()  || null,
+      pris:      document.getElementById('f-pris').value.trim()     || null,
+      prisTekst: document.getElementById('f-pristekst').value.trim()|| null,
+      beskrivelse: document.getElementById('f-besk').value.trim()   || null,
+      lenke:     document.getElementById('f-lenke').value.trim()    || null,
+      bilde:     document.getElementById('f-bilde').value.trim()    || null,
+    }),
+  });
+  const data = await res.json();
+  submit.disabled = false; submit.textContent = 'Legg til i candidates';
+
+  if (data.ok) {
+    ok.textContent = `✓ Lagt til (id: ${data.id}). Bytt til Review-fanen for å godkjenne.`;
+    ok.style.display = 'block';
+    // Nullstill skjema
+    ['f-tittel','f-start','f-slutt','f-sted','f-adresse','f-pris','f-pristekst','f-besk','f-lenke','f-bilde']
+      .forEach(id => document.getElementById(id).value = '');
+    // Last inn feed på nytt
+    await lastInn();
+  } else {
+    feil.textContent = data.feil ?? 'Ukjent feil'; feil.style.display = 'block';
+  }
+}
+
+lastInn();
+</script>
+</body>
+</html>
