@@ -5752,5 +5752,24 @@
     "bilde": null,
     "sistVerifisert": "2026-07-19T23:15:42.420Z",
     "_status": "godkjent"
+  },
+  {
+    "id": "herrnilsen-groovelab-2026-07-21",
+    "tittel": "GrooveLAB",
+    "kategori": "musikk",
+    "sted": "HerrNilsen",
+    "adresse": "C. J. Hambros plass 5, 0164 Oslo, Oslo",
+    "lat": 59.9151,
+    "lng": 10.7403,
+    "start": "2026-07-21T20:00:00+02:00",
+    "slutt": null,
+    "pris": 0,
+    "prisTekst": "Gratis",
+    "beskrivelse": "GrooveLAB kombinerer smooth jazz, soul og blues i en avslappet og groovy konsertopplevelse. Funky rytmer og lekent samspill på HerrNilsen.",
+    "kuratortekst": null,
+    "lenke": "https://herrnilsen.ticketco.events/no/nb/e/groovelab/tellus",
+    "bilde": null,
+    "sistVerifisert": "2026-07-19T23:55:14.839Z",
+    "_status": "pending"
   }
 ]
