@@ -11,6 +11,7 @@ import { hentLagredeIder }                         from './application/lagret.js
 import { visEventer }                              from './presentation/feed.js';
 import { initModal, åpneModal, lukkModal,
          hentÅpenEvent }                           from './presentation/modal.js';
+import { aktiverSporing, trackEvent }              from './application/sporing.js';
 
 
 /* ========================
@@ -144,6 +145,11 @@ function initFiltre() {
 
       oppdaterNullstillKnapp();
       oppdaterFeed();
+
+      /* Sporing: track kun når filter aktiveres, ikke ved deaktivering */
+      if (chip.classList.contains('aktiv')) {
+        trackEvent('filter_valgt', { type, verdi: chip.dataset.verdi ?? type });
+      }
     });
   });
 }
@@ -236,6 +242,7 @@ function initVisAvstandKnapp() {
     knapp.setAttribute('aria-pressed', 'true');
     knapp.classList.add('aktiv');
     skjulStatus(statusEl);
+    trackEvent('avstand_aktivert');
     oppdaterFeed();
   });
 }
@@ -324,8 +331,31 @@ function initLagretSync() {
       modalHjerte.textContent = lagret ? '♥ lagret' : '♡ lagre';
       modalHjerte.setAttribute('aria-pressed', String(lagret));
     }
+    if (lagret) trackEvent('event_lagret', { id });
     if (tilstand.visLagret) oppdaterFeed();
   });
+}
+
+
+/* ========================
+   SAMTYKKE OG SPORING
+   ======================== */
+
+function initSamtykke() {
+  if (localStorage.getItem('paaby-samtykke') === 'ja') {
+    aktiverSporing();
+    return;
+  }
+
+  const stripe = document.getElementById('samtykke-stripe');
+  if (!stripe) return;
+  stripe.classList.remove('skjult');
+
+  document.getElementById('samtykke-ok').addEventListener('click', () => {
+    localStorage.setItem('paaby-samtykke', 'ja');
+    stripe.classList.add('skjult');
+    aktiverSporing();
+  }, { once: true });
 }
 
 
@@ -372,6 +402,7 @@ async function startApp() {
   initHashRuting();
   initVisAvstandKnapp();
   initSortering();
+  initSamtykke();
 
   try {
     tilstand.alleEventer = await hentEventer();

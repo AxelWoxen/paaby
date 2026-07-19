@@ -31,6 +31,13 @@
   <link rel="stylesheet" href="css/reset.css" />
   <link rel="stylesheet" href="css/variabler.css" />
   <link rel="stylesheet" href="css/stil.css" />
+
+  <!-- ==============================
+       ANALYSE-SCRIPT
+       Lim inn script-taggen fra din analyse-leverandør her,
+       og definer window.__paaby_track for å koble sporingsmodulen til den.
+       Se js/application/sporing.js for eksempler og instruksjoner.
+       ============================== -->
 </head>
 
 <body>
@@ -163,6 +170,12 @@
     </div>
   </div>
 
+
+  <!-- Samtykke-stripe — vises av main.js hvis brukeren ikke har svart ennå -->
+  <div id="samtykke-stripe" class="samtykke-stripe skjult" role="region" aria-label="Informasjon om statistikk">
+    <p class="samtykke-tekst">Vi bruker anonym statistikk for å forbedre påby.</p>
+    <button id="samtykke-ok" class="samtykke-knapp">Ok</button>
+  </div>
 
   <script type="module" src="js/main.js"></script>
 

@@ -8,6 +8,7 @@ import { formaterPrisTekst, formaterTidKort,
          kategoriVisningsnavn }                        from '../application/formatering.js';
 import { erGyldigUrl }                                 from '../application/validering.js';
 import { hentEventbilde, KATEGORI_BILDER }             from '../application/kategori-bilder.js';
+import { trackEvent }                                  from '../application/sporing.js';
 import { synkroniserKortHjerte }                       from './feed.js';
 
 /* Konfigurasjon — fyll inn produksjonsdomene og evt. feedback-URL. */
@@ -30,6 +31,7 @@ let forrigeAktivtElement   = null; /* fokus returneres hit når modal lukkes */
    ======================== */
 
 export function åpneModal(event) {
+  trackEvent('kort_åpnet', { kategori: event.kategori });
   åpenEvent            = event;
   forrigeAktivtElement = document.activeElement;
 
@@ -218,6 +220,7 @@ function byggHandlinger(event) {
     a.rel       = 'noopener noreferrer';
     a.className = 'knapp knapp-primaer';
     a.textContent = 'mer info / billett';
+    a.addEventListener('click', () => trackEvent('mer_info_klikket', { id: event.id }), { once: true });
     div.appendChild(a);
   }
 
@@ -301,6 +304,7 @@ function leggTilModalLyttere(event) {
 }
 
 async function delEvent(event, knapp) {
+  trackEvent('event_delt', { id: event.id });
   const base  = KONFIG.prodDomene || window.location.origin;
   const path  = window.location.pathname;
   const delUrl = `${base}${path}#event/${encodeURIComponent(event.id)}`;

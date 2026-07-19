@@ -795,3 +795,40 @@ body.modal-aapen {
     width: 100%;
   }
 }
+
+
+/* === SAMTYKKE-STRIPE === */
+
+.samtykke-stripe {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-m);
+  padding: var(--gap-s) var(--gap-m);
+  padding-bottom: calc(var(--gap-s) + env(safe-area-inset-bottom));
+  background: var(--flate-2);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  font-size: 0.8rem;
+  color: var(--graa);
+}
+
+.samtykke-knapp {
+  font-family: var(--font-tekst);
+  font-size: 0.8rem;
+  background: var(--korall);
+  color: white;
+  padding: 0.3rem 1rem;
+  border-radius: var(--radius-s);
+  white-space: nowrap;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.samtykke-knapp:hover {
+  opacity: 0.85;
+}
