@@ -152,7 +152,12 @@ export function visForside(utvalg) {
 
 export function initSeAlt() {
   const knapp  = document.getElementById('se-alt-knapp');
-  const scroll = () => document.getElementById('hoveddel').scrollIntoView({ behavior: 'smooth' });
+  const scroll = () => {
+    const topbar   = document.querySelector('.topbar');
+    const offset   = topbar ? topbar.offsetHeight : 0;
+    const topp     = document.getElementById('hoveddel').getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: topp, behavior: 'smooth' });
+  };
   knapp.addEventListener('click', scroll);
 
   // Flytende pill: separat element i body, aldri i dokumentflyten
