@@ -13,6 +13,7 @@ import { initModal, åpneModal, lukkModal,
          hentÅpenEvent }                           from './presentation/modal.js';
 import { aktiverSporing, trackEvent }              from './application/sporing.js';
 import { velgUtvalg, visForside, initSeAlt }      from './presentation/forside.js';
+import { visFølgerVisning }                        from './presentation/følger.js';
 
 
 /* ========================
@@ -34,6 +35,7 @@ const tilstand = {
   visAvstand:     false,           /* Viser avstand på kort og i modal */
   posisjonLastes: false,           /* Mutex — hindrer samtidige geolocation-forespørsler */
   visLagret:      false,
+  visFølger:      false,
 };
 
 
@@ -42,6 +44,12 @@ const tilstand = {
    ======================== */
 
 function oppdaterFeed() {
+  if (tilstand.visFølger) {
+    visFølgerVisning(tilstand.alleEventer, oppdaterFeed);
+    oppdaterTreffLinje(0);
+    return;
+  }
+
   let eventer;
 
   if (tilstand.visLagret) {
@@ -88,18 +96,30 @@ function oppdaterFeed() {
 }
 
 function oppdaterTreffLinje(antall) {
-  const teller       = document.getElementById('treff-teller');
-  const tilbakeKnapp = document.getElementById('vis-alle');
+  const teller        = document.getElementById('treff-teller');
+  const tilbakeKnapp  = document.getElementById('vis-alle');
+  const lagretInfo    = document.getElementById('lagret-info');
+  const sorteringDiv  = document.querySelector('.sortering-kontroll');
+  const sidestolpe    = document.querySelector('.sidestolpe');
 
-  const lagretInfo = document.getElementById('lagret-info');
-  if (tilstand.visLagret) {
+  if (tilstand.visFølger) {
+    teller.textContent = 'Steder du følger';
+    tilbakeKnapp.classList.remove('skjult');
+    lagretInfo?.classList.add('skjult');
+    sorteringDiv?.classList.add('skjult');
+    sidestolpe?.classList.add('skjult');
+  } else if (tilstand.visLagret) {
     teller.textContent = antall === 0 ? 'ingenting lagret' : `${antall} forslag lagret`;
     tilbakeKnapp.classList.remove('skjult');
     lagretInfo?.classList.remove('skjult');
+    sorteringDiv?.classList.remove('skjult');
+    sidestolpe?.classList.remove('skjult');
   } else {
     teller.textContent = `${antall} forslag`;
     tilbakeKnapp.classList.add('skjult');
     lagretInfo?.classList.add('skjult');
+    sorteringDiv?.classList.remove('skjult');
+    sidestolpe?.classList.remove('skjult');
   }
 }
 
@@ -307,21 +327,44 @@ function skjulStatus(el) {
    LAGRET-VISNING
    ======================== */
 
+function nullstillModusKnapper() {
+  document.getElementById('vis-lagret')?.classList.remove('aktiv');
+  document.getElementById('vis-lagret')?.setAttribute('aria-pressed', 'false');
+  document.getElementById('vis-følger')?.classList.remove('aktiv');
+  document.getElementById('vis-følger')?.setAttribute('aria-pressed', 'false');
+}
+
 function initLagretKnapp() {
   const visLagretKnapp = document.getElementById('vis-lagret');
   const visAlleKnapp   = document.getElementById('vis-alle');
 
   visLagretKnapp.addEventListener('click', () => {
+    nullstillModusKnapper();
     tilstand.visLagret = true;
+    tilstand.visFølger = false;
     visLagretKnapp.classList.add('aktiv');
     visLagretKnapp.setAttribute('aria-pressed', 'true');
     oppdaterFeed();
   });
 
   visAlleKnapp.addEventListener('click', () => {
+    nullstillModusKnapper();
     tilstand.visLagret = false;
-    visLagretKnapp.classList.remove('aktiv');
-    visLagretKnapp.setAttribute('aria-pressed', 'false');
+    tilstand.visFølger = false;
+    oppdaterFeed();
+  });
+}
+
+function initFølgerKnapp() {
+  const visFølgerKnapp = document.getElementById('vis-følger');
+  if (!visFølgerKnapp) return;
+
+  visFølgerKnapp.addEventListener('click', () => {
+    nullstillModusKnapper();
+    tilstand.visFølger = true;
+    tilstand.visLagret = false;
+    visFølgerKnapp.classList.add('aktiv');
+    visFølgerKnapp.setAttribute('aria-pressed', 'true');
     oppdaterFeed();
   });
 }
@@ -410,6 +453,7 @@ async function startApp() {
   initSortering();
   initSamtykke();
 
+  initFølgerKnapp();
   initSeAlt();
 
   try {

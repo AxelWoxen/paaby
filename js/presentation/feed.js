@@ -53,7 +53,7 @@ function lagBildeEllement(event) {
    KORTET
    ======================== */
 
-function lagKort(event) {
+export function lagKort(event) {
   const lagret = erLagret(event.id);
 
   const artikkel = document.createElement('article');
@@ -214,7 +214,7 @@ export function visEventer(dagGrupper, erLagretVisning) {
    HENDELSELYTTERE
    ======================== */
 
-function leggTilKortLyttere(feed, eventer) {
+export function leggTilKortLyttere(feed, eventer) {
   feed.querySelectorAll('.kort').forEach((kort) => {
     kort.addEventListener('click', (hendelse) => {
       if (hendelse.target.closest('.hjerte-knapp')) return;

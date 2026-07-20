@@ -94,6 +94,28 @@ body {
   background: var(--flate-2);
 }
 
+.følger-topbar-knapp {
+  font-size: 0.8rem;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--flate-2);
+  color: var(--graa);
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.følger-topbar-knapp:hover {
+  border-color: var(--paper);
+  color: var(--paper);
+}
+
+.følger-topbar-knapp.aktiv {
+  border-color: var(--korall);
+  color: var(--korall);
+  background: rgba(255, 77, 94, 0.08);
+}
+
 
 /* === FILTRE === */
 
@@ -304,6 +326,51 @@ body {
   font-size: 0.9rem;
   line-height: 1.6;
   margin-top: var(--gap-l);
+}
+
+
+/* === FØLGER-VISNING === */
+
+.følger-seksjon {
+  margin-top: var(--gap-xl);
+}
+
+.følger-seksjon:first-child {
+  margin-top: var(--gap-m);
+}
+
+.følger-seksjon-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--gap-m);
+  padding-bottom: var(--gap-s);
+  border-bottom: 1px solid var(--flate-2);
+  margin-bottom: var(--gap-m);
+}
+
+.følger-seksjon-tittel {
+  font-family: var(--font-tittel);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--paper);
+}
+
+.avfølg-knapp {
+  font-size: 0.72rem;
+  color: var(--graa);
+  margin-left: auto;
+  transition: color 0.15s;
+}
+
+.avfølg-knapp:hover {
+  color: var(--korall);
+}
+
+.følger-tom {
+  font-size: 0.875rem;
+  color: var(--graa);
+  padding: var(--gap-m) 0;
+  opacity: 0.7;
 }
 
 
