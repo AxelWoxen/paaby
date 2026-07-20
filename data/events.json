@@ -15,7 +15,8 @@
     "kuratortekst": "Et av de sikreste Oslo-tipsene når du ikke er klar for at helga skal være over.",
     "lenke": "https://www.blaaoslo.no/events/frank-znort-quartet/0PjwRoGFq6",
     "bilde": null,
-    "sistVerifisert": "2026-07-15T04:00:00+02:00"
+    "sistVerifisert": "2026-07-15T04:00:00+02:00",
+    "gjentas": "ukentlig:søndag"
   },
   {
     "id": "xstalker-superspaz-haerverk-2026-07-23",
@@ -449,7 +450,7 @@
     "adresse": "St. Halvards gate 33, 0192 Oslo, Oslo",
     "lat": 59.9064,
     "lng": 10.7765,
-    "start": "2026-07-31T19:00:00+02:00",
+    "start": "2026-06-26T19:00:00+02:00",
     "slutt": null,
     "pris": 139,
     "prisTekst": null,
@@ -458,7 +459,8 @@
     "lenke": "https://tikkio.com/events/61979",
     "bilde": null,
     "sistVerifisert": "2026-07-19T23:16:16.365Z",
-    "fremhevet": true
+    "fremhevet": true,
+    "gjentas": "månedlig:siste-torsdag"
   },
   {
     "id": "dattera-til-hagen-standup-sommershow-pa-dattera-2026-07-23",

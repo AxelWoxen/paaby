@@ -13,6 +13,7 @@ import { initModal, åpneModal, lukkModal,
          hentÅpenEvent }                           from './presentation/modal.js';
 import { aktiverSporing, trackEvent }              from './application/sporing.js';
 import { velgUtvalg, visForside, initSeAlt }      from './presentation/forside.js';
+import { utvidGjentakende }                        from './application/gjentas.js';
 import { visFølgerVisning }                        from './presentation/følger.js';
 
 
@@ -334,17 +335,30 @@ function nullstillModusKnapper() {
   document.getElementById('vis-følger')?.setAttribute('aria-pressed', 'false');
 }
 
+function scrollTilHoveddel() {
+  document.getElementById('hoveddel')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 function initLagretKnapp() {
   const visLagretKnapp = document.getElementById('vis-lagret');
   const visAlleKnapp   = document.getElementById('vis-alle');
 
   visLagretKnapp.addEventListener('click', () => {
+    if (tilstand.visLagret) {
+      nullstillModusKnapper();
+      tilstand.visLagret = false;
+      tilstand.visFølger = false;
+      oppdaterFeed();
+      scrollTilHoveddel();
+      return;
+    }
     nullstillModusKnapper();
     tilstand.visLagret = true;
     tilstand.visFølger = false;
     visLagretKnapp.classList.add('aktiv');
     visLagretKnapp.setAttribute('aria-pressed', 'true');
     oppdaterFeed();
+    scrollTilHoveddel();
   });
 
   visAlleKnapp.addEventListener('click', () => {
@@ -360,12 +374,21 @@ function initFølgerKnapp() {
   if (!visFølgerKnapp) return;
 
   visFølgerKnapp.addEventListener('click', () => {
+    if (tilstand.visFølger) {
+      nullstillModusKnapper();
+      tilstand.visFølger = false;
+      tilstand.visLagret = false;
+      oppdaterFeed();
+      scrollTilHoveddel();
+      return;
+    }
     nullstillModusKnapper();
     tilstand.visFølger = true;
     tilstand.visLagret = false;
     visFølgerKnapp.classList.add('aktiv');
     visFølgerKnapp.setAttribute('aria-pressed', 'true');
     oppdaterFeed();
+    scrollTilHoveddel();
   });
 }
 
@@ -457,7 +480,7 @@ async function startApp() {
   initSeAlt();
 
   try {
-    tilstand.alleEventer = await hentEventer();
+    tilstand.alleEventer = utvidGjentakende(await hentEventer());
     visForside(velgUtvalg(tilstand.alleEventer));
     oppdaterFeed();
     håndterHash();
