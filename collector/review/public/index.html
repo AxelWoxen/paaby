@@ -82,8 +82,9 @@
       transition: all .15s;
     }
     .filter-chip.aktiv { background: var(--flate3); color: var(--tekst); border-color: var(--flate3); }
-    .filter-chip.aktiv.musikk { color: var(--lime); border-color: var(--lime); background: rgba(200,255,77,.1); }
-    .filter-chip.aktiv.klubb  { color: var(--korall); border-color: var(--korall); background: rgba(255,107,91,.1); }
+    .filter-chip.aktiv.musikk  { color: var(--lime); border-color: var(--lime); background: rgba(200,255,77,.1); }
+    .filter-chip.aktiv.klubb   { color: var(--korall); border-color: var(--korall); background: rgba(255,107,91,.1); }
+    .filter-chip.aktiv.pafunn  { color: #b44dff; border-color: #b44dff; background: rgba(180,77,255,.1); }
 
     .skjul-passerte {
       margin-left: auto;
@@ -247,7 +248,7 @@
   <button class="filter-chip musikk" data-filter="musikk" onclick="velgFilter(this)">Musikk</button>
   <button class="filter-chip klubb"  data-filter="klubb"  onclick="velgFilter(this)">Klubb</button>
   <button class="filter-chip"        data-filter="mat"    onclick="velgFilter(this)">Mat</button>
-  <button class="filter-chip"        data-filter="pafunn" onclick="velgFilter(this)">Påfunn</button>
+  <button class="filter-chip pafunn"  data-filter="pafunn" onclick="velgFilter(this)">Påfunn</button>
 
   <label class="skjul-passerte">
     <input type="checkbox" id="skjul-passerte" onchange="oppdaterVisning()" /> Skjul passerte

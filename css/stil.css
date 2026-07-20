@@ -370,7 +370,7 @@ body {
 .kategori-musikk  { background: rgba(200, 255, 77, 0.15);  color: var(--lime); }
 .kategori-mat     { background: rgba(255, 77, 94, 0.15);   color: var(--korall); }
 .kategori-klubb   { background: rgba(244, 241, 234, 0.12); color: var(--paper); }
-.kategori-pafunn  { background: rgba(244, 241, 234, 0.10); color: var(--graa); }
+.kategori-pafunn  { background: rgba(180, 77, 255, 0.15);  color: #b44dff; }
 
 .hjerte-knapp {
   position: absolute;
@@ -701,7 +701,7 @@ body.modal-aapen {
 .kort-bilde-placeholder.kategori-musikk  { background: rgba(200, 255, 77, 0.08); }
 .kort-bilde-placeholder.kategori-mat     { background: rgba(255, 77, 94, 0.08);  }
 .kort-bilde-placeholder.kategori-klubb   { background: rgba(244, 241, 234, 0.06); }
-.kort-bilde-placeholder.kategori-pafunn  { background: rgba(244, 241, 234, 0.06); }
+.kort-bilde-placeholder.kategori-pafunn  { background: rgba(180, 77, 255, 0.08); }
 
 
 /* === FILTER BUNNRAD (Vis avstand + Nullstill) === */
