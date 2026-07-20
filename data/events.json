@@ -520,5 +520,23 @@
     "lenke": "https://www.ticketmaster.no/event/745320542",
     "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_gNWgaL9Bw/tr:w-750",
     "sistVerifisert": "2026-07-19T23:45:11.770Z"
+  },
+  {
+    "id": "salt-salt-badstu-kunst-og-bar-ved-fjorden-2026-07-20",
+    "tittel": "SALT – badstu, kunst og bar ved fjorden",
+    "kategori": "pafunn",
+    "sted": "SALT",
+    "adresse": "Langkaia 1, 0150 Oslo, Oslo",
+    "lat": 59.9075,
+    "lng": 10.753,
+    "start": "2026-07-20T12:00:00+02:00",
+    "slutt": null,
+    "pris": 0,
+    "prisTekst": "Gratis",
+    "beskrivelse": "Fjordnært kulturareal med badstuer, kunst, mat og bar. Åpent daglig – bare å stikke innom på dagtid eller booke badstu.",
+    "kuratortekst": null,
+    "lenke": null,
+    "bilde": null,
+    "sistVerifisert": "2026-07-20T00:15:22.650Z"
   }
 ]
