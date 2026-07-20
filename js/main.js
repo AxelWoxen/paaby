@@ -91,12 +91,15 @@ function oppdaterTreffLinje(antall) {
   const teller       = document.getElementById('treff-teller');
   const tilbakeKnapp = document.getElementById('vis-alle');
 
+  const lagretInfo = document.getElementById('lagret-info');
   if (tilstand.visLagret) {
     teller.textContent = antall === 0 ? 'ingenting lagret' : `${antall} forslag lagret`;
     tilbakeKnapp.classList.remove('skjult');
+    lagretInfo?.classList.remove('skjult');
   } else {
     teller.textContent = `${antall} forslag`;
     tilbakeKnapp.classList.add('skjult');
+    lagretInfo?.classList.add('skjult');
   }
 }
 
