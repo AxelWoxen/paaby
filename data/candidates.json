@@ -5771,5 +5771,29 @@
     "bilde": null,
     "sistVerifisert": "2026-07-19T23:55:14.839Z",
     "_status": "pending"
+  },
+  {
+    "id": "jaeger-helt-texas-jaegers-torsdagsklubb-2026-07-23",
+    "tittel": "Helt Texas – Jægers torsdagsklubb",
+    "kategori": "klubb",
+    "sted": "Jaeger",
+    "adresse": "Grensen 9, 0159 Oslo, Oslo",
+    "lat": 59.9135,
+    "lng": 10.7419,
+    "start": "2026-07-23T22:00:00+02:00",
+    "slutt": null,
+    "pris": 0,
+    "prisTekst": "Gratis",
+    "beskrivelse": "Fast torsdagskonsept på Jæger, ledet av Ole HK. Elektronisk klubbkveld i Gården.",
+    "kuratortekst": null,
+    "lenke": "https://jaegeroslo.no/events/",
+    "bilde": null,
+    "sistVerifisert": "2026-07-19T23:59:53.000Z",
+    "_status": "pending"
+  }
+]
+ilde": null,
+    "sistVerifisert": "2026-07-19T23:59:52.999Z",
+    "_status": "pending"
   }
 ]
