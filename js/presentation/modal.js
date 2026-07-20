@@ -2,6 +2,9 @@
    Bygger DOM-elementer direkte (ingen innerHTML med brukerdata) for å unngå XSS.
    Håndterer fokus-felle, hash-ruting og synkronisering av lagret-tilstand. */
 
+/* ─── IKON ─────────────────────────────────────────────────────────────────── */
+const BINDERS_SVG_SM = '<svg class="binders-ikon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
 import { erLagret, veksleLagret }                     from '../application/lagret.js';
 import { formaterPrisTekst, formaterTidKort,
          formaterAvstand, formaterVerifisert,
@@ -234,9 +237,9 @@ function byggBunn(event) {
   /* Lagre-knapp */
   const lagretNå = erLagret(event.id);
   const hjerteKnapp = document.createElement('button');
-  hjerteKnapp.className = 'knapp-ghost modal-hjerte';
+  hjerteKnapp.className = `knapp-ghost modal-hjerte${lagretNå ? ' lagret' : ''}`;
   hjerteKnapp.dataset.id = event.id;
-  hjerteKnapp.textContent = lagretNå ? '♥ lagret' : '♡ lagre';
+  hjerteKnapp.innerHTML = `${BINDERS_SVG_SM} <span class="modal-hjerte-tekst">${lagretNå ? 'lagret' : 'lagre'}</span>`;
   hjerteKnapp.setAttribute('aria-pressed', String(lagretNå));
   div.appendChild(hjerteKnapp);
 
@@ -286,7 +289,8 @@ function byggTillit(event) {
 function leggTilModalLyttere(event) {
   document.querySelector('.modal-hjerte').addEventListener('click', (e) => {
     const erNåLagret = veksleLagret(event.id);
-    e.currentTarget.textContent = erNåLagret ? '♥ lagret' : '♡ lagre';
+    e.currentTarget.classList.toggle('lagret', erNåLagret);
+    e.currentTarget.querySelector('.modal-hjerte-tekst').textContent = erNåLagret ? 'lagret' : 'lagre';
     e.currentTarget.setAttribute('aria-pressed', String(erNåLagret));
 
     /* Oppdater hjertene i feeden bak modalen */

@@ -1,6 +1,11 @@
 /* feed.js — presentasjonslaget for kortlisten.
    Bygger DOM-elementer direkte (ingen innerHTML med brukerdata) for å unngå XSS. */
 
+/* ─── IKON ───────────────────────────────────────────────────────────────────
+   Bytt ut path-dataene her for å bruke et annet binders-ikon.
+   Eller erstatt hele strengen med en annen SVG-form. */
+const BINDERS_SVG = '<svg class="binders-ikon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
 import { erLagret, veksleLagret }                               from '../application/lagret.js';
 import { formaterPrisTekst, formaterTid, formaterAvstand,
          kategoriVisningsnavn }                                  from '../application/formatering.js';
@@ -127,7 +132,7 @@ function lagHjerteKnapp(id, erLagretNå) {
   const knapp = document.createElement('button');
   knapp.className = `hjerte-knapp${erLagretNå ? ' lagret' : ''}`;
   knapp.dataset.id = id;
-  knapp.textContent = erLagretNå ? '♥' : '♡';
+  knapp.innerHTML = BINDERS_SVG;
   knapp.setAttribute('aria-pressed', String(erLagretNå));
   knapp.setAttribute('aria-label', erLagretNå ? 'Fjern fra lagret' : 'Lagre arrangement');
   return knapp;
@@ -145,7 +150,6 @@ function lagHjerteKnapp(id, erLagretNå) {
 export function synkroniserKortHjerte(id, erNåLagret) {
   document.querySelectorAll(`.hjerte-knapp[data-id]`).forEach((knapp) => {
     if (knapp.dataset.id !== id) return;
-    knapp.textContent = erNåLagret ? '♥' : '♡';
     knapp.classList.toggle('lagret', erNåLagret);
     knapp.setAttribute('aria-pressed', String(erNåLagret));
     knapp.setAttribute('aria-label', erNåLagret ? 'Fjern fra lagret' : 'Lagre arrangement');
@@ -233,10 +237,16 @@ function leggTilKortLyttere(feed, eventer) {
       const erNåLagret  = veksleLagret(id);
 
       /* Oppdater dette kortet */
-      knapp.textContent = erNåLagret ? '♥' : '♡';
       knapp.classList.toggle('lagret', erNåLagret);
       knapp.setAttribute('aria-pressed', String(erNåLagret));
       knapp.setAttribute('aria-label', erNåLagret ? 'Fjern fra lagret' : 'Lagre arrangement');
+
+      /* Liten pop-animasjon ved lagring */
+      if (erNåLagret) {
+        knapp.classList.remove('binders-pop');
+        void knapp.offsetWidth; /* tving reflow for å re-trigge animasjonen */
+        knapp.classList.add('binders-pop');
+      }
 
       /* Informer resten av appen (main.js lytter for å oppdatere feed og modal) */
       document.dispatchEvent(new CustomEvent('paaby:lagret-endret', {

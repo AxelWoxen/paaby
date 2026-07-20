@@ -325,7 +325,8 @@
     "kuratortekst": "Bra søndagssyssel selv om du egentlig bare skulle titte.",
     "lenke": "https://somo.social/no/e/prinsen-platemesse-pa-folk-726",
     "bilde": null,
-    "sistVerifisert": "2026-07-15T04:00:00+02:00"
+    "sistVerifisert": "2026-07-15T04:00:00+02:00",
+    "fremhevet": false
   },
   {
     "id": "bla-gatefest-2026-08-08",
@@ -362,7 +363,8 @@
     "kuratortekst": null,
     "lenke": "https://www.ticketmaster.no/event/1450533178?brand=johndee&camefrom=CFC_NO_Rockefeller_Big_Latin_Party_080826_Billettsalg&utm_campaign=NO_Rockefeller_Big_Latin_Party_080826_Billettsalg&utm_content=NO&utm_medium=referral&utm_source=Website",
     "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_I5h3rB1Mz/tr:w-750",
-    "sistVerifisert": "2026-07-19T22:58:12.461Z"
+    "sistVerifisert": "2026-07-19T22:58:12.461Z",
+    "fremhevet": false
   },
   {
     "id": "john-dee-dancing-the-conga-2026-08-13",
@@ -417,7 +419,8 @@
     "kuratortekst": null,
     "lenke": "https://haugenoslo.no/bingoprogram/",
     "bilde": null,
-    "sistVerifisert": "2026-07-19T23:16:02.694Z"
+    "sistVerifisert": "2026-07-19T23:16:02.694Z",
+    "fremhevet": true
   },
   {
     "id": "gamla-beat-bar-the-90-s-hiphop-r-n-b-party-oslo-2026-10-10",
@@ -435,7 +438,8 @@
     "kuratortekst": null,
     "lenke": "https://www.tickettailor.com/events/hiphoprnb/2120546",
     "bilde": null,
-    "sistVerifisert": "2026-07-19T23:16:09.456Z"
+    "sistVerifisert": "2026-07-19T23:16:09.456Z",
+    "fremhevet": true
   },
   {
     "id": "fuglen-gamlebyen-jazz-jam-fuglen-gamlebyen-2026-07-31",
@@ -453,7 +457,8 @@
     "kuratortekst": null,
     "lenke": "https://tikkio.com/events/61979",
     "bilde": null,
-    "sistVerifisert": "2026-07-19T23:16:16.365Z"
+    "sistVerifisert": "2026-07-19T23:16:16.365Z",
+    "fremhevet": true
   },
   {
     "id": "dattera-til-hagen-standup-sommershow-pa-dattera-2026-07-23",
@@ -508,7 +513,8 @@
     "kuratortekst": null,
     "lenke": "https://www.ticketmaster.no/event/1521956928",
     "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_usNFbxhhV/tr:w-750",
-    "sistVerifisert": "2026-07-19T23:45:04.309Z"
+    "sistVerifisert": "2026-07-19T23:45:04.309Z",
+    "fremhevet": true
   },
   {
     "id": "bla-veps-2026-09-04",
@@ -526,7 +532,8 @@
     "kuratortekst": null,
     "lenke": "https://www.ticketmaster.no/event/745320542",
     "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_gNWgaL9Bw/tr:w-750",
-    "sistVerifisert": "2026-07-19T23:45:11.770Z"
+    "sistVerifisert": "2026-07-19T23:45:11.770Z",
+    "fremhevet": true
   },
   {
     "id": "salt-salt-badstu-kunst-og-bar-ved-fjorden-2026-07-20",

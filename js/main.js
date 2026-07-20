@@ -329,7 +329,9 @@ function initLagretSync() {
     /* Oppdater modal-hjertet dersom modalen er åpen og viser dette arrangementet */
     const modalHjerte = document.querySelector('.modal-hjerte[data-id]');
     if (modalHjerte?.dataset.id === id) {
-      modalHjerte.textContent = lagret ? '♥ lagret' : '♡ lagre';
+      modalHjerte.classList.toggle('lagret', lagret);
+      const tekst = modalHjerte.querySelector('.modal-hjerte-tekst');
+      if (tekst) tekst.textContent = lagret ? 'lagret' : 'lagre';
       modalHjerte.setAttribute('aria-pressed', String(lagret));
     }
     if (lagret) trackEvent('event_lagret', { id });
