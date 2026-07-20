@@ -6,6 +6,7 @@
 const BINDERS_SVG_SM = '<svg class="binders-ikon" width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 import { erLagret, veksleLagret }                     from '../application/lagret.js';
+import { erFulgt, veksleFulgt }                       from '../application/fulgte-steder.js';
 import { formaterPrisTekst, formaterTidKort,
          formaterAvstand, formaterVerifisert,
          kategoriVisningsnavn }                        from '../application/formatering.js';
@@ -126,12 +127,26 @@ function byggModalInnhold(event) {
   tittel.textContent = event.tittel;
   body.appendChild(tittel);
 
-  /* Sted */
-  const stedTekst = [event.sted, event.adresse].filter(Boolean).join(' · ');
-  const sted = document.createElement('p');
-  sted.className   = 'modal-sted';
-  sted.textContent = stedTekst;
-  body.appendChild(sted);
+  /* Sted + følg-knapp */
+  const stedRad = document.createElement('div');
+  stedRad.className = 'modal-sted-rad';
+
+  const stedP = document.createElement('p');
+  stedP.className   = 'modal-sted';
+  stedP.textContent = [event.sted, event.adresse].filter(Boolean).join(' · ');
+  stedRad.appendChild(stedP);
+
+  if (event.sted) {
+    const fulgtNå   = erFulgt(event.sted);
+    const følgKnapp = document.createElement('button');
+    følgKnapp.className      = `følg-knapp${fulgtNå ? ' fulgt' : ''}`;
+    følgKnapp.dataset.sted   = event.sted;
+    følgKnapp.textContent    = fulgtNå ? 'følger ✓' : `+ følg ${event.sted}`;
+    følgKnapp.setAttribute('aria-pressed', String(fulgtNå));
+    stedRad.appendChild(følgKnapp);
+  }
+
+  body.appendChild(stedRad);
 
   /* Faktarad */
   body.appendChild(byggFaktarad(event));
@@ -301,6 +316,17 @@ function leggTilModalLyttere(event) {
       detail: { id: event.id, lagret: erNåLagret },
     }));
   });
+
+  const følgKnapp = document.querySelector('.følg-knapp');
+  if (følgKnapp) {
+    følgKnapp.addEventListener('click', () => {
+      const sted       = følgKnapp.dataset.sted;
+      const erNåFulgt  = veksleFulgt(sted);
+      følgKnapp.classList.toggle('fulgt', erNåFulgt);
+      følgKnapp.textContent = erNåFulgt ? 'følger ✓' : `+ følg ${sted}`;
+      følgKnapp.setAttribute('aria-pressed', String(erNåFulgt));
+    });
+  }
 
   document.querySelector('.del-knapp').addEventListener('click', (e) => {
     delEvent(event, e.currentTarget);
