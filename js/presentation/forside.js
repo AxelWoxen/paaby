@@ -12,9 +12,9 @@ const MAKS = 5;
 /* ─── Hilsen ─────────────────────────────────────────────────────────────────── */
 
 function hentGreeting(time) {
-  if (time >= 5  && time < 11) return ['God morgen',       'Her er det vi tror du vil like i dag'];
-  if (time >= 11 && time < 17) return ['God ettermiddag',  'Her er noe å se frem til i dag'];
-  return                               ['God kveld',        'Her er det vi tror du vil like i kveld'];
+  if (time >= 5  && time < 11) return ['God morgen',       'Her er det vi tror du vil like til uka'];
+  if (time >= 11 && time < 17) return ['God ettermiddag',  'Her er noe å se frem til'];
+  return                               ['God kveld',        'Her er det vi tror du vil like'];
 }
 
 /* ─── Utvalg ─────────────────────────────────────────────────────────────────── */
