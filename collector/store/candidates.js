@@ -25,10 +25,18 @@ export async function skrivCandidates(liste) {
   await fs.writeFile(FIL, JSON.stringify(liste, null, 2) + '\n', 'utf8');
 }
 
+// Serialiserer alle skriveoperasjoner — hindrer race condition ved parallelle POSTs.
+let skriveKø = Promise.resolve();
+
 // Legger til nye events med status "pending" og returnerer antallet som ble lagt til.
 export async function leggTilCandidates(nyeListe) {
-  const eksisterende = await lesCandidates();
-  const medStatus    = nyeListe.map((e) => ({ ...e, _status: 'pending' }));
-  await skrivCandidates([...eksisterende, ...medStatus]);
-  return medStatus.length;
+  let antall = 0;
+  skriveKø = skriveKø.then(async () => {
+    const eksisterende = await lesCandidates();
+    const medStatus    = nyeListe.map((e) => ({ ...e, _status: 'pending' }));
+    await skrivCandidates([...eksisterende, ...medStatus]);
+    antall = medStatus.length;
+  });
+  await skriveKø;
+  return antall;
 }
