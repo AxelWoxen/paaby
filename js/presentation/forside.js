@@ -151,7 +151,26 @@ export function visForside(utvalg) {
 }
 
 export function initSeAlt() {
-  document.getElementById('se-alt-knapp').addEventListener('click', () => {
-    document.getElementById('hoveddel').scrollIntoView({ behavior: 'smooth' });
-  });
+  const knapp  = document.getElementById('se-alt-knapp');
+  const scroll = () => document.getElementById('hoveddel').scrollIntoView({ behavior: 'smooth' });
+  knapp.addEventListener('click', scroll);
+
+  // Flytende pill: separat element i body, aldri i dokumentflyten
+  const pill = document.createElement('button');
+  pill.className   = 'se-alt-flytende';
+  pill.textContent = knapp.textContent.trim();
+  pill.setAttribute('aria-label', 'Scroll til full arrangementsliste');
+  pill.addEventListener('click', scroll);
+  document.body.appendChild(pill);
+
+  // Vis pill kun når knappen er UNDER viewport (ikke nådd ennå).
+  // Hvis knappen er OVER viewport (scrollet forbi), skjul pillen.
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      const erUnder = entry.boundingClientRect.top > 0;
+      pill.classList.toggle('vis', !entry.isIntersecting && erUnder);
+    },
+    { threshold: 0 }
+  );
+  observer.observe(knapp);
 }
