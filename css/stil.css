@@ -855,14 +855,15 @@ body.modal-aapen {
 
 .forside {
   border-bottom: 1px solid var(--flate-2);
-  padding: var(--gap-xl) var(--gap-m);
-  padding-left:  max(var(--gap-m), env(safe-area-inset-left));
-  padding-right: max(var(--gap-m), env(safe-area-inset-right));
+  padding: var(--gap-xl) 0;
 }
 
 .forside-innhold {
   max-width: 640px;
   margin: 0 auto;
+  padding: 0 var(--gap-m);
+  padding-left:  max(var(--gap-m), env(safe-area-inset-left));
+  padding-right: max(var(--gap-m), env(safe-area-inset-right));
 }
 
 .forside-tittel {
@@ -1036,13 +1037,14 @@ body.modal-aapen {
 
 @media (min-width: 768px) {
   .forside {
-    padding: var(--gap-xl) var(--gap-xl);
-    padding-left:  max(var(--gap-xl), env(safe-area-inset-left));
-    padding-right: max(var(--gap-xl), env(safe-area-inset-right));
+    padding: var(--gap-xl) 0;
   }
 
   .forside-innhold {
     max-width: 1020px;
+    padding: 0 var(--gap-xl);
+    padding-left:  max(var(--gap-xl), env(safe-area-inset-left));
+    padding-right: max(var(--gap-xl), env(safe-area-inset-right));
   }
 
   .forside-tittel {
