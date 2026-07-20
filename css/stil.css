@@ -226,7 +226,6 @@ body {
   .feedkolonne {
     flex: 1;
     min-width: 0;
-    max-width: 640px;
   }
 }
 
