@@ -33,7 +33,8 @@
     "kuratortekst": "Lite, røft og akkurat passe under radaren.",
     "lenke": "https://tikkio.com/events/64937-xstalkerx-superspaz-tba-kafe-haerverk",
     "bilde": null,
-    "sistVerifisert": "2026-07-15T04:00:00+02:00"
+    "sistVerifisert": "2026-07-15T04:00:00+02:00",
+    "fremhevet": true
   },
   {
     "id": "utflod-haerverk-2026-07-24",
@@ -159,7 +160,8 @@
     "kuratortekst": "Sommerlig og stødig uten festivalmas.",
     "lenke": "https://www.blaaoslo.no/events/frantzvaag/gIXFHMAOJc",
     "bilde": null,
-    "sistVerifisert": "2026-07-15T04:00:00+02:00"
+    "sistVerifisert": "2026-07-15T04:00:00+02:00",
+    "fremhevet": true
   },
   {
     "id": "dj-fett-burger-the-villa-2026-07-25",
@@ -177,7 +179,8 @@
     "kuratortekst": "Sterk lineup og flere rom å bevege seg mellom.",
     "lenke": "https://www.thevilla.no/event-details/dj-fett-burger-manwell-us-hakeem-us-madrigal-nora-teslo-snurrebassen-og-issix",
     "bilde": null,
-    "sistVerifisert": "2026-07-15T04:00:00+02:00"
+    "sistVerifisert": "2026-07-15T04:00:00+02:00",
+    "fremhevet": true
   },
   {
     "id": "sauser-til-selskap-mathallen-2026-07-16",
@@ -303,7 +306,8 @@
     "kuratortekst": "Lav terskel og en god grunn til å gjøre noe på en tirsdag.",
     "lenke": "https://www.facebook.com/events/ingensteds/sommerkvissen-p%C3%A5-ingensteds/1306024228255054/",
     "bilde": null,
-    "sistVerifisert": "2026-07-15T04:00:00+02:00"
+    "sistVerifisert": "2026-07-15T04:00:00+02:00",
+    "fremhevet": true
   },
   {
     "id": "prinsen-platemesse-folk-2026-07-26",
@@ -339,7 +343,8 @@
     "kuratortekst": null,
     "lenke": "https://www.blaaoslo.no",
     "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_Va1wMH4Qe/tr:w-750",
-    "sistVerifisert": "2026-07-19T22:26:58.204Z"
+    "sistVerifisert": "2026-07-19T22:26:58.204Z",
+    "fremhevet": true
   },
   {
     "id": "john-dee-big-latin-party-2026-08-08",
@@ -375,7 +380,8 @@
     "kuratortekst": null,
     "lenke": "https://www.ticketmaster.no/event/109674949",
     "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_fP1ozI4zG/tr:w-750",
-    "sistVerifisert": "2026-07-19T22:58:44.585Z"
+    "sistVerifisert": "2026-07-19T22:58:44.585Z",
+    "fremhevet": false
   },
   {
     "id": "st-hanshaugen-park-quiz-pa-haugen-2026-07-24",
@@ -483,7 +489,8 @@
     "kuratortekst": null,
     "lenke": null,
     "bilde": null,
-    "sistVerifisert": "2026-07-19T23:17:10.709Z"
+    "sistVerifisert": "2026-07-19T23:17:10.709Z",
+    "fremhevet": true
   },
   {
     "id": "bla-egyptian-lover-us-2026-08-28",
@@ -627,7 +634,8 @@
     "kuratortekst": null,
     "lenke": null,
     "bilde": null,
-    "sistVerifisert": "2026-07-20T00:21:23.262Z"
+    "sistVerifisert": "2026-07-20T00:21:23.262Z",
+    "fremhevet": true
   },
   {
     "id": "vestkanttorvet-vestkanttorvet-antikk-og-bruktmarked-2026-07-25",
