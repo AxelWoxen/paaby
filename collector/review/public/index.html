@@ -16,6 +16,7 @@
       --dempet:    #9896A4;
       --lime:      #C8FF4D;
       --korall:    #FF6B5B;
+      --gull:      #FFD700;
       --font:      'Inter', system-ui, sans-serif;
     }
 
@@ -28,7 +29,7 @@
       padding: 2rem 1rem 6rem;
     }
 
-    /* ──��� TOPBAR ─────────────────────────────────────────────────── */
+    /* ─── TOPBAR ─────────────────────────────────────────────────── */
     .topbar {
       max-width: 780px;
       margin: 0 auto 1.5rem;
@@ -39,7 +40,16 @@
       gap: 1rem;
     }
     .topbar-logo { font-size: 1rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .topbar-meta { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
     #teller { color: var(--dempet); font-size: .85rem; }
+    #fremhev-teller {
+      font-size: .85rem; font-weight: 600;
+      color: var(--gull);
+      background: rgba(255, 215, 0, 0.12);
+      border-radius: 20px;
+      padding: .2rem .75rem;
+    }
+    #fremhev-teller:empty { display: none; }
 
     /* ─── TABS ───────────────────────────────────────────────────── */
     .tabs {
@@ -82,9 +92,9 @@
       transition: all .15s;
     }
     .filter-chip.aktiv { background: var(--flate3); color: var(--tekst); border-color: var(--flate3); }
-    .filter-chip.aktiv.musikk  { color: var(--lime); border-color: var(--lime); background: rgba(200,255,77,.1); }
+    .filter-chip.aktiv.musikk  { color: var(--lime);   border-color: var(--lime);   background: rgba(200,255,77,.1); }
     .filter-chip.aktiv.klubb   { color: var(--korall); border-color: var(--korall); background: rgba(255,107,91,.1); }
-    .filter-chip.aktiv.pafunn  { color: #b44dff; border-color: #b44dff; background: rgba(180,77,255,.1); }
+    .filter-chip.aktiv.pafunn  { color: #b44dff;       border-color: #b44dff;       background: rgba(180,77,255,.1); }
 
     .skjul-passerte {
       margin-left: auto;
@@ -98,7 +108,7 @@
     .skjul-passerte input { cursor: pointer; accent-color: var(--lime); }
 
     /* ─── FEED ───────────────────────────────────────────────────── */
-    #feed {
+    #feed, #publiserte-feed {
       max-width: 780px;
       margin: 0 auto;
       display: flex;
@@ -108,6 +118,7 @@
 
     /* ─── KORT ───────────────────────────────────────────────────── */
     .kort { background: var(--flate); border-radius: 12px; overflow: hidden; }
+    .kort.er-fremhevet { box-shadow: 0 0 0 2px var(--gull); }
 
     .kort-bilde { width: 100%; height: 180px; object-fit: cover; display: block; background: var(--flate2); }
 
@@ -125,6 +136,10 @@
     .badge.mat    { background: rgba(255,200,77,.15); color: #ffc84d; }
     .badge.pafunn { background: rgba(150,77,255,.15); color: #b44dff; }
     .badge.manuell { background: rgba(77,180,255,.15); color: #4db4ff; font-size: .65rem; }
+    .badge.fremhevet-badge {
+      background: rgba(255,215,0,.2); color: var(--gull);
+      font-size: .65rem;
+    }
 
     .kort-tittel { font-size: 1.1rem; font-weight: 700; margin-bottom: .2rem; }
 
@@ -157,15 +172,28 @@
     textarea { resize: vertical; min-height: 56px; }
     textarea:focus, input[type=text]:focus { border-color: var(--lime); }
 
-    .knapp-rad { display: flex; gap: .65rem; }
+    .knapp-rad { display: flex; gap: .65rem; flex-wrap: wrap; }
     .knapp {
       flex: 1; padding: .55rem 1rem; border: none; border-radius: 8px;
       font-size: .875rem; font-weight: 600; cursor: pointer; transition: opacity .15s;
+      min-width: 80px;
     }
     .knapp:hover { opacity: .85; }
     .knapp:disabled { opacity: .4; cursor: default; }
     .knapp-godkjenn { background: var(--lime);   color: #141318; }
     .knapp-avslaa   { background: var(--flate2); color: var(--dempet); }
+    .knapp-fremhev {
+      flex: 0; background: var(--flate2); color: var(--dempet);
+      border: 1px solid var(--flate2);
+      font-size: 1rem; padding: .5rem .8rem;
+      border-radius: 8px; cursor: pointer; transition: all .15s;
+    }
+    .knapp-fremhev.aktiv {
+      background: rgba(255,215,0,.15);
+      border-color: var(--gull);
+      color: var(--gull);
+    }
+    .knapp-fremhev:hover { border-color: var(--gull); color: var(--gull); }
 
     .git-melding {
       margin-top: .85rem; padding: .65rem .85rem; background: var(--flate2);
@@ -183,6 +211,31 @@
       text-align: center; padding: 3rem 1rem; color: var(--dempet);
     }
     .tom strong { display: block; color: var(--tekst); font-size: 1.05rem; margin-bottom: .4rem; }
+
+    /* ─── PUBLISERTE ─────────────────────────────────────────────── */
+    .pub-kort {
+      background: var(--flate);
+      border-radius: 12px;
+      padding: .9rem 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+    }
+    .pub-kort.er-fremhevet { box-shadow: 0 0 0 2px var(--gull); }
+
+    .pub-info { flex: 1; min-width: 0; }
+    .pub-tittel { font-weight: 600; font-size: .95rem; margin-bottom: .15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pub-meta { color: var(--dempet); font-size: .8rem; }
+
+    .knapp-pub-fremhev {
+      flex-shrink: 0;
+      background: var(--flate2); border: 1px solid var(--flate2);
+      border-radius: 8px; color: var(--dempet);
+      cursor: pointer; font-size: 1rem;
+      padding: .45rem .7rem; transition: all .15s;
+    }
+    .knapp-pub-fremhev.aktiv { background: rgba(255,215,0,.15); border-color: var(--gull); color: var(--gull); }
+    .knapp-pub-fremhev:hover { border-color: var(--gull); color: var(--gull); }
 
     /* ─── MANUELT SKJEMA ─────────────────────────────────────────── */
     #skjema-panel {
@@ -233,22 +286,26 @@
 <!-- ─── TOPBAR ──────────────────────────────────────────────────────────── -->
 <div class="topbar">
   <span class="topbar-logo">påby · review</span>
-  <span id="teller">laster…</span>
+  <div class="topbar-meta">
+    <span id="fremhev-teller"></span>
+    <span id="teller">laster…</span>
+  </div>
 </div>
 
 <!-- ─── TABS ────────────────────────────────────────────────────────────── -->
 <div class="tabs">
-  <button class="tab aktiv" data-tab="review" onclick="byttTab('review', this)">Review</button>
-  <button class="tab" data-tab="legg-til" onclick="byttTab('legg-til', this)">+ Legg til manuelt</button>
+  <button class="tab aktiv" data-tab="review"     onclick="byttTab('review', this)">Review</button>
+  <button class="tab"       data-tab="publiserte" onclick="byttTab('publiserte', this)">★ Publiserte</button>
+  <button class="tab"       data-tab="legg-til"   onclick="byttTab('legg-til', this)">+ Legg til manuelt</button>
 </div>
 
 <!-- ─── FILTRE ───────────────────────────────────────────────────────────── -->
 <div id="filtre-panel" class="filtre">
-  <button class="filter-chip aktiv" data-filter="alle" onclick="velgFilter(this)">Alle</button>
+  <button class="filter-chip aktiv" data-filter="alle"   onclick="velgFilter(this)">Alle</button>
   <button class="filter-chip musikk" data-filter="musikk" onclick="velgFilter(this)">Musikk</button>
   <button class="filter-chip klubb"  data-filter="klubb"  onclick="velgFilter(this)">Klubb</button>
   <button class="filter-chip"        data-filter="mat"    onclick="velgFilter(this)">Mat</button>
-  <button class="filter-chip pafunn"  data-filter="pafunn" onclick="velgFilter(this)">Påfunn</button>
+  <button class="filter-chip pafunn" data-filter="pafunn" onclick="velgFilter(this)">Påfunn</button>
 
   <label class="skjul-passerte">
     <input type="checkbox" id="skjul-passerte" onchange="oppdaterVisning()" /> Skjul passerte
@@ -257,6 +314,9 @@
 
 <!-- ─── REVIEW FEED ──────────────────────────────────────────────────────── -->
 <div id="feed"></div>
+
+<!-- ─── PUBLISERTE FEED ──────────────────────────────────────────────────── -->
+<div id="publiserte-feed" style="display:none"></div>
 
 <!-- ─── MANUELT SKJEMA ──────────────────────────────────────────────────── -->
 <div id="skjema-panel">
@@ -329,9 +389,12 @@ function byttTab(tab, knapp) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('aktiv'));
   knapp.classList.add('aktiv');
 
-  document.getElementById('feed').style.display          = tab === 'review'   ? '' : 'none';
-  document.getElementById('filtre-panel').style.display  = tab === 'review'   ? '' : 'none';
-  document.getElementById('skjema-panel').style.display  = tab === 'legg-til' ? 'block' : 'none';
+  document.getElementById('feed').style.display            = tab === 'review'     ? '' : 'none';
+  document.getElementById('filtre-panel').style.display    = tab === 'review'     ? '' : 'none';
+  document.getElementById('publiserte-feed').style.display = tab === 'publiserte' ? '' : 'none';
+  document.getElementById('skjema-panel').style.display    = tab === 'legg-til'   ? 'block' : 'none';
+
+  if (tab === 'publiserte') lastInnPubliserte();
 }
 
 // ─── Filtre ──────────────────────────────────────────────────────────────────
@@ -359,7 +422,7 @@ function oppdaterVisning() {
   skjulPasserte = document.getElementById('skjul-passerte').checked;
   antallSynlig  = 0;
 
-  document.querySelectorAll('.kort[data-id]').forEach(kort => {
+  document.querySelectorAll('#feed .kort[data-id]').forEach(kort => {
     const event = alleEvents.find(e => e.id === kort.dataset.id);
     if (!event) return;
     const vis = skalVises(event);
@@ -394,6 +457,23 @@ function oppdaterTeller(delta = 0) {
   }
 }
 
+function oppdaterFremhevTeller(publiserte) {
+  const nå       = new Date();
+  const dag      = nå.getDay(); // 0=søn
+  const dagerTilMan = (dag + 6) % 7;
+  const mandag   = new Date(nå.getTime() - dagerTilMan * 86400000);
+  mandag.setHours(0, 0, 0, 0);
+  const søndag   = new Date(mandag.getTime() + 6 * 86400000);
+  søndag.setHours(23, 59, 59, 999);
+
+  const antall = publiserte.filter(e =>
+    e.fremhevet && new Date(e.start) >= mandag && new Date(e.start) <= søndag
+  ).length;
+
+  const el = document.getElementById('fremhev-teller');
+  el.textContent = antall > 0 ? `★ ${antall} fremhevet denne uka` : '';
+}
+
 // ─── Formater ────────────────────────────────────────────────────────────────
 
 function formaterDato(iso) {
@@ -411,12 +491,13 @@ function formaterPris(pris, prisTekst) {
   return 'Pris ukjent';
 }
 
-// ─── Bygg kort ───────────────────────────────────────────────────────────────
+// ─── Bygg pending-kort ───────────────────────────────────────────────────────
 
 function lagKort(event) {
   const kort = document.createElement('article');
   kort.className = 'kort';
   kort.dataset.id = event.id;
+  if (event._fremhevet) kort.classList.add('er-fremhevet');
 
   if (event.bilde) {
     const img = document.createElement('img');
@@ -433,10 +514,13 @@ function lagKort(event) {
   meta.className = 'kort-meta';
   const badge = document.createElement('span');
   badge.className = `badge ${event.kategori}`; badge.textContent = event.kategori;
-  const dato  = document.createElement('span');
-  dato.style.cssText = 'color:var(--dempet);font-size:.8rem';
-  dato.textContent = formaterDato(event.start);
   meta.appendChild(badge);
+
+  if (event._fremhevet) {
+    const fb = document.createElement('span');
+    fb.className = 'badge fremhevet-badge'; fb.textContent = '★ Fremhevet';
+    meta.appendChild(fb);
+  }
   if (event._broadcastId === undefined) {
     const m = document.createElement('span');
     m.className = 'badge manuell'; m.textContent = 'manuell';
@@ -447,6 +531,9 @@ function lagKort(event) {
     p.style.cssText = 'color:var(--korall);font-size:.75rem'; p.textContent = 'passert';
     meta.appendChild(p);
   }
+  const dato = document.createElement('span');
+  dato.style.cssText = 'color:var(--dempet);font-size:.8rem';
+  dato.textContent = formaterDato(event.start);
   meta.appendChild(dato);
   kropp.appendChild(meta);
 
@@ -491,63 +578,166 @@ function lagKort(event) {
   // Knapper
   const rad = document.createElement('div');
   rad.className = 'knapp-rad';
+
   const gKnapp = document.createElement('button');
   gKnapp.className = 'knapp knapp-godkjenn'; gKnapp.textContent = '✓ Godkjenn';
+
   const aKnapp = document.createElement('button');
   aKnapp.className = 'knapp knapp-avslaa'; aKnapp.textContent = '✕ Avslå';
-  rad.appendChild(gKnapp); rad.appendChild(aKnapp);
+
+  const fKnapp = document.createElement('button');
+  fKnapp.className = `knapp-fremhev${event._fremhevet ? ' aktiv' : ''}`;
+  fKnapp.title = event._fremhevet ? 'Fjern fremheving' : 'Fremhev';
+  fKnapp.textContent = '★';
+
+  fKnapp.onclick = () => {
+    event._fremhevet = !event._fremhevet;
+    fKnapp.classList.toggle('aktiv', event._fremhevet);
+    fKnapp.title = event._fremhevet ? 'Fjern fremheving' : 'Fremhev';
+    kort.classList.toggle('er-fremhevet', event._fremhevet);
+    // Oppdater fremhevet-badge i meta
+    const fb = meta.querySelector('.fremhevet-badge');
+    if (event._fremhevet && !fb) {
+      const nb = document.createElement('span');
+      nb.className = 'badge fremhevet-badge'; nb.textContent = '★ Fremhevet';
+      meta.insertBefore(nb, meta.children[1]);
+    } else if (!event._fremhevet && fb) {
+      fb.remove();
+    }
+  };
+
+  rad.appendChild(gKnapp); rad.appendChild(aKnapp); rad.appendChild(fKnapp);
   kropp.appendChild(rad);
   kort.appendChild(kropp);
 
   // Godkjenn
   gKnapp.onclick = async () => {
-    gKnapp.disabled = aKnapp.disabled = true; gKnapp.textContent = '…';
+    gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = true;
+    gKnapp.textContent = '…';
     const res  = await fetch(`/api/godkjenn/${encodeURIComponent(event.id)}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kuratortekst: ta.value }),
+      body: JSON.stringify({ kuratortekst: ta.value, fremhevet: event._fremhevet === true }),
     });
     const data = await res.json();
     if (data.ok) {
       rad.remove();
       const div = document.createElement('div');
       div.className = 'git-melding';
-      div.innerHTML = '<strong>✓ Godkjent — klar til publisering</strong>Kjør fra paaby/-roten:';
+      div.innerHTML = `<strong>✓ Godkjent${event._fremhevet ? ' · ★ Fremhevet' : ''} — klar til publisering</strong>Kjør fra paaby/-roten:`;
       const btn = document.createElement('button');
       btn.className = 'git-kommando'; btn.textContent = data.gitKommando;
-      btn.onclick = async () => { await navigator.clipboard.writeText(data.gitKommando); btn.textContent = '✓ kopiert!'; setTimeout(() => btn.textContent = data.gitKommando, 2000); };
+      btn.onclick = async () => {
+        await navigator.clipboard.writeText(data.gitKommando);
+        btn.textContent = '✓ kopiert!';
+        setTimeout(() => btn.textContent = data.gitKommando, 2000);
+      };
       div.appendChild(btn); kropp.appendChild(div);
       event._status = 'godkjent';
       oppdaterVisning();
-    } else { gKnapp.disabled = aKnapp.disabled = false; gKnapp.textContent = '✓ Godkjenn'; alert(data.feil); }
+    } else {
+      gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = false;
+      gKnapp.textContent = '✓ Godkjenn';
+      alert(data.feil);
+    }
   };
 
   // Avslå
   aKnapp.onclick = async () => {
-    gKnapp.disabled = aKnapp.disabled = true; aKnapp.textContent = '…';
+    gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = true;
+    aKnapp.textContent = '…';
     const res  = await fetch(`/api/avslaa/${encodeURIComponent(event.id)}`, { method: 'POST' });
     const data = await res.json();
     if (data.ok) {
       kort.style.transition = 'opacity .25s'; kort.style.opacity = '0';
       setTimeout(() => { kort.remove(); event._status = 'avslatt'; oppdaterVisning(); }, 250);
-    } else { gKnapp.disabled = aKnapp.disabled = false; aKnapp.textContent = '✕ Avslå'; }
+    } else {
+      gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = false;
+      aKnapp.textContent = '✕ Avslå';
+    }
   };
 
   return kort;
 }
 
-// ─── Last inn ────────────────────────────────────────────────────────────────
+// ─── Last inn pending ────────────────────────────────────────────────────────
 
 async function lastInn() {
-  const res    = await fetch('/api/candidates');
-  alleEvents   = await res.json();
-
-  // Sorter på startdato, tidligst først
+  const res  = await fetch('/api/candidates');
+  alleEvents = await res.json();
+  alleEvents.forEach(e => { e._fremhevet = false; });
   alleEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
 
   const feed = document.getElementById('feed');
   feed.innerHTML = '';
   alleEvents.forEach(e => feed.appendChild(lagKort(e)));
   oppdaterVisning();
+
+  // Oppdater fremhev-teller fra publiserte
+  fetch('/api/publiserte').then(r => r.json()).then(oppdaterFremhevTeller);
+}
+
+// ─── Publiserte tab ──────────────────────────────────────────────────────────
+
+async function lastInnPubliserte() {
+  const feed = document.getElementById('publiserte-feed');
+  feed.innerHTML = '<div class="tom"><strong>Laster…</strong></div>';
+
+  const publiserte = await fetch('/api/publiserte').then(r => r.json());
+  publiserte.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+  oppdaterFremhevTeller(publiserte);
+
+  feed.innerHTML = '';
+  if (publiserte.length === 0) {
+    feed.innerHTML = '<div class="tom"><strong>Ingen publiserte events</strong></div>';
+    return;
+  }
+
+  for (const event of publiserte) {
+    const kort = document.createElement('div');
+    kort.className = `pub-kort${event.fremhevet ? ' er-fremhevet' : ''}`;
+    kort.dataset.id = event.id;
+
+    const infoDel = document.createElement('div');
+    infoDel.className = 'pub-info';
+
+    const tittel = document.createElement('div');
+    tittel.className = 'pub-tittel';
+    tittel.textContent = `${event.fremhevet ? '★ ' : ''}${event.tittel}`;
+    infoDel.appendChild(tittel);
+
+    const m = document.createElement('div');
+    m.className = 'pub-meta';
+    m.textContent = `${event.sted} · ${formaterDato(event.start)}`;
+    infoDel.appendChild(m);
+
+    const fKnapp = document.createElement('button');
+    fKnapp.className = `knapp-pub-fremhev${event.fremhevet ? ' aktiv' : ''}`;
+    fKnapp.textContent = '★';
+    fKnapp.title = event.fremhevet ? 'Fjern fremheving' : 'Fremhev';
+
+    fKnapp.onclick = async () => {
+      fKnapp.disabled = true;
+      const res  = await fetch(`/api/fremhev/${encodeURIComponent(event.id)}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        event.fremhevet = data.fremhevet;
+        fKnapp.classList.toggle('aktiv', data.fremhevet);
+        fKnapp.title = data.fremhevet ? 'Fjern fremheving' : 'Fremhev';
+        kort.classList.toggle('er-fremhevet', data.fremhevet);
+        tittel.textContent = `${data.fremhevet ? '★ ' : ''}${event.tittel}`;
+        oppdaterFremhevTeller(document.getElementById('publiserte-feed')
+          .__events__ || publiserte);
+      }
+      fKnapp.disabled = false;
+    };
+
+    kort.appendChild(infoDel);
+    kort.appendChild(fKnapp);
+    feed.appendChild(kort);
+  }
+
+  feed.__events__ = publiserte;
 }
 
 // ─── Manuelt skjema ──────────────────────────────────────────────────────────
@@ -578,14 +768,14 @@ async function sendSkjema() {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       tittel, kategori, start,
-      slutt:     document.getElementById('f-slutt').value.trim()    || null,
-      sted:      document.getElementById('f-sted').value.trim()     || null,
-      adresse:   document.getElementById('f-adresse').value.trim()  || null,
-      pris:      document.getElementById('f-pris').value.trim()     || null,
-      prisTekst: document.getElementById('f-pristekst').value.trim()|| null,
-      beskrivelse: document.getElementById('f-besk').value.trim()   || null,
-      lenke:     document.getElementById('f-lenke').value.trim()    || null,
-      bilde:     document.getElementById('f-bilde').value.trim()    || null,
+      slutt:       document.getElementById('f-slutt').value.trim()     || null,
+      sted:        document.getElementById('f-sted').value.trim()      || null,
+      adresse:     document.getElementById('f-adresse').value.trim()   || null,
+      pris:        document.getElementById('f-pris').value.trim()      || null,
+      prisTekst:   document.getElementById('f-pristekst').value.trim() || null,
+      beskrivelse: document.getElementById('f-besk').value.trim()      || null,
+      lenke:       document.getElementById('f-lenke').value.trim()     || null,
+      bilde:       document.getElementById('f-bilde').value.trim()     || null,
     }),
   });
   const data = await res.json();
@@ -594,10 +784,8 @@ async function sendSkjema() {
   if (data.ok) {
     ok.textContent = `✓ Lagt til (id: ${data.id}). Bytt til Review-fanen for å godkjenne.`;
     ok.style.display = 'block';
-    // Nullstill skjema
     ['f-tittel','f-start','f-slutt','f-sted','f-adresse','f-pris','f-pristekst','f-besk','f-lenke','f-bilde']
       .forEach(id => document.getElementById(id).value = '');
-    // Last inn feed på nytt
     await lastInn();
   } else {
     feil.textContent = data.feil ?? 'Ukjent feil'; feil.style.display = 'block';

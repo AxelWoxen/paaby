@@ -797,6 +797,168 @@ body.modal-aapen {
 }
 
 
+/* === FORSIDE === */
+
+.forside {
+  border-bottom: 1px solid var(--flate-2);
+  padding: var(--gap-xl) var(--gap-m);
+  padding-left:  max(var(--gap-m), env(safe-area-inset-left));
+  padding-right: max(var(--gap-m), env(safe-area-inset-right));
+}
+
+.forside-innhold {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.forside-tittel {
+  font-family: var(--font-tittel);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  margin-bottom: 0.35rem;
+}
+
+.forside-undertittel {
+  color: var(--graa);
+  font-size: 1rem;
+  margin-bottom: var(--gap-xl);
+}
+
+.forside-utvalg {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-m);
+  margin-bottom: var(--gap-l);
+}
+
+/* Utvalg-kort: litt større og åpnere enn vanlig feed-kort */
+
+.utvalg-kort {
+  background: var(--flate-1);
+  border-radius: var(--radius-l);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.utvalg-kort:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.utvalg-bilde-wrapper {
+  position: relative;
+  aspect-ratio: 16 / 6;
+  overflow: hidden;
+  background: var(--flate-2);
+}
+
+.utvalg-bilde {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.utvalg-kort:hover .utvalg-bilde {
+  transform: scale(1.03);
+}
+
+.utvalg-badge-rad {
+  position: absolute;
+  top: var(--gap-s);
+  left: var(--gap-s);
+  display: flex;
+  gap: var(--gap-s);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Gjenbruker .kategori-* klassene som allerede er definert */
+.utvalg-badge {
+  padding: 0.25rem 0.625rem;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.utvalg-fremhevet-badge {
+  padding: 0.25rem 0.625rem;
+  border-radius: 100px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(255, 215, 0, 0.2);
+  color: #ffd700;
+}
+
+.utvalg-innhold {
+  padding: var(--gap-m) var(--gap-l);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.utvalg-tittel {
+  font-family: var(--font-tittel);
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.utvalg-meta {
+  font-size: 0.85rem;
+  color: var(--graa);
+}
+
+.utvalg-kuratortekst {
+  font-size: 0.9rem;
+  color: var(--lime);
+  font-style: italic;
+  line-height: 1.55;
+  margin-top: 0.15rem;
+}
+
+.se-alt-knapp {
+  width: 100%;
+  padding: var(--gap-m);
+  background: transparent;
+  border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-m);
+  color: var(--paper);
+  font-family: var(--font-tekst);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.se-alt-knapp:hover {
+  background: var(--flate-2);
+  border-color: var(--graa);
+}
+
+@media (min-width: 768px) {
+  .forside {
+    padding: var(--gap-xl) var(--gap-xl);
+    padding-left:  max(var(--gap-xl), env(safe-area-inset-left));
+    padding-right: max(var(--gap-xl), env(safe-area-inset-right));
+  }
+
+  .forside-innhold {
+    max-width: 1020px;
+  }
+
+  .forside-tittel {
+    font-size: 2.5rem;
+  }
+}
+
+
 /* === SAMTYKKE-STRIPE === */
 
 .samtykke-stripe {

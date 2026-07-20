@@ -12,6 +12,7 @@ import { visEventer }                              from './presentation/feed.js'
 import { initModal, åpneModal, lukkModal,
          hentÅpenEvent }                           from './presentation/modal.js';
 import { aktiverSporing, trackEvent }              from './application/sporing.js';
+import { velgUtvalg, visForside, initSeAlt }      from './presentation/forside.js';
 
 
 /* ========================
@@ -404,8 +405,11 @@ async function startApp() {
   initSortering();
   initSamtykke();
 
+  initSeAlt();
+
   try {
     tilstand.alleEventer = await hentEventer();
+    visForside(velgUtvalg(tilstand.alleEventer));
     oppdaterFeed();
     håndterHash();
   } catch (feil) {
