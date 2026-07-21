@@ -50,6 +50,18 @@ function lagBildeEllement(event) {
 
 
 /* ========================
+   GJENTAS-TEKST (eksportert for bruk i modal)
+   ======================== */
+
+export function gjentasTekst(gjentas) {
+  if (!gjentas) return null;
+  if (gjentas.startsWith('ukentlig:'))      return `hver ${gjentas.slice(9)}`;
+  if (gjentas.startsWith('månedlig:siste-')) return `siste ${gjentas.slice(15)} i mnd`;
+  return null;
+}
+
+
+/* ========================
    KORTET
    ======================== */
 
