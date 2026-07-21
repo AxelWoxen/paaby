@@ -458,7 +458,7 @@ body {
   letter-spacing: 0.04em;
   text-transform: lowercase;
   background: var(--korall);
-  color: var(--lime);
+  color: rgba(244, 241, 234, 0.7);
   backdrop-filter: blur(4px);
   pointer-events: none;
 }
