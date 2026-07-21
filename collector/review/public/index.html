@@ -279,6 +279,30 @@
       margin-top: .75rem; padding: .55rem .85rem; background: rgba(200,255,77,.12);
       color: var(--lime); border-radius: 8px; font-size: .85rem; display: none;
     }
+
+    /* ─── GJENTAS-KONTROLL ───────────────────────────────────────────── */
+    .gjentas-rad {
+      display: flex; gap: .5rem; align-items: center;
+      margin-bottom: .75rem; flex-wrap: wrap;
+    }
+    .gjentas-label {
+      font-size: .75rem; color: var(--dempet);
+      text-transform: uppercase; letter-spacing: .06em; white-space: nowrap;
+    }
+    .gjentas-select {
+      flex: 1; min-width: 0;
+      background: var(--flate2); border: 1px solid var(--flate3);
+      border-radius: 8px; color: var(--tekst); font-family: var(--font);
+      font-size: .8rem; padding: .35rem .6rem; outline: none;
+      transition: border-color .15s; cursor: pointer;
+    }
+    .gjentas-select:focus { border-color: var(--lime); }
+    .gjentas-status { font-size: .72rem; color: var(--lime); min-width: 2rem; }
+
+    .pub-gjentas-rad {
+      display: flex; gap: .5rem; align-items: center;
+      margin-top: .5rem; flex-wrap: wrap;
+    }
   </style>
 </head>
 <body>
@@ -370,6 +394,21 @@
   <label class="felt-label">Bilde-URL (valgfritt)</label>
   <input type="text" id="f-bilde" placeholder="https://…" />
 
+  <label class="felt-label">Gjentas (valgfritt)</label>
+  <div class="gjentas-rad" style="margin-bottom:.85rem">
+    <select id="f-gjentas-type" class="gjentas-select"
+      onchange="document.getElementById('f-gjentas-dag').style.display=this.value?'':'none'">
+      <option value="">Av (engang)</option>
+      <option value="ukentlig">Ukentlig</option>
+      <option value="månedlig">Månedlig (siste …)</option>
+    </select>
+    <select id="f-gjentas-dag" class="gjentas-select" style="display:none">
+      <option>mandag</option><option>tirsdag</option><option>onsdag</option>
+      <option>torsdag</option><option>fredag</option><option>lørdag</option>
+      <option selected>søndag</option>
+    </select>
+  </div>
+
   <button class="skjema-submit" id="skjema-submit" onclick="sendSkjema()">Legg til i candidates</button>
   <div class="skjema-feil" id="skjema-feil"></div>
   <div class="skjema-ok"   id="skjema-ok"></div>
@@ -382,6 +421,59 @@ let alleEvents     = [];
 let aktivFilter    = 'alle';
 let skjulPasserte  = false;
 let antallSynlig   = 0;
+
+// ─── Gjentas-hjelp ───────────────────────────────────────────────────────────
+
+const UKEDAGER = ['mandag','tirsdag','onsdag','torsdag','fredag','lørdag','søndag'];
+
+function parseGjentasKontroll(gjentas) {
+  if (!gjentas) return { type: '', dag: 'søndag' };
+  if (gjentas.startsWith('ukentlig:'))       return { type: 'ukentlig', dag: gjentas.slice(9) };
+  if (gjentas.startsWith('månedlig:siste-')) return { type: 'månedlig', dag: gjentas.slice(15) };
+  return { type: '', dag: 'søndag' };
+}
+
+function byggGjentasStreng(type, dag) {
+  if (!type) return null;
+  if (type === 'ukentlig') return `ukentlig:${dag}`;
+  return `månedlig:siste-${dag}`;
+}
+
+/* Lager gjentas-kontroll og returnerer { el, hentVerdi }. */
+function lagGjentasKontroll(gjentas) {
+  const { type: initType, dag: initDag } = parseGjentasKontroll(gjentas);
+
+  const rad = document.createElement('div');
+  rad.className = 'gjentas-rad';
+
+  const label = document.createElement('span');
+  label.className   = 'gjentas-label';
+  label.textContent = 'Gjentas';
+
+  const typeSelect = document.createElement('select');
+  typeSelect.className = 'gjentas-select';
+  [['', 'Av (engang)'], ['ukentlig', 'Ukentlig'], ['månedlig', 'Månedlig (siste …)']].forEach(([val, txt]) => {
+    const opt = new Option(txt, val, false, val === initType);
+    typeSelect.appendChild(opt);
+  });
+
+  const dagSelect = document.createElement('select');
+  dagSelect.className    = 'gjentas-select';
+  dagSelect.style.display = initType ? '' : 'none';
+  UKEDAGER.forEach(dag => {
+    dagSelect.appendChild(new Option(dag, dag, false, dag === initDag));
+  });
+
+  typeSelect.addEventListener('change', () => {
+    dagSelect.style.display = typeSelect.value ? '' : 'none';
+  });
+
+  rad.appendChild(label);
+  rad.appendChild(typeSelect);
+  rad.appendChild(dagSelect);
+
+  return { el: rad, hentVerdi: () => byggGjentasStreng(typeSelect.value, dagSelect.value) };
+}
 
 // ─── Tabs ────────────────────────────────────────────────────────────────────
 
@@ -575,6 +667,10 @@ function lagKort(event) {
   ta.placeholder = 'Skriv en kort redaksjonell begrunnelse…'; ta.rows = 2;
   kropp.appendChild(ktLabel); kropp.appendChild(ta);
 
+  // Gjentas
+  const gjentasKontroll = lagGjentasKontroll(event.gjentas ?? null);
+  kropp.appendChild(gjentasKontroll.el);
+
   // Knapper
   const rad = document.createElement('div');
   rad.className = 'knapp-rad';
@@ -616,7 +712,7 @@ function lagKort(event) {
     gKnapp.textContent = '…';
     const res  = await fetch(`/api/godkjenn/${encodeURIComponent(event.id)}`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kuratortekst: ta.value, fremhevet: event._fremhevet === true }),
+      body: JSON.stringify({ kuratortekst: ta.value, fremhevet: event._fremhevet === true, gjentas: gjentasKontroll.hentVerdi() }),
     });
     const data = await res.json();
     if (data.ok) {
@@ -732,7 +828,33 @@ async function lastInnPubliserte() {
       fKnapp.disabled = false;
     };
 
-    kort.appendChild(infoDel);
+    // Gjentas-rad under tittel/meta
+    const gjKontroll = lagGjentasKontroll(event.gjentas ?? null);
+    const statusSpan = document.createElement('span');
+    statusSpan.className = 'gjentas-status';
+    gjKontroll.el.className = 'pub-gjentas-rad';
+    gjKontroll.el.appendChild(statusSpan);
+
+    const lagreGjentas = async () => {
+      statusSpan.textContent = '…';
+      const res  = await fetch(`/api/gjentas/${encodeURIComponent(event.id)}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gjentas: gjKontroll.hentVerdi() }),
+      });
+      const data = await res.json();
+      statusSpan.textContent = data.ok ? '✓' : '!';
+      if (data.ok) event.gjentas = data.gjentas;
+      setTimeout(() => { statusSpan.textContent = ''; }, 1800);
+    };
+
+    gjKontroll.el.querySelectorAll('select').forEach(s => s.addEventListener('change', lagreGjentas));
+
+    const kortInnhold = document.createElement('div');
+    kortInnhold.style.cssText = 'flex:1;min-width:0';
+    kortInnhold.appendChild(infoDel);
+    kortInnhold.appendChild(gjKontroll.el);
+
+    kort.appendChild(kortInnhold);
     kort.appendChild(fKnapp);
     feed.appendChild(kort);
   }
@@ -764,6 +886,9 @@ async function sendSkjema() {
   const submit = document.getElementById('skjema-submit');
   submit.disabled = true; submit.textContent = '…';
 
+  const gjType = document.getElementById('f-gjentas-type').value;
+  const gjDag  = document.getElementById('f-gjentas-dag').value;
+
   const res  = await fetch('/api/manuell', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -776,6 +901,7 @@ async function sendSkjema() {
       beskrivelse: document.getElementById('f-besk').value.trim()      || null,
       lenke:       document.getElementById('f-lenke').value.trim()     || null,
       bilde:       document.getElementById('f-bilde').value.trim()     || null,
+      gjentas:     byggGjentasStreng(gjType, gjDag),
     }),
   });
   const data = await res.json();
@@ -786,6 +912,8 @@ async function sendSkjema() {
     ok.style.display = 'block';
     ['f-tittel','f-start','f-slutt','f-sted','f-adresse','f-pris','f-pristekst','f-besk','f-lenke','f-bilde']
       .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('f-gjentas-type').value = '';
+    document.getElementById('f-gjentas-dag').style.display = 'none';
     await lastInn();
   } else {
     feil.textContent = data.feil ?? 'Ukjent feil'; feil.style.display = 'block';
