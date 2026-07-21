@@ -206,6 +206,46 @@
     <button id="samtykke-ok" class="samtykke-knapp">Ok</button>
   </div>
 
+
+  <!-- ==============================
+       BUNN-NAV — kun mobil (< 900px), se css/stil.css.
+       Speiler eksisterende tilstand (vis-følger / vis-lagret) —
+       egen logikk finnes i js/main.js (initBunnNav).
+       ============================== -->
+  <nav class="bunn-nav" aria-label="Hovednavigasjon">
+    <button id="bunn-forside" class="bunn-nav-knapp aktiv" aria-current="page">
+      <svg class="bunn-nav-ikon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M4 11.5 12 4l8 7.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M6 10v9a1 1 0 0 0 1 1h3v-6h4v6h3a1 1 0 0 0 1-1v-9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Forside</span>
+    </button>
+    <button id="bunn-utforsk" class="bunn-nav-knapp" aria-current="false">
+      <svg class="bunn-nav-ikon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="3" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+        <rect x="14" y="4" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+        <rect x="3" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+        <rect x="14" y="13" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="2"/>
+      </svg>
+      <span>Utforsk</span>
+    </button>
+    <button id="bunn-folger" class="bunn-nav-knapp" aria-current="false">
+      <svg class="bunn-nav-ikon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="2"/>
+        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M16 4.5a3 3 0 0 1 0 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        <path d="M18 14.5c2 .6 3.5 2.4 3.5 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>Følger</span>
+    </button>
+    <button id="bunn-lagret" class="bunn-nav-knapp" aria-current="false">
+      <svg class="bunn-nav-ikon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Lagret</span>
+    </button>
+  </nav>
+
   <script type="module" src="js/main.js"></script>
 
 </body>

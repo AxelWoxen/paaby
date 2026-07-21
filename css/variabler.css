@@ -46,6 +46,9 @@
   /* Topbar-høyde på desktop (gap-l + linjehøyde for 1.75rem logo + gap-s) */
   --topbar-h: 74px;
 
+  /* Bunn-nav-høyde på mobil (< 900px) — se stil.css */
+  --bunn-nav-h: 64px;
+
 
   /* --- AVRUNDING --- */
   --radius-s: 8px;

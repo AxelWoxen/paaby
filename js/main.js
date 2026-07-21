@@ -148,6 +148,8 @@ function oppdaterTreffLinje(antall) {
     sidestolpe?.classList.remove('skjult');
     ukeNav?.classList.remove('skjult');
   }
+
+  oppdaterBunnNavAktiv();
 }
 
 /* ========================
@@ -461,6 +463,79 @@ function initLagretSync() {
 
 
 /* ========================
+   BUNN-NAV (mobil, < 900px)
+   Speiler tilstand fra vis-følger/vis-lagret ved å gjenbruke
+   deres klikk-handlere — unngår duplisert tilstandslogikk.
+   ======================== */
+
+function bunnNavVisningsmodus() {
+  const forsideEl = document.getElementById('forside');
+  if (!forsideEl) return 'utforsk';
+  /* Forside regnes som aktiv helt til bunnen av forside-seksjonen
+     har passert forbi den sticky topbaren */
+  return forsideEl.getBoundingClientRect().bottom > 100 ? 'forside' : 'utforsk';
+}
+
+function oppdaterBunnNavAktiv() {
+  const knapper = {
+    forside: document.getElementById('bunn-forside'),
+    utforsk: document.getElementById('bunn-utforsk'),
+    folger:  document.getElementById('bunn-folger'),
+    lagret:  document.getElementById('bunn-lagret'),
+  };
+  if (!knapper.forside) return;
+
+  let aktivNavn;
+  if (tilstand.visLagret)      aktivNavn = 'lagret';
+  else if (tilstand.visFølger) aktivNavn = 'folger';
+  else                         aktivNavn = bunnNavVisningsmodus();
+
+  Object.entries(knapper).forEach(([navn, el]) => {
+    const erAktiv = navn === aktivNavn;
+    el.classList.toggle('aktiv', erAktiv);
+    el.setAttribute('aria-current', erAktiv ? 'page' : 'false');
+  });
+}
+
+function initBunnNav() {
+  const nav = document.querySelector('.bunn-nav');
+  if (!nav) return;
+
+  document.getElementById('bunn-forside').addEventListener('click', () => {
+    document.getElementById('vis-alle')?.click();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    oppdaterBunnNavAktiv();
+  });
+
+  document.getElementById('bunn-utforsk').addEventListener('click', () => {
+    document.getElementById('vis-alle')?.click();
+    scrollTilHoveddel();
+    oppdaterBunnNavAktiv();
+  });
+
+  document.getElementById('bunn-folger').addEventListener('click', () => {
+    document.getElementById('vis-følger')?.click();
+  });
+
+  document.getElementById('bunn-lagret').addEventListener('click', () => {
+    document.getElementById('vis-lagret')?.click();
+  });
+
+  let scrollTikker = false;
+  window.addEventListener('scroll', () => {
+    if (scrollTikker) return;
+    scrollTikker = true;
+    requestAnimationFrame(() => {
+      oppdaterBunnNavAktiv();
+      scrollTikker = false;
+    });
+  }, { passive: true });
+
+  oppdaterBunnNavAktiv();
+}
+
+
+/* ========================
    SAMTYKKE OG SPORING
    ======================== */
 
@@ -530,6 +605,7 @@ async function startApp() {
   initFølgerKnapp();
   initSeAlt();
   initUkeNav();
+  initBunnNav();
 
   try {
     tilstand.alleEventer = utvidGjentakende(await hentEventer());

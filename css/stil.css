@@ -1249,3 +1249,70 @@ body.modal-aapen {
 .samtykke-knapp:hover {
   opacity: 0.85;
 }
+
+
+/* === BUNN-NAV — kun mobil (< 900px) ===
+   Fast plassert nederst, som en native app-tab-bar.
+   Skjult på desktop; der gjelder eksisterende navigering uendret. */
+
+.bunn-nav {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  body {
+    padding-bottom: calc(var(--bunn-nav-h) + env(safe-area-inset-bottom));
+  }
+
+  .bunn-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    height: var(--bunn-nav-h);
+    padding-bottom: env(safe-area-inset-bottom);
+    background: var(--ink);
+    border-top: 1px solid var(--flate-2);
+  }
+
+  .bunn-nav-knapp {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    color: var(--graa);
+    font-family: var(--font-tekst);
+    font-size: 0.65rem;
+    font-weight: 500;
+    transition: color 0.15s;
+  }
+
+  .bunn-nav-ikon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .bunn-nav-knapp.aktiv {
+    color: var(--korall);
+  }
+
+  /* Løft flytende "se alt"-pill og samtykke-stripe over bunn-nav */
+  .se-alt-flytende {
+    bottom: calc(var(--bunn-nav-h) + 0.75rem + env(safe-area-inset-bottom));
+  }
+
+  .samtykke-stripe {
+    bottom: var(--bunn-nav-h);
+    padding-bottom: var(--gap-s);
+  }
+}
+
+@media (max-width: 899px) and (orientation: landscape) and (max-height: 500px) {
+  .bunn-nav-knapp span {
+    display: none;
+  }
+}
