@@ -663,5 +663,24 @@
     "lenke": null,
     "bilde": null,
     "sistVerifisert": "2026-07-20T00:21:26.334Z"
+  },
+  {
+    "id": "bla-morstaq-tia-taro-2026-07-25",
+    "tittel": "Morstaq & Tia Taro",
+    "kategori": "klubb",
+    "sted": "BLÅ",
+    "adresse": "Brenneriveien 9c, 0182, Oslo",
+    "lat": 59.92035,
+    "lng": 10.75279,
+    "start": "2026-07-25T23:00:00+02:00",
+    "slutt": "2026-07-26T03:00:00+02:00",
+    "pris": 150,
+    "prisTekst": "150 kr",
+    "beskrivelse": "Morstaq is an Oslo-based DJ and artist known for her electric, genre-blurring sets at festivals like Øyanatt and Vinjerock. Navigating her sets with a \"we listen, we don't judge\" ethos, she creates a club space where boundaries completely dissolve.\n\nMoving between hypnotic techno, psychedelic textures and moments of pure euphoria, Tia Taro crafts sets that are as immersive as they are unpredictabl",
+    "kuratortekst": "no boundaries",
+    "lenke": "https://www.ticketmaster.no/event/1375822574",
+    "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_xO9tm3xJO/tr:w-750",
+    "sistVerifisert": "2026-07-21T02:15:37.061Z",
+    "fremhevet": false
   }
 ]
