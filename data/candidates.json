@@ -5754,8 +5754,8 @@
     "kategori": "pafunn",
     "sted": "Birkelunden",
     "adresse": "Birkelunden, Grünerløkka, Oslo",
-    "lat": null,
-    "lng": null,
+    "lat": 59.9256,
+    "lng": 10.7594,
     "start": "2026-07-26T12:00:00+02:00",
     "slutt": "2026-07-26T19:00:00+02:00",
     "pris": 0,
@@ -5766,7 +5766,7 @@
     "bilde": "",
     "sistVerifisert": "2026-07-21T05:09:11.000Z",
     "gjentas": "ukentlig:søndag",
-    "_status": "pending"
+    "_status": "godkjent"
   },
   {
     "id": "ingensteds-sondagsmarkedet-i-ingensgate-2026-07-26",
@@ -5774,8 +5774,8 @@
     "kategori": "pafunn",
     "sted": "Ingensteds",
     "adresse": "Brenneriveien 5, 0182 Oslo",
-    "lat": null,
-    "lng": null,
+    "lat": 59.9227,
+    "lng": 10.7607,
     "start": "2026-07-26T12:00:00+02:00",
     "slutt": "2026-07-26T17:00:00+02:00",
     "pris": 0,
@@ -5786,6 +5786,6 @@
     "bilde": "",
     "sistVerifisert": "2026-07-21T05:09:11.000Z",
     "gjentas": "ukentlig:søndag",
-    "_status": "pending"
+    "_status": "godkjent"
   }
 ]
