@@ -448,8 +448,8 @@ body {
 .gjentas-badge {
   position: absolute;
   top: 45px;
-  right: -26px;
-  width: 160px;
+  right: -40px;
+  width: 180px;
   padding: 3px 0;
   transform: rotate(45deg);
   text-align: center;
