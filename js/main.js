@@ -15,6 +15,8 @@ import { aktiverSporing, trackEvent }              from './application/sporing.j
 import { velgUtvalg, visForside, initSeAlt }      from './presentation/forside.js';
 import { utvidGjentakende }                        from './application/gjentas.js';
 import { visFølgerVisning }                        from './presentation/følger.js';
+import { ukeMandag, ukeVindu,
+         filtrerTilUke, ukeLabel }                 from './application/uke.js';
 
 
 /* ========================
@@ -37,6 +39,8 @@ const tilstand = {
   posisjonLastes: false,           /* Mutex — hindrer samtidige geolocation-forespørsler */
   visLagret:      false,
   visFølger:      false,
+
+  ukeOffset:      0,  /* 0 = denne uka, 1 = neste uke osv. — kun i standardvisning */
 };
 
 
@@ -52,6 +56,7 @@ function oppdaterFeed() {
   }
 
   let eventer;
+  let ukeTom = false;
 
   if (tilstand.visLagret) {
     const lagredeIder = hentLagredeIder(tilstand.alleEventer.map((e) => e.id));
@@ -59,7 +64,15 @@ function oppdaterFeed() {
     eventer = skjulPasserte(eventer);
   } else {
     const aktive = skjulPasserte(tilstand.alleEventer);
-    eventer = filtrerEventer(aktive, tilstand.aktivFiltre, tilstand.brukerPosisjon);
+
+    const mandag        = ukeMandag();
+    const { fra, til }   = ukeVindu(mandag, tilstand.ukeOffset);
+    const ukensEventer   = filtrerTilUke(aktive, fra, til);
+
+    ukeTom  = ukensEventer.length === 0;
+    eventer = filtrerEventer(ukensEventer, tilstand.aktivFiltre, tilstand.brukerPosisjon);
+
+    oppdaterUkeNav(mandag);
   }
 
   /* Legg til _avstand (internt felt i km) på hvert event dersom avstand er aktiv.
@@ -92,7 +105,16 @@ function oppdaterFeed() {
     dagGrupper = [{ nokkel: 'global', label: null, eventer: sorterte }];
   }
 
-  visEventer(dagGrupper, tilstand.visLagret);
+  let tomMelding;
+  if (tilstand.visLagret) {
+    tomMelding = 'Ingenting lagret enda — trykk hjertet på det du vil på.';
+  } else if (ukeTom) {
+    tomMelding = 'Ingenting lagt inn her ennå – vi fyller på.';
+  } else {
+    tomMelding = 'Ingenting matchet — løsne på filtrene, så finner vi noe.';
+  }
+
+  visEventer(dagGrupper, tomMelding);
   oppdaterTreffLinje(sorterte.length);
 }
 
@@ -102,6 +124,7 @@ function oppdaterTreffLinje(antall) {
   const lagretInfo    = document.getElementById('lagret-info');
   const sorteringDiv  = document.querySelector('.sortering-kontroll');
   const sidestolpe    = document.querySelector('.sidestolpe');
+  const ukeNav        = document.getElementById('uke-nav');
 
   if (tilstand.visFølger) {
     teller.textContent = 'Steder du følger';
@@ -109,19 +132,44 @@ function oppdaterTreffLinje(antall) {
     lagretInfo?.classList.add('skjult');
     sorteringDiv?.classList.add('skjult');
     sidestolpe?.classList.add('skjult');
+    ukeNav?.classList.add('skjult');
   } else if (tilstand.visLagret) {
     teller.textContent = antall === 0 ? 'ingenting lagret' : `${antall} forslag lagret`;
     tilbakeKnapp.classList.remove('skjult');
     lagretInfo?.classList.remove('skjult');
     sorteringDiv?.classList.remove('skjult');
     sidestolpe?.classList.remove('skjult');
+    ukeNav?.classList.add('skjult');
   } else {
     teller.textContent = `${antall} forslag`;
     tilbakeKnapp.classList.add('skjult');
     lagretInfo?.classList.add('skjult');
     sorteringDiv?.classList.remove('skjult');
     sidestolpe?.classList.remove('skjult');
+    ukeNav?.classList.remove('skjult');
   }
+}
+
+/* ========================
+   UKE-NAVIGASJON
+   ======================== */
+
+function oppdaterUkeNav(mandagDenneUka) {
+  document.getElementById('uke-label').textContent = ukeLabel(mandagDenneUka, tilstand.ukeOffset);
+  document.getElementById('uke-forrige').classList.toggle('skjult', tilstand.ukeOffset === 0);
+}
+
+function initUkeNav() {
+  document.getElementById('uke-forrige').addEventListener('click', () => {
+    if (tilstand.ukeOffset === 0) return;
+    tilstand.ukeOffset -= 1;
+    oppdaterFeed();
+  });
+
+  document.getElementById('uke-neste').addEventListener('click', () => {
+    tilstand.ukeOffset += 1;
+    oppdaterFeed();
+  });
 }
 
 
@@ -348,6 +396,7 @@ function initLagretKnapp() {
       nullstillModusKnapper();
       tilstand.visLagret = false;
       tilstand.visFølger = false;
+      tilstand.ukeOffset = 0;
       oppdaterFeed();
       scrollTilHoveddel();
       return;
@@ -365,6 +414,7 @@ function initLagretKnapp() {
     nullstillModusKnapper();
     tilstand.visLagret = false;
     tilstand.visFølger = false;
+    tilstand.ukeOffset = 0;
     oppdaterFeed();
   });
 }
@@ -378,6 +428,7 @@ function initFølgerKnapp() {
       nullstillModusKnapper();
       tilstand.visFølger = false;
       tilstand.visLagret = false;
+      tilstand.ukeOffset = 0;
       oppdaterFeed();
       scrollTilHoveddel();
       return;
@@ -478,6 +529,7 @@ async function startApp() {
 
   initFølgerKnapp();
   initSeAlt();
+  initUkeNav();
 
   try {
     tilstand.alleEventer = utvidGjentakende(await hentEventer());

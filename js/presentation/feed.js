@@ -184,10 +184,10 @@ export function synkroniserKortHjerte(id, erNåLagret) {
 /**
  * Erstatter innholdet i #feed med dag-seksjoner og kort.
  *
- * @param {Array}   dagGrupper       - [{ nokkel, label, eventer }]
- * @param {boolean} erLagretVisning
+ * @param {Array}  dagGrupper  - [{ nokkel, label, eventer }]
+ * @param {string} tomMelding  - Tekst som vises når dagGrupper er tom
  */
-export function visEventer(dagGrupper, erLagretVisning) {
+export function visEventer(dagGrupper, tomMelding) {
   const feed = document.getElementById('feed');
   feed.innerHTML = '';
 
@@ -195,10 +195,8 @@ export function visEventer(dagGrupper, erLagretVisning) {
 
   if (alleEventer.length === 0) {
     const melding = document.createElement('p');
-    melding.className = 'tom-feed';
-    melding.textContent = erLagretVisning
-      ? 'Ingenting lagret enda — trykk hjertet på det du vil på.'
-      : 'Ingenting matchet — løsne på filtrene, så finner vi noe.';
+    melding.className   = 'tom-feed';
+    melding.textContent = tomMelding;
     feed.appendChild(melding);
     return;
   }

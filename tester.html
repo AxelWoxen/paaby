@@ -31,6 +31,8 @@
              erTidsSortering }                              from './js/application/sortering.js';
     import { kalkulerAvstand, erGyldigeKoordinater }        from './js/application/posisjon.js';
     import { KATEGORI_BILDER, hentEventbilde }              from './js/application/kategori-bilder.js';
+    import { ukeMandag, ukeVindu,
+             filtrerTilUke, ukeLabel }                      from './js/application/uke.js';
 
     const _evRes = await fetch('./data/events.json');
     const EVENTER = await _evRes.json();
@@ -569,6 +571,35 @@
     const enKoord = { ...GYLDIG, id: 'en-koord', lat: 59.9, lng: null };
     test('lat uten lng avvises (parvis sjekk)',
       validerEventer([enKoord]).length, 0);
+
+
+    /* ══════════════════════════════════════
+       18. UKE-NAVIGERING
+       ══════════════════════════════════════ */
+    gruppe('18. Uke-navigering');
+
+    const nåUke     = new Date('2026-07-21T10:00:00+02:00'); /* tirsdag */
+    const mandagUke = ukeMandag(nåUke);
+
+    test('mandag denne uka er 2026-07-20', mandagUke.toISOString(), '2026-07-19T22:00:00.000Z');
+    test('label for denne uka', ukeLabel(mandagUke, 0), 'Denne uka');
+    test('label for neste uke viser ukenummer og datospenn', ukeLabel(mandagUke, 1), 'Uke 31 · 27. jul–2. aug');
+    test('label innad i samme måned forkorter til dag', ukeLabel(mandagUke, 2), 'Uke 32 · 3.–9. aug');
+
+    const { fra: ukeFra, til: ukeTil } = ukeVindu(mandagUke, 0);
+    const ukeEventer = [
+      { id: 'forrige-uke',      start: '2026-07-19T20:00:00+02:00' }, /* søndag, uka før */
+      { id: 'mandag-denne-uka', start: '2026-07-20T08:00:00+02:00' },
+      { id: 'sondag-denne-uka', start: '2026-07-26T23:59:00+02:00' },
+      { id: 'mandag-neste-uke', start: '2026-07-27T00:00:00+02:00' }, /* eksklusiv øvre grense */
+    ];
+    const denneUkaFiltrert = filtrerTilUke(ukeEventer, ukeFra, ukeTil).map(e => e.id);
+
+    test('filtrerTilUke inkluderer kun events i vinduet', denneUkaFiltrert, ['mandag-denne-uka', 'sondag-denne-uka']);
+
+    /* Årsskifte: 2026-01-01 er en torsdag i ISO-uke 1 — uka etter (mandag 5. jan) er uke 2 */
+    const mandagÅrsskifte = ukeMandag(new Date('2026-01-01T12:00:00+01:00'));
+    test('uke-label håndterer årsskifte korrekt', ukeLabel(mandagÅrsskifte, 1), 'Uke 2 · 5.–11. jan');
 
 
     /* ══════════════════════════════════════

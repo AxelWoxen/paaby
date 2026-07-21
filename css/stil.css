@@ -274,6 +274,45 @@ body {
 }
 
 
+/* === UKE-NAVIGASJON === */
+
+.uke-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-s);
+  padding: var(--gap-s) 0 0;
+  font-size: 0.8rem;
+}
+
+.uke-knapp {
+  color: var(--korall);
+  background: none;
+  border: none;
+  padding: 0.3rem 0.2rem;
+  font-family: var(--font-tekst);
+  font-size: 0.8rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+
+.uke-knapp:hover {
+  opacity: 0.75;
+}
+
+.uke-knapp:last-child {
+  margin-left: auto;
+}
+
+.uke-label {
+  color: var(--graa);
+  font-weight: 600;
+  text-align: center;
+  flex: 1;
+}
+
+
 /* === DAG-SEKSJON === */
 
 .dag-gruppe {
