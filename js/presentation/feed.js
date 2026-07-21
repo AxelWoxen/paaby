@@ -50,18 +50,6 @@ function lagBildeEllement(event) {
 
 
 /* ========================
-   GJENTAS-TEKST
-   ======================== */
-
-function gjentasTekst(gjentas) {
-  if (!gjentas) return null;
-  if (gjentas.startsWith('ukentlig:'))     return `hver ${gjentas.slice(9)}`;
-  if (gjentas.startsWith('månedlig:siste-')) return `siste ${gjentas.slice(15)} i mnd`;
-  return null;
-}
-
-
-/* ========================
    KORTET
    ======================== */
 
@@ -87,13 +75,12 @@ export function lagKort(event) {
   badge.textContent = kategoriVisningsnavn(event.kategori);
   bildeWrapper.appendChild(badge);
 
-  /* Gjentas-badge (ribbon øvre høyre hjørne) */
-  const gjentasTekstVerdi = gjentasTekst(event.gjentas);
-  if (gjentasTekstVerdi) {
+  /* Gjentas-badge (ribbon øvre venstre hjørne — bak kategoribadge) */
+  if (event.gjentas) {
     const gjentasBadge = document.createElement('div');
     gjentasBadge.className   = 'gjentas-badge';
-    gjentasBadge.textContent = gjentasTekstVerdi;
-    bildeWrapper.appendChild(gjentasBadge);
+    gjentasBadge.textContent = 'gjentas';
+    bildeWrapper.insertBefore(gjentasBadge, badge);
   }
 
   /* Hjerte-knapp */

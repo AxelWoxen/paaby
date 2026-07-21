@@ -182,6 +182,13 @@ function byggModalInnhold(event) {
   return fragment;
 }
 
+function formaterGjentas(gjentas) {
+  if (!gjentas) return null;
+  if (gjentas.startsWith('ukentlig:'))       return `hver ${gjentas.slice(9)}`;
+  if (gjentas.startsWith('månedlig:siste-')) return `siste ${gjentas.slice(15)} i mnd`;
+  return null;
+}
+
 function byggFaktarad(event) {
   const rad = document.createElement('div');
   rad.className = 'modal-faktarad';
@@ -207,6 +214,11 @@ function byggFaktarad(event) {
 
   if (event._avstand != null) {
     rad.appendChild(felt('Avstand', formaterAvstand(event._avstand)));
+  }
+
+  const gjentasTekst = formaterGjentas(event.gjentas);
+  if (gjentasTekst) {
+    rad.appendChild(felt('Gjentas', gjentasTekst));
   }
 
   return rad;
