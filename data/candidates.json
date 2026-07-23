@@ -5805,7 +5805,7 @@
     "lenke": "https://ra.co/events/2494057",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:30:16.722Z",
-    "_status": "pending"
+    "_status": "godkjent"
   },
   {
     "id": "revier-rooftop-friday-aw-teknoteket-nnnn-showcase-2026-07-24",
@@ -5824,7 +5824,7 @@
     "lenke": "https://ra.co/events/2493205",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:36:07.155Z",
-    "_status": "pending"
+    "_status": "godkjent"
   },
   {
     "id": "gressholmen-kro-quackfestivalen-2026-2026-07-26",
@@ -5843,7 +5843,7 @@
     "lenke": "https://ra.co/events/2477662",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:36:26.602Z",
-    "_status": "pending"
+    "_status": "godkjent"
   },
   {
     "id": "kaf-haerverk-snick-snack-music-label-night-2026-07-31",
@@ -5862,7 +5862,7 @@
     "lenke": "https://tikkio.com/events/64934-snick-snack-music-label-night-kafe-haerverk-31-juli",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:36:26.706Z",
-    "_status": "pending"
+    "_status": "godkjent"
   },
   {
     "id": "salt-verdens-storste-danske-bingo-2026-07-31",
@@ -5881,7 +5881,7 @@
     "lenke": "https://kulturikveld.no/arrangementer/oslo/verdens-stoerste-danske-bingo-oslo-humorfest-2026/bnF42Z",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:36:38.217Z",
-    "_status": "pending"
+    "_status": "godkjent"
   },
   {
     "id": "salt-pyramiden-ferske-fjes-2026-08-05",
@@ -5900,7 +5900,7 @@
     "lenke": "https://www.ticketmaster.no/artist/ferske-fjes-billetter/1379313",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:36:49.795Z",
-    "_status": "pending"
+    "_status": "godkjent"
   },
   {
     "id": "salt-pyramiden-ferske-fjes-2026-08-12",
@@ -5919,7 +5919,7 @@
     "lenke": "https://www.ticketmaster.no/artist/ferske-fjes-billetter/1379313",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:36:49.886Z",
-    "_status": "pending"
+    "_status": "godkjent"
   },
   {
     "id": "salt-pyramiden-ferske-fjes-2026-08-19",
@@ -5957,7 +5957,7 @@
     "lenke": "https://www.instagram.com/khaolaeng/",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:41:33.490Z",
-    "_status": "pending"
+    "_status": "godkjent"
   },
   {
     "id": "oppmote-evita-espressobar-fotowalk-industri-murstein-og-gatekunst-pa-lokka-2026-07-25",
@@ -5976,7 +5976,7 @@
     "lenke": "https://www.meetup.com/takeaphotowalkoslo/events/315752869/",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:41:33.589Z",
-    "_status": "pending"
+    "_status": "godkjent"
   },
   {
     "id": "bitraf-byggekveld-hos-bitraf-2026-07-23",
@@ -5996,6 +5996,6 @@
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:41:33.705Z",
     "gjentas": "ukentlig:torsdag",
-    "_status": "pending"
+    "_status": "godkjent"
   }
 ]
