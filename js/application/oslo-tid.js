@@ -82,14 +82,20 @@ export function osloDataNokkel(isoStrengMedOffset) {
    EVENT-UTLØP (dag-basert, med nattmargin)
    ======================== */
 
-/** Timer inn i neste morgen (Oslo-tid) et event fortsatt regnes som "i dag". */
-const NATTMARGIN_TIMER = 4;
+/* Eventer som starter kl. NATT_TERSKEL_TIME eller senere regnes som
+   kveldseventer og får en liten nattmargin inn i morgenen etter (så en
+   klubbkveld som starter 23:00 ikke forsvinner midt i natta). Eventer som
+   starter tidligere på dagen har ingen grunn til å henge igjen — de
+   forsvinner rett ved midnatt. */
+const NATT_TERSKEL_TIME       = 20; /* kl. 20:00 Oslo-tid — eventets EGEN starttid */
+const NATTMARGIN_TIMER_SENT   = 3;  /* timer inn i morgenen etter, for kveldseventer */
+const NATTMARGIN_TIMER_TIDLIG = 0;  /* ingen margin — skjules ved midnatt */
 
 /**
  * Tidspunktet (Date, UTC) da et events "dag" er over — starten på eventets
- * kalenderdag (Oslo-tid) pluss 24 + NATTMARGIN_TIMER timer. Et event som
- * starter sent på kvelden (f.eks. 23:00) forsvinner dermed ikke ved midnatt,
- * men først kl. 04:00 morgenen etter.
+ * kalenderdag (Oslo-tid) pluss 24 timer, pluss en nattmargin som avhenger
+ * av eventets EGEN starttid: eventer som starter kl. 20:00 eller senere får
+ * NATTMARGIN_TIMER_SENT ekstra timer, resten forsvinner rett ved midnatt.
  *
  * @param {string} startISO  event.start, ISO-streng med Oslo-offset
  * @returns {Date}
@@ -97,7 +103,8 @@ const NATTMARGIN_TIMER = 4;
 export function dagensSlutt(startISO) {
   const k = osloKomponenter(new Date(startISO));
   const midnattStart = lagOsloDato(k.år, k.maned, k.dag, 0, 0, 0);
-  return new Date(midnattStart.getTime() + (24 + NATTMARGIN_TIMER) * 60 * 60 * 1000);
+  const nattmargin = k.time >= NATT_TERSKEL_TIME ? NATTMARGIN_TIMER_SENT : NATTMARGIN_TIMER_TIDLIG;
+  return new Date(midnattStart.getTime() + (24 + nattmargin) * 60 * 60 * 1000);
 }
 
 /**
