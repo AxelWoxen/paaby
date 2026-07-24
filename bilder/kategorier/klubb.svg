@@ -1,37 +1,15 @@
 <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1600" height="900" fill="#141318"/>
+  <rect width="1600" height="900" fill="#E9DDCF"/>
 
-  <!-- Høyttalerringer — konsentriske sirkler fra bunn-sentrum -->
-  <circle cx="800" cy="1050" r="320"  fill="none" stroke="#28252F" stroke-width="28"/>
-  <circle cx="800" cy="1050" r="480"  fill="none" stroke="#28252F" stroke-width="18"/>
-  <circle cx="800" cy="1050" r="640"  fill="none" stroke="#1E1C24" stroke-width="14"/>
-  <circle cx="800" cy="1050" r="800"  fill="none" stroke="#1E1C24" stroke-width="10"/>
-  <circle cx="800" cy="1050" r="960"  fill="none" stroke="#1E1C24" stroke-width="6" opacity="0.6"/>
-  <circle cx="800" cy="1050" r="1120" fill="none" stroke="#1E1C24" stroke-width="4" opacity="0.4"/>
+  <!-- Rolig frekvenstekstur — den opprinnelige bølge-placeholderen, nå flyttet hit. -->
+  <path d="M0,420 C100,365 100,365 200,420 C300,475 300,475 400,420 C500,365 500,365 600,420 C700,475 700,475 800,420 C900,365 900,365 1000,420 C1100,475 1100,475 1200,420 C1300,365 1300,365 1400,420 C1500,475 1500,475 1600,420"
+        fill="none" stroke="#3C3C34" stroke-width="2" opacity="0.32"/>
+  <path d="M0,470 C100,430 100,430 200,470 C300,510 300,510 400,470 C500,430 500,430 600,470 C700,510 700,510 800,470 C900,430 900,430 1000,470 C1100,510 1100,510 1200,470 C1300,430 1300,430 1400,470 C1500,510 1500,510 1600,470"
+        fill="none" stroke="#3C3C34" stroke-width="1.5" opacity="0.20"/>
+  <path d="M0,520 C100,492 100,492 200,520 C300,548 300,548 400,520 C500,492 500,492 600,520 C700,548 700,548 800,520 C900,492 900,492 1000,520 C1100,548 1100,548 1200,520 C1300,492 1300,492 1400,520 C1500,548 1500,548 1600,520"
+        fill="none" stroke="#3C3C34" stroke-width="1.5" opacity="0.13"/>
 
-  <!-- Lyskjegler fra topp -->
-  <polygon points="800,0 560,900 800,900" fill="#FF4D5E" opacity="0.07"/>
-  <polygon points="800,0 800,900 1040,900" fill="#C8FF4D" opacity="0.05"/>
-  <polygon points="800,0 440,900 680,900"  fill="#FF4D5E" opacity="0.04"/>
-  <polygon points="800,0 920,900 1160,900" fill="#C8FF4D" opacity="0.03"/>
-
-  <!-- Lyskjegle-kanter -->
-  <line x1="800" y1="0" x2="560"  y2="900" stroke="#FF4D5E" stroke-width="1.5" opacity="0.25"/>
-  <line x1="800" y1="0" x2="1040" y2="900" stroke="#C8FF4D" stroke-width="1.5" opacity="0.2"/>
-  <line x1="800" y1="0" x2="380"  y2="900" stroke="#FF4D5E" stroke-width="1"   opacity="0.12"/>
-  <line x1="800" y1="0" x2="1220" y2="900" stroke="#C8FF4D" stroke-width="1"   opacity="0.10"/>
-
-  <!-- Senter-høyttaler-membran -->
-  <circle cx="800" cy="1050" r="140" fill="#1E1C24"/>
-  <circle cx="800" cy="1050" r="90"  fill="#28252F"/>
-  <circle cx="800" cy="1050" r="50"  fill="#FF4D5E" opacity="0.7"/>
-  <circle cx="800" cy="1050" r="22"  fill="#141318"/>
-
-  <!-- Dansegulv-prikker -->
-  <rect x="640"  y="820" width="18" height="18" rx="3" fill="#C8FF4D" opacity="0.5"/>
-  <rect x="700"  y="848" width="18" height="18" rx="3" fill="#FF4D5E" opacity="0.4"/>
-  <rect x="760"  y="820" width="18" height="18" rx="3" fill="#F4F1EA" opacity="0.3"/>
-  <rect x="820"  y="848" width="18" height="18" rx="3" fill="#C8FF4D" opacity="0.4"/>
-  <rect x="880"  y="820" width="18" height="18" rx="3" fill="#FF4D5E" opacity="0.5"/>
-  <rect x="940"  y="848" width="18" height="18" rx="3" fill="#F4F1EA" opacity="0.3"/>
+  <!-- Lime: tynn aksentlinje, ikke dominerende -->
+  <path d="M0,445 C100,398 100,398 200,445 C300,492 300,492 400,445 C500,398 500,398 600,445 C700,492 700,492 800,445 C900,398 900,398 1000,445 C1100,492 1100,492 1200,445 C1300,398 1300,398 1400,445 C1500,492 1500,492 1600,445"
+        fill="none" stroke="#CEFB94" stroke-width="1.5" opacity="0.45"/>
 </svg>

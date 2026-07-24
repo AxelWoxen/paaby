@@ -1,65 +1,45 @@
 <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1600" height="900" fill="#141318"/>
+  <rect width="1600" height="900" fill="#E9DDCF"/>
 
-  <!-- Vinylplate: stor sirkel, litt til venstre -->
-  <circle cx="620" cy="480" r="320" fill="#1E1C24"/>
-  <!-- Vinyl-riller -->
-  <circle cx="620" cy="480" r="300" fill="none" stroke="#28252F" stroke-width="2"/>
-  <circle cx="620" cy="480" r="268" fill="none" stroke="#28252F" stroke-width="1.5"/>
-  <circle cx="620" cy="480" r="236" fill="none" stroke="#28252F" stroke-width="1.5"/>
-  <circle cx="620" cy="480" r="204" fill="none" stroke="#28252F" stroke-width="1.5"/>
-  <circle cx="620" cy="480" r="172" fill="none" stroke="#28252F" stroke-width="1.5"/>
-  <circle cx="620" cy="480" r="140" fill="none" stroke="#28252F" stroke-width="1.5"/>
-  <!-- Label-sirkelen i midten -->
-  <circle cx="620" cy="480" r="100" fill="#28252F"/>
-  <circle cx="620" cy="480" r="100" fill="none" stroke="#FF4D5E" stroke-width="2" opacity="0.6"/>
-  <!-- Senter-hull -->
-  <circle cx="620" cy="480" r="18" fill="#141318"/>
-  <circle cx="620" cy="480" r="6"  fill="#9994A2" opacity="0.6"/>
+  <!-- Vimpelsnor i riso-duotone. Diagonal, asymmetrisk komposisjon —
+       ujevn snorlengde og fallende sagging, flaggene henger i litt ulik
+       vinkel som om de faktisk henger i vind. Aksentflagget (lime) har
+       samme forskjøvne trykk-spøkelse som platen/sitrusen, og bærer
+       eneste halvtone-teksturen — resten holdes flatt og rolig. -->
 
-  <!-- Stjerner i lime — 4-puntede -->
-  <!-- Stjerne: to kryssende rektangler -->
-  <g transform="translate(1100,200) rotate(15)">
-    <rect x="-5" y="-28" width="10" height="56" rx="5" fill="#C8FF4D" opacity="0.9"/>
-    <rect x="-28" y="-5" width="56" height="10" rx="5" fill="#C8FF4D" opacity="0.9"/>
-  </g>
-  <g transform="translate(1320,380) rotate(-10)">
-    <rect x="-3" y="-18" width="6" height="36" rx="3" fill="#C8FF4D" opacity="0.7"/>
-    <rect x="-18" y="-3" width="36" height="6" rx="3" fill="#C8FF4D" opacity="0.7"/>
-  </g>
-  <g transform="translate(1250,650) rotate(22)">
-    <rect x="-4" y="-22" width="8" height="44" rx="4" fill="#C8FF4D" opacity="0.8"/>
-    <rect x="-22" y="-4" width="44" height="8" rx="4" fill="#C8FF4D" opacity="0.8"/>
-  </g>
-  <g transform="translate(980,720) rotate(-5)">
-    <rect x="-3" y="-16" width="6" height="32" rx="3" fill="#C8FF4D" opacity="0.6"/>
-    <rect x="-16" y="-3" width="32" height="6" rx="3" fill="#C8FF4D" opacity="0.6"/>
-  </g>
-  <g transform="translate(1450,550) rotate(8)">
-    <rect x="-2" y="-12" width="4" height="24" rx="2" fill="#C8FF4D" opacity="0.5"/>
-    <rect x="-12" y="-2" width="24" height="4" rx="2" fill="#C8FF4D" opacity="0.5"/>
-  </g>
-  <g transform="translate(1050,420) rotate(-18)">
-    <rect x="-3" y="-14" width="6" height="28" rx="3" fill="#F4F1EA" opacity="0.35"/>
-    <rect x="-14" y="-3" width="28" height="6" rx="3" fill="#F4F1EA" opacity="0.35"/>
-  </g>
+  <path d="M80,170 C560,420 1040,420 1520,150" fill="none" stroke="#3C3C34" stroke-width="4" opacity="0.5"/>
 
-  <!-- Totebag / poseform til høyre -->
-  <rect x="1120" y="300" width="180" height="200" rx="14" fill="#28252F" stroke="#9994A2" stroke-width="2" opacity="0.7"/>
-  <!-- Håndtak -->
-  <path d="M1150,300 Q1150,248 1180,248 Q1210,248 1210,300" fill="none" stroke="#9994A2" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
-  <path d="M1190,300 Q1190,248 1220,248 Q1250,248 1250,300" fill="none" stroke="#9994A2" stroke-width="10" stroke-linecap="round" opacity="0.6"/>
-  <!-- Liten lime-detalj på pose -->
-  <rect x="1175" y="370" width="70" height="4" rx="2" fill="#C8FF4D" opacity="0.6"/>
-  <rect x="1175" y="384" width="50" height="4" rx="2" fill="#C8FF4D" opacity="0.4"/>
+  <!-- Flagg 1: outline -->
+  <path d="M152.3,230.2 L237.7,219.8 L210.8,354.0 Z" fill="none" stroke="#3C3C34" stroke-width="3" opacity="0.55"/>
+  <!-- Flagg 2: outline -->
+  <path d="M379.2,302.9 L472.8,311.1 L413.6,448.5 Z" fill="none" stroke="#3C3C34" stroke-width="3" opacity="0.55"/>
+  <!-- Flagg 3: solid -->
+  <path d="M611.1,352.1 L700.9,345.9 L665.5,484.7 Z" fill="#3C3C34" opacity="0.85"/>
 
-  <!-- Prikkete mønster øverst til høyre -->
-  <circle cx="1480" cy="160" r="6" fill="#FF4D5E" opacity="0.5"/>
-  <circle cx="1520" cy="200" r="4" fill="#C8FF4D" opacity="0.4"/>
-  <circle cx="1460" cy="220" r="5" fill="#F4F1EA" opacity="0.3"/>
-  <circle cx="1510" cy="140" r="3" fill="#FF4D5E" opacity="0.35"/>
+  <!-- Flagg 4: aksent — misregistration-spøkelse bak, halvtone-tekstur, ren lime foran -->
+  <path d="M800.3,342.8 L899.7,353.2 L834.3,497.2 Z" fill="none" stroke="#3C3C34" stroke-width="3" opacity="0.4"/>
+  <path d="M793.3,348.8 L892.7,359.2 L827.3,503.2 Z" fill="#CEFB94"/>
+  <circle cx="839.2" cy="413.2" r="3.4" fill="#3C3C34" opacity="0.30"/>
+  <circle cx="840.3" cy="409.5" r="3.2" fill="#3C3C34" opacity="0.30"/>
+  <circle cx="817.8" cy="409.8" r="3.2" fill="#3C3C34" opacity="0.30"/>
+  <circle cx="866.4" cy="380.6" r="3.5" fill="#3C3C34" opacity="0.38"/>
+  <circle cx="810.3" cy="430.7" r="2.9" fill="#3C3C34" opacity="0.26"/>
+  <circle cx="806.4" cy="442.8" r="2.9" fill="#3C3C34" opacity="0.22"/>
+  <circle cx="855.3" cy="417.1" r="2.6" fill="#3C3C34" opacity="0.28"/>
+  <circle cx="804.2" cy="411.0" r="2.6" fill="#3C3C34" opacity="0.30"/>
+  <circle cx="818.2" cy="390.9" r="3.0" fill="#3C3C34" opacity="0.35"/>
 
-  <!-- Små prikkmarkeder langs kanten -->
-  <circle cx="380" cy="200" r="5" fill="#FF4D5E" opacity="0.3"/>
-  <circle cx="340" cy="750" r="4" fill="#C8FF4D" opacity="0.25"/>
+  <!-- Flagg 5: outline -->
+  <path d="M986.2,336.8 L1073.8,329.2 L1041.5,464.5 Z" fill="none" stroke="#3C3C34" stroke-width="3" opacity="0.55"/>
+  <!-- Flagg 6: solid -->
+  <path d="M1186.1,277.6 L1277.9,282.4 L1224.8,417.8 Z" fill="#3C3C34" opacity="0.85"/>
+  <!-- Flagg 7: outline -->
+  <path d="M1392.2,200.4 L1475.8,191.6 L1447.2,321.3 Z" fill="none" stroke="#3C3C34" stroke-width="3" opacity="0.55"/>
+
+  <!-- Konfetti — restraint, i den åpne nedre flaten -->
+  <circle cx="300" cy="620" r="7" fill="#3C3C34" opacity="0.28"/>
+  <rect x="1190" y="643" width="20" height="7" rx="3.5" fill="#CEFB94" opacity="0.55" transform="rotate(24 1200 646)"/>
+  <path d="M970,690 l16,0 l-8,15 Z" fill="#3C3C34" opacity="0.22"/>
+  <circle cx="500" cy="715" r="5" fill="#CEFB94" opacity="0.5"/>
+  <rect x="1350" y="595" width="18" height="6" rx="3" fill="#3C3C34" opacity="0.22" transform="rotate(-18 1359 598)"/>
 </svg>

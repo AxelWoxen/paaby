@@ -101,6 +101,11 @@ export function lagKort(event) {
 
   artikkel.appendChild(bildeWrapper);
 
+  /* Tynn hvit stripe der bildet møter tekstflaten */
+  const stripe = document.createElement('div');
+  stripe.className = 'kort-stripe';
+  artikkel.appendChild(stripe);
+
   /* Tekstinnhold */
   const innhold = document.createElement('div');
   innhold.className = 'kort-innhold';

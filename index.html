@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="no">
+<!-- data-palette: "a" (varm, standard) | "b" (lavendel) | "c" (oransje).
+     Se css/variabler.css for hva hver palett faktisk setter. -->
+<html lang="no" data-palette="a">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -11,15 +13,15 @@
   <meta property="og:type"        content="website" />
   <meta property="og:title"       content="påby – håndplukkede ting som skjer i Oslo" />
   <meta property="og:description" content="Finn håndplukkede konserter, matopplevelser og klubbkvelder i Oslo." />
-  <meta property="og:image"       content="bilder/og-bilde.svg" />
+  <meta property="og:image"       content="bilder/og-bilde.png" />
 
   <!-- Twitter / X -->
   <meta name="twitter:card"        content="summary_large_image" />
   <meta name="twitter:title"       content="påby – håndplukkede ting som skjer i Oslo" />
   <meta name="twitter:description" content="Finn håndplukkede konserter, matopplevelser og klubbkvelder i Oslo." />
-  <meta name="twitter:image"       content="bilder/og-bilde.svg" />
+  <meta name="twitter:image"       content="bilder/og-bilde.png" />
 
-  <link rel="icon" type="image/svg+xml" href="bilder/favicon.svg" />
+  <link rel="icon" type="image/png" href="bilder/favicon.png" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -49,13 +51,9 @@
   <div class="topbar">
     <header class="topptekst topbar-innhold">
 
-      <div class="logo" aria-label="påby">
-        p<span class="logo-aa" aria-hidden="true">
-          a
-          <svg class="logo-pin" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-          </svg>
-        </span>by
+      <div class="logo-lockup" aria-label="påby">
+        <img class="logo-merke"    src="bilder/paaby-merke-lys.png"    alt="" />
+        <img class="logo-ordmerke" src="bilder/paaby-ordmerke-lys.png" alt="" />
       </div>
 
       <p class="tagline">Det du ellers hadde gått glipp av</p>

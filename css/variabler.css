@@ -1,28 +1,112 @@
 /* variabler.css — alle designvalg samlet på én plass.
    Vil du endre en farge? Gjør det her, og det gjelder overalt i appen.
-   CSS-variabler definert på :root er tilgjengelige i alle andre CSS-filer. */
+   CSS-variabler definert på :root er tilgjengelige i alle andre CSS-filer.
+
+   ============================================================
+   FARGEPALETT — bytt mellom tre ferdige forslag
+   ============================================================
+   Sett data-palette på <html>-taggen i index.html til "a", "b" eller "c":
+
+     <html lang="no" data-palette="a">   ← varm (standard)
+     <html lang="no" data-palette="b">   ← lavendel
+     <html lang="no" data-palette="c">   ← oransje
+
+   Fjerner du attributtet helt, brukes palett A (verdiene i :root under).
+   Hver blokk under setter kun de fire råfargene (bakgrunn/kortflate/
+   aksent/sekundær) — alt annet (tekstfarger, dempede toner, kort- og
+   modal-farger, aktiv-tilstander) er REGNET UT fra disse fire lenger
+   ned i filen med color-mix(), så du trenger aldri styre dem manuelt.
+   Vil du lage en fjerde palett, dupliser én av blokkene og endre de
+   fire hex-verdiene — resten justerer seg selv. */
 
 :root {
-  /* --- FARGER --- */
+  /* --- PALETT A — varm (standard) --- */
+  --palett-bakgrunn:  #3C3C34;
+  --palett-kortflate: #E9DDCF;
+  --palett-aksent:    #CEFB94;
+  --palett-sekundaer: #CEFB94;  /* ingen egen sekundærfarge i palett A — gjenbruker aksenten */
+}
 
-  /* Bakgrunnen i hele appen */
-  --ink: #141318;
+[data-palette="b"] {
+  /* --- PALETT B — lavendel --- */
+  --palett-bakgrunn:  #3C3C34;
+  --palett-kortflate: #E9DDCF;
+  --palett-aksent:    #C7C7FD;
+  --palett-sekundaer: #CEFB94;
+}
 
-  /* Primær tekstfarge */
+[data-palette="c"] {
+  /* --- PALETT C — oransje --- */
+  --palett-bakgrunn:  #2C180F;
+  --palett-kortflate: #E9DDCF;
+  --palett-aksent:    #FE3C07;
+  --palett-sekundaer: #FE3C07;  /* ingen egen sekundærfarge i palett C — gjenbruker aksenten */
+}
+
+
+:root {
+  /* --- FARGER: mørk side (topbar, filtre, modal-bakteppe, sidestolpe) ---
+     Appens bakgrunn er alltid mørk, uansett palett — her ligger de fire
+     råfargene fra blokkene over, pluss lys tekst avledet fra dem. */
+
+  --ink:      var(--palett-bakgrunn);
+  --aksent:   var(--palett-aksent);
+  --sekundaer: var(--palett-sekundaer);
+
+  /* Primær tekstfarge på mørk bakgrunn — varm off-white, leser fint mot alle tre bakgrunnsfargene */
   --paper: #F4F1EA;
 
-  /* Korall — aksent, hover, CTA-knapper */
-  --korall: #FF4D5E;
+  /* Dempet tekst på mørk bakgrunn — blandet fra --paper og --ink,
+     så den arver litt av bakgrunnens egen varme i stedet for å bli nøytralt grå. */
+  --graa: color-mix(in srgb, var(--paper) 65%, var(--ink) 35%);
 
-  /* Lime — brukes på tid og "Gratis"-merking, gjør dem poppy og lette å scanne */
-  --lime: #C8FF4D;
+  /* Sekundær mørk overflate: chip-kanter, hover-tilstander, inputfelt, knapper på mørk bunn */
+  --flate-2: color-mix(in srgb, var(--ink) 78%, white 22%);
 
-  /* Overflater: litt lysere enn bakgrunnen for å skape dybde */
-  --flate-1: #1E1C24;   /* Kortbakgrunn */
-  --flate-2: #28252F;   /* Hover-tilstander, inputfelter, sekundære knapper */
+  /* Tekst/ikon oppå en flate FYLT med --aksent (aktiv chip, primærknapp, gjentas-badge).
+     --ink vinner kontrasttesten mot alle tre paletter (lys pastell og mettet oransje), se KRAV. */
+  --aksent-kontrast: var(--ink);
 
-  /* Sekundær tekstfarge — ikke så viktig info */
-  --graa: #9994A2;
+
+  /* --- FARGER: lys side (kortflate) ---
+     Kort, forsidekort og modal har lys flate mot appens mørke bakgrunn
+     (se ".kort, .modal-container, .utvalg-kort" i stil.css, som bruker
+     disse til å omdefinere --paper/--graa/--flate-2/--sekundaer lokalt
+     — det er DET som gjør at all tekst inni automatisk blir lesbar). */
+
+  --flate-1: var(--palett-kortflate);   /* Kortflate — lys, mot mørk --ink */
+
+  /* Primær tekst PÅ kortflaten — mørk, blandet fra --ink slik at hver
+     palett får en tekstfarge med samme "temperatur" som sin egen bakgrunn. */
+  --tekst-kort: color-mix(in srgb, var(--ink) 88%, black 12%);
+
+  /* Dempet tekst PÅ kortflaten (møtested/dato, tid, faktarad-etiketter) */
+  --graa-kort: color-mix(in srgb, var(--tekst-kort) 78%, var(--flate-1) 22%);
+
+  /* Sekundær lys overflate INNI kortet/modalen (faktarad, sekundærknapp) —
+     en anelse mørkere enn selve kortflaten, for å skape et innfelt panel. */
+  --flate-2-kort: color-mix(in srgb, var(--flate-1) 88%, black 12%);
+
+  /* Aksent- og sekundærfarge som REN TEKST/IKON på kortflaten (følg-knapp,
+     "lagret"-hjertet i modalen, pris, avstand). Lyse pastellfarger (palett
+     A/B) er for lyse til å leses direkte på kortflaten, så disse mørkner
+     aksenten/sekundæren mot --ink til den består kontrasttesten — testet
+     til minst 4.5:1 på alle tre paletter. */
+  --aksent-pa-lys:    color-mix(in srgb, var(--aksent) 20%, var(--ink) 80%);
+  --sekundaer-pa-lys: color-mix(in srgb, var(--sekundaer) 20%, var(--ink) 80%);
+
+
+  /* --- FARGER: merke-badges over vilkårlig bilde (kategori-badge, gjentas-ribbon) ---
+     Disse ligger OPPÅ eventbilder vi ikke kontrollerer — derfor en FAST mørk
+     bakgrunn (#3C3C34, ikke --ink) som alltid er mørk uansett palett eller bilde,
+     med farget tekst oppå. Se ".kort-kategori/.kategori-*/.gjentas-badge" i stil.css. */
+  --merke-bg: #3C3C34;
+
+  /* Aksent som tekst på --merke-bg (gjentas-ribbon). Samme idé som --aksent-pa-lys,
+     men lysnet MOT hvitt i stedet for mørknet mot --ink, og målt mot den faste
+     --merke-bg — palett C sin mettede oransje (#FE3C07) er for mørk til å bestå
+     4.5:1 rått, så alle tre paletter lysnes med samme forhold for konsistens. */
+  --aksent-pa-merke: color-mix(in srgb, var(--aksent) 55%, #F4F1EA 45%);
 
 
   /* --- TYPOGRAFI --- */

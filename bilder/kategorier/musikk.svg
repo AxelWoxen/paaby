@@ -1,36 +1,50 @@
 <svg viewBox="0 0 1600 900" xmlns="http://www.w3.org/2000/svg">
-  <rect width="1600" height="900" fill="#141318"/>
+  <rect width="1600" height="900" fill="#E9DDCF"/>
 
-  <!-- Bakgrunnslag -->
-  <rect width="1600" height="900" fill="#1E1C24" opacity="0.4"/>
+  <!-- Vinylplaten, alene — riso-duotone. En tynn lime-kant er forskjøvet
+       bak platen ("misregistration": trykklagene truffet et par mm feil,
+       et ekte riso-avtrykk). Rillene er ujevnt fordelt for hånd-kuttet
+       følelse, og lyskanten øverst til høyre er bygget av håndsatte
+       halvtone-prikker — variert tetthet i stedet for en gradient. -->
 
-  <!-- Stor lydbølge i lime -->
-  <path d="M0,450 C100,200 300,700 400,450 C500,200 700,700 800,450 C900,200 1100,700 1200,450 C1300,200 1500,700 1600,450"
-        fill="none" stroke="#C8FF4D" stroke-width="3.5" opacity="0.88"/>
+  <!-- Misregistration: lime bak platen -->
+  <circle cx="486" cy="486" r="364" fill="#CEFB94"/>
 
-  <!-- Andre bølge, nedover-fase, lime tynn -->
-  <path d="M0,420 C100,630 300,210 400,420 C500,630 700,210 800,420 C900,630 1100,210 1200,420 C1300,630 1500,210 1600,420"
-        fill="none" stroke="#C8FF4D" stroke-width="1.2" opacity="0.22"/>
+  <!-- Platen -->
+  <circle cx="480" cy="480" r="360" fill="#3C3C34"/>
 
-  <!-- Korall-bølge, liten amplitude -->
-  <path d="M0,490 C100,360 300,620 400,490 C500,360 700,620 800,490 C900,360 1100,620 1200,490 C1300,360 1500,620 1600,490"
-        fill="none" stroke="#FF4D5E" stroke-width="2" opacity="0.45"/>
+  <!-- Riller — ujevnt fordelt, varierende styrke -->
+  <circle cx="480" cy="480" r="322" fill="none" stroke="#E9DDCF" stroke-width="3.5" opacity="0.55"/>
+  <circle cx="482" cy="481" r="283" fill="none" stroke="#E9DDCF" stroke-width="3"   opacity="0.40"/>
+  <circle cx="480" cy="480" r="244" fill="none" stroke="#E9DDCF" stroke-width="3.5" opacity="0.50"/>
+  <circle cx="479" cy="482" r="206" fill="none" stroke="#E9DDCF" stroke-width="2.5" opacity="0.32"/>
+  <circle cx="480" cy="480" r="168" fill="none" stroke="#E9DDCF" stroke-width="3"   opacity="0.42"/>
 
-  <!-- Svak høy bølge for dybde -->
-  <path d="M0,300 C100,140 300,460 400,300 C500,140 700,460 800,300 C900,140 1100,460 1200,300 C1300,140 1500,460 1600,300"
-        fill="none" stroke="#C8FF4D" stroke-width="1" opacity="0.12"/>
+  <!-- Lyskant: halvtone-prikker, tetthet avtar innover -->
+  <circle cx="588.7" cy="160.8" r="6.7" fill="#E9DDCF" opacity="0.81"/>
+  <circle cx="626.6" cy="177.8" r="5.6" fill="#E9DDCF" opacity="0.81"/>
+  <circle cx="653.4" cy="207.2" r="5.3" fill="#E9DDCF" opacity="0.73"/>
+  <circle cx="689.3" cy="231.6" r="5.0" fill="#E9DDCF" opacity="0.70"/>
+  <circle cx="716.0" cy="258.9" r="5.2" fill="#E9DDCF" opacity="0.68"/>
+  <circle cx="728.8" cy="272.0" r="5.2" fill="#E9DDCF" opacity="0.63"/>
+  <circle cx="736.0" cy="311.8" r="4.2" fill="#E9DDCF" opacity="0.64"/>
+  <circle cx="753.0" cy="350.4" r="4.2" fill="#E9DDCF" opacity="0.56"/>
+  <circle cx="763.6" cy="372.1" r="3.2" fill="#E9DDCF" opacity="0.50"/>
+  <circle cx="772.9" cy="411.0" r="3.2" fill="#E9DDCF" opacity="0.50"/>
+  <circle cx="770.2" cy="442.5" r="3.4" fill="#E9DDCF" opacity="0.47"/>
+  <circle cx="764.6" cy="479.6" r="2.7" fill="#E9DDCF" opacity="0.45"/>
+  <circle cx="766.5" cy="506.4" r="2.9" fill="#E9DDCF" opacity="0.33"/>
+  <circle cx="750.7" cy="543.6" r="1.6" fill="#E9DDCF" opacity="0.33"/>
+  <circle cx="732.4" cy="568.1" r="2.0" fill="#E9DDCF" opacity="0.30"/>
+  <circle cx="731.4" cy="593.8" r="1.6" fill="#E9DDCF" opacity="0.26"/>
 
-  <!-- Senter-puls: tre konsentriske sirkler -->
-  <circle cx="800" cy="450" r="180" fill="none" stroke="#F4F1EA" stroke-width="0.8" opacity="0.07"/>
-  <circle cx="800" cy="450" r="100" fill="none" stroke="#F4F1EA" stroke-width="0.8" opacity="0.07"/>
-  <circle cx="800" cy="450" r="40"  fill="none" stroke="#FF4D5E" stroke-width="1.5" opacity="0.4"/>
+  <!-- Etiketten — også forskjøvet, samme trykkfeil-logikk -->
+  <circle cx="486" cy="474" r="118" fill="#CEFB94"/>
+  <circle cx="486" cy="474" r="20"  fill="#E9DDCF"/>
 
-  <!-- Notepunkter langs bølgen -->
-  <circle cx="400"  cy="450" r="7" fill="#FF4D5E" opacity="0.7"/>
-  <circle cx="800"  cy="450" r="9" fill="#C8FF4D" opacity="0.8"/>
-  <circle cx="1200" cy="450" r="7" fill="#FF4D5E" opacity="0.7"/>
-  <circle cx="200"  cy="450" r="4" fill="#9994A2" opacity="0.4"/>
-  <circle cx="600"  cy="450" r="4" fill="#9994A2" opacity="0.4"/>
-  <circle cx="1000" cy="450" r="4" fill="#9994A2" opacity="0.4"/>
-  <circle cx="1400" cy="450" r="4" fill="#9994A2" opacity="0.4"/>
+  <!-- Korn i den åpne høyre flaten -->
+  <circle cx="1120" cy="300" r="5" fill="#3C3C34" opacity="0.25"/>
+  <circle cx="1280" cy="420" r="7" fill="#3C3C34" opacity="0.18"/>
+  <circle cx="1180" cy="560" r="4" fill="#CEFB94" opacity="0.45"/>
+  <circle cx="1380" cy="250" r="3" fill="#3C3C34" opacity="0.20"/>
 </svg>

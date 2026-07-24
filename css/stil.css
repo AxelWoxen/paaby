@@ -13,6 +13,31 @@ body {
 }
 
 
+/* === LYS-OVERFLATE-SCOPE ===
+   Kort, forsidekort og modal har lys kortflate mot appens mørke bakgrunn
+   (se --flate-1 i variabler.css). De tre selectorene under omdefinerer
+   --paper/--graa/--flate-2/--sekundaer LOKALT til sine lys-tilpassede
+   motstykker (regnet ut i variabler.css) — alt av tittel, meta, tid,
+   pris og knapper inni arver disse via vanlig CSS-cascading, så teksten
+   blir automatisk mørk-på-lys uten at hver enkelt regel må overstyres.
+
+   NB: "color: var(--paper)" gjentas her med vilje (samme mønster som
+   body). Elementer som .kort-tittel/.modal-tittel setter ingen egen
+   color — de arver den. CSS arver den FERDIG UTREGNEDE fargen, ikke en
+   levende kobling til variabelen, så uten denne linja ville de fortsatt
+   arvet body sin lyse tekstfarge gjennom kortet. Denne linja gjør at
+   arven starter på nytt her, med riktig mørk verdi. */
+.kort,
+.modal-container,
+.utvalg-kort {
+  --paper:     var(--tekst-kort);
+  --graa:      var(--graa-kort);
+  --flate-2:   var(--flate-2-kort);
+  --sekundaer: var(--sekundaer-pa-lys);
+  color: var(--paper);
+}
+
+
 /* === TOPBAR (sticky: header + filtre) ===
    Én felles sticky container gjør at begge elementer
    klistrer seg til toppen som én blokk ved scrolling. */
@@ -45,33 +70,27 @@ body {
   padding: var(--gap-l) 0 var(--gap-s);
 }
 
-.logo {
-  font-family: var(--font-tittel);
-  font-size: 1.75rem;
-  font-weight: 700;
-  letter-spacing: -0.03em;
+/* Logo-lockup: merket (symbolet) først, så ordmerket — begge PNG med
+   den mørke fyllfargen byttet til papir/off-white ("-lys"-variantene,
+   se bilder/), siden de sitter på den mørke topbaren. Naturlig-fargede
+   versjoner (mørk på transparent) brukes til favicon og OG-bildet,
+   der bakgrunnen er lys. */
+.logo-lockup {
   display: inline-flex;
   align-items: center;
+  gap: var(--gap-s);
 }
 
-/* Wrapper rundt å-en — position:relative lar oss plassere SVG-pinen
-   absolutt relativt til akkurat denne bokstaven */
-.logo-aa {
-  position: relative;
-  display: inline-block;
+.logo-merke {
+  display: block;
+  height: 34px;
+  width: auto;
 }
 
-/* SVG-pinen overlapper prikken/ringen i å, og erstatter den visuelt
-   med et korall-farget kartnål-hode */
-.logo-pin {
-  position: absolute;
-  width: 14px;
-  height: 14px;
-  fill: var(--korall);
-  top: 1px;
-  left: 50%;
-  transform: translateX(-50%);
-  pointer-events: none;
+.logo-ordmerke {
+  display: block;
+  height: 29px;
+  width: auto;
 }
 
 .tagline {
@@ -111,8 +130,8 @@ body {
 }
 
 .følger-topbar-knapp.aktiv {
-  border-color: var(--korall);
-  color: var(--korall);
+  border-color: var(--aksent);
+  color: var(--aksent);
   background: rgba(255, 77, 94, 0.08);
 }
 
@@ -174,14 +193,14 @@ body {
 }
 
 .chip.aktiv {
-  background: var(--korall);
-  border-color: var(--korall);
-  color: white;
+  background: var(--aksent);
+  border-color: var(--aksent);
+  color: var(--aksent-kontrast);
 }
 
 .nullstill-knapp {
   font-size: 0.8rem;
-  color: var(--korall);
+  color: var(--aksent);
   border: none;
   background: none;
   padding: 0.3rem 0.5rem;
@@ -265,7 +284,7 @@ body {
 }
 
 .tilbake-knapp {
-  color: var(--korall);
+  color: var(--aksent);
   font-size: 0.875rem;
 }
 
@@ -286,7 +305,7 @@ body {
 }
 
 .uke-knapp {
-  color: var(--korall);
+  color: var(--aksent);
   background: none;
   border: none;
   padding: 0.3rem 0.2rem;
@@ -402,7 +421,7 @@ body {
 }
 
 .avfølg-knapp:hover {
-  color: var(--korall);
+  color: var(--aksent);
 }
 
 .følger-tom {
@@ -478,12 +497,29 @@ body {
   letter-spacing: 0.05em;
 }
 
-.kategori-musikk  { background: rgba(200, 255, 77, 0.15);  color: var(--lime); }
-.kategori-mat     { background: rgba(255, 77, 94, 0.15);   color: var(--korall); }
-.kategori-klubb   { background: rgba(244, 241, 234, 0.12); color: var(--paper); }
-.kategori-pafunn  { background: rgba(180, 77, 255, 0.15);  color: #b44dff; }
+/* Badge-teksten er samme hvit/papir-farge for alle fire kategorier (ingen
+   fargekoding lenger — kategorien identifiseres av teksten/etiketten selv).
+   Bakgrunnen er --ink — den samme mørke fargen som resten av nettsidens
+   bakgrunn (topbar, forside, sidestolpe) — IKKE en fast/annen gråtone, og
+   ALDRI en lys/transparent bakgrunn, som gjorde badgen nær usynlig oppå
+   lyse bilder. Fortsatt solid og ugjennomsiktig, så teksten er alltid lesbar
+   uansett hvilket bilde ligger bak. */
+.kategori-musikk,
+.kategori-mat,
+.kategori-klubb,
+.kategori-pafunn {
+  background: var(--ink);
+  color: #F4F1EA;
+}
 
-/* === GJENTAS-BADGE (ribbon øvre høyre hjørne) === */
+/* En tynn hvit stripe der bildet møter tekstflaten (eller øverst på kort
+   uten bilde — samme element, samme plassering først i kortet). Samme
+   hvitfarge som badge-teksten — ikke lenger fargekodet per kategori. */
+.kort-stripe { height: 4px; background: #F4F1EA; }
+
+/* === GJENTAS-BADGE (ribbon øvre høyre hjørne) ===
+   Samme prinsipp som kategori-badgen: solid --merke-bg, tydelig farget tekst —
+   ikke en lys aksentflate som kan bli utydelig mot enkelte bilder/paletter. */
 .gjentas-badge {
   position: absolute;
   top: 45px;
@@ -496,9 +532,8 @@ body {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: lowercase;
-  background: var(--korall);
-  color: rgba(244, 241, 234, 0.7);
-  backdrop-filter: blur(4px);
+  background: var(--merke-bg);
+  color: var(--aksent-pa-merke);
   pointer-events: none;
 }
 
@@ -514,7 +549,7 @@ body {
 
 /* Lagret: korall */
 .lagret .binders-ikon {
-  color: var(--korall);
+  color: var(--aksent);
 }
 
 /* Pop-animasjon når man lagrer */
@@ -566,7 +601,7 @@ body {
 }
 
 .lagret-knapp.aktiv .binders-ikon {
-  color: var(--korall);
+  color: var(--aksent);
 }
 
 /* Modal lagre-knapp */
@@ -582,7 +617,10 @@ body {
 }
 
 .modal-hjerte.lagret .binders-ikon {
-  color: var(--korall);
+  /* --aksent-pa-lys, ikke --aksent: dette ikonet står direkte på den lyse
+     kortflaten (modal-container), og trenger den mørknede on-lys-varianten
+     for å lese — se KRAV i variabler.css. */
+  color: var(--aksent-pa-lys);
 }
 
 .kort-innhold {
@@ -612,7 +650,7 @@ body {
 }
 
 .avstand {
-  color: var(--lime);
+  color: var(--sekundaer);
 }
 
 .kort-footer {
@@ -627,7 +665,7 @@ body {
 }
 
 .pris-gratis {
-  color: var(--lime);
+  color: var(--sekundaer);
   font-weight: 500;
 }
 
@@ -747,8 +785,9 @@ body {
 }
 
 .følg-knapp.fulgt {
-  border-color: var(--korall);
-  color: var(--korall);
+  /* --aksent-pa-lys: knappen står direkte på den lyse modal-kortflaten */
+  border-color: var(--aksent-pa-lys);
+  color: var(--aksent-pa-lys);
 }
 
 /* Faktarad: Type / Tid / Pris / Avstand */
@@ -804,8 +843,8 @@ body {
 .knapp:active { transform: scale(0.98); }
 
 .knapp-primaer {
-  background: var(--korall);
-  color: white;
+  background: var(--aksent);
+  color: var(--aksent-kontrast);
   flex: 1;
 }
 
@@ -930,9 +969,9 @@ body.modal-aapen {
 }
 
 #vis-avstand.aktiv {
-  background: rgba(200, 255, 77, 0.15);
-  border-color: var(--lime);
-  color: var(--lime);
+  background: color-mix(in srgb, var(--sekundaer) 15%, transparent);
+  border-color: var(--sekundaer);
+  color: var(--sekundaer);
 }
 
 #vis-avstand:disabled {
@@ -950,7 +989,7 @@ body.modal-aapen {
 }
 
 .posisjon-info { color: var(--graa); }
-.posisjon-feil { color: var(--korall); }
+.posisjon-feil { color: var(--aksent); }
 
 
 /* === SORTERINGSKONTROLL ===
@@ -999,7 +1038,7 @@ body.modal-aapen {
 }
 
 .sortering-select:focus-visible {
-  outline: 2px solid var(--korall);
+  outline: 2px solid var(--aksent);
   outline-offset: 2px;
   border-color: var(--graa);
 }
@@ -1108,7 +1147,7 @@ body.modal-aapen {
   border-radius: 100px;
   font-size: 0.7rem;
   font-weight: 600;
-  background: rgba(255, 215, 0, 0.2);
+  background: var(--ink);
   color: #ffd700;
 }
 
@@ -1133,7 +1172,7 @@ body.modal-aapen {
 
 .utvalg-kuratortekst {
   font-size: 0.9rem;
-  color: var(--lime);
+  color: var(--sekundaer);
   font-style: italic;
   line-height: 1.55;
   margin-top: 0.15rem;
@@ -1142,23 +1181,24 @@ body.modal-aapen {
 .se-alt-knapp {
   width: 100%;
   padding: var(--gap-m);
-  background: transparent;
-  border: 1.5px solid var(--flate-2);
+  background: var(--aksent);
+  border: 1.5px solid var(--aksent);
   border-radius: var(--radius-m);
-  color: var(--paper);
+  color: var(--aksent-kontrast);
   font-family: var(--font-tekst);
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
+  transition: opacity 0.15s;
 }
 
 .se-alt-knapp:hover {
-  background: var(--flate-2);
-  border-color: var(--graa);
+  opacity: 0.85;
 }
 
-/* Flytende pill-versjon — alltid position:fixed, synlighet styres av JS */
+/* Flytende pill-versjon — alltid position:fixed, synlighet styres av JS.
+   Samme grønne aksentflate som knappen over — solid bakgrunn trenger
+   ikke lenger frostet glass-effekten fra den gamle mørke/transparente pillen. */
 .se-alt-flytende {
   position: fixed;
   bottom: calc(1.5rem + env(safe-area-inset-bottom));
@@ -1173,11 +1213,9 @@ body.modal-aapen {
   white-space: nowrap;
   padding: 0.55rem 1.4rem;
   border-radius: 100px;
-  border: 1.5px solid rgba(244, 241, 234, 0.2);
-  background: rgba(20, 19, 24, 0.88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: var(--paper);
+  border: 1.5px solid var(--aksent);
+  background: var(--aksent);
+  color: var(--aksent-kontrast);
   font-family: var(--font-tekst);
   font-size: 0.875rem;
   font-weight: 500;
@@ -1192,8 +1230,7 @@ body.modal-aapen {
 }
 
 .se-alt-flytende:hover {
-  border-color: rgba(244, 241, 234, 0.5);
-  background: rgba(30, 28, 36, 0.95);
+  opacity: 0.85;
 }
 
 @media (min-width: 768px) {
@@ -1237,8 +1274,8 @@ body.modal-aapen {
 .samtykke-knapp {
   font-family: var(--font-tekst);
   font-size: 0.8rem;
-  background: var(--korall);
-  color: white;
+  background: var(--aksent);
+  color: var(--aksent-kontrast);
   padding: 0.3rem 1rem;
   border-radius: var(--radius-s);
   white-space: nowrap;
@@ -1297,7 +1334,7 @@ body.modal-aapen {
   }
 
   .bunn-nav-knapp.aktiv {
-    color: var(--korall);
+    color: var(--aksent);
   }
 
   /* Løft flytende "se alt"-pill og samtykke-stripe over bunn-nav */

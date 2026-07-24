@@ -103,6 +103,11 @@ function lagUtvalgKort(event) {
   bildeWrapper.appendChild(badgeRad);
   el.appendChild(bildeWrapper);
 
+  // Tynn hvit stripe der bildet møter tekstflaten
+  const stripe = document.createElement('div');
+  stripe.className = 'kort-stripe';
+  el.appendChild(stripe);
+
   // Innhold
   const innhold = document.createElement('div');
   innhold.className = 'utvalg-innhold';
