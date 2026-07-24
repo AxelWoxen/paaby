@@ -532,8 +532,8 @@ body {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: lowercase;
-  background: var(--merke-bg);
-  color: var(--aksent-pa-merke);
+  background: var(--aksent);
+  color: var(--aksent-kontrast);
   pointer-events: none;
 }
 
