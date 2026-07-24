@@ -1,13 +1,15 @@
 /* sporing.js — vendor-nøytral hendelsessporing.
  *
  * ══════════════════════════════════════════════════════════
- * KOBLE TIL ANALYSE — to steg:
- * ══════════════════════════════════════════════════════════
+ * AKTIV KOBLING: Umami (cookieless) — se ANALYSE-SCRIPT-blokken i
+ * index.html for script-tag og hvor du finner Website ID-en din.
+ * window.__paaby_track er definert der:
  *
- * 1. Lim inn analyse-script-taggen i <head> i index.html
- *    (se kommentarblokken merket ANALYSE-SCRIPT der).
+ *   window.__paaby_track = (navn, data) => window.umami?.track(navn, data);
  *
- * 2. Definer window.__paaby_track i det samme scriptet:
+ * Vil du bytte analyse-verktøy senere, er dette det ENESTE stedet som må
+ * endres — resten av appen kaller kun trackEvent() under, aldri verktøyet
+ * direkte. Andre alternative koblinger (samme mønster, andre biblioteker):
  *
  *    Microsoft Clarity:
  *      window.__paaby_track = (navn, data) =>
@@ -17,17 +19,13 @@
  *      window.__paaby_track = (navn, data) =>
  *        window.plausible?.(navn, { props: data });
  *
- *    Umami:
- *      window.__paaby_track = (navn, data) =>
- *        window.umami?.track(navn, data);
- *
  *    Posthog:
  *      window.__paaby_track = (navn, data) =>
  *        window.posthog?.capture(navn, data);
  *
  * trackEvent() gjør ingenting (og krasjer ikke) hvis:
- *   — brukeren ikke har samtykket ennå
- *   — window.__paaby_track ikke er definert
+ *   — brukeren ikke har samtykket ennå (samtykke-stripen, se main.js)
+ *   — window.__paaby_track ikke er definert (f.eks. Website ID ikke satt ennå)
  * ══════════════════════════════════════════════════════════
  */
 

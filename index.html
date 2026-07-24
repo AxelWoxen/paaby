@@ -35,11 +35,25 @@
   <link rel="stylesheet" href="css/stil.css" />
 
   <!-- ==============================
-       ANALYSE-SCRIPT
-       Lim inn script-taggen fra din analyse-leverandør her,
-       og definer window.__paaby_track for å koble sporingsmodulen til den.
-       Se js/application/sporing.js for eksempler og instruksjoner.
+       ANALYSE-SCRIPT — Umami (cookieless, gratis opptil 100k hendelser/mnd
+       på cloud.umami.is, ingen kredittkort). Slik finner du Website ID:
+
+         1. Opprett konto på https://cloud.umami.is (eller bruk en
+            selvhostet Umami-instans du allerede har).
+         2. Legg til paaby.online som nettsted (Websites → Add website).
+         3. Åpne nettstedet → Edit → "Tracking code" — Website ID-en står
+            der, og i script-taggen Umami viser deg.
+         4. Sett Website ID-en inn i data-website-id under, i stedet for
+            "SETT-INN-WEBSITE-ID-HER".
+
+       Selvhostet Umami: bytt src til https://din-instans.no/script.js.
+
+       Se js/application/sporing.js for hvordan trackEvent() bruker denne.
        ============================== -->
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="da8bf02b-0671-4e3c-afb6-255a4afeb357"></script>
+  <script>
+    window.__paaby_track = (navn, data) => window.umami?.track(navn, data);
+  </script>
 </head>
 
 <body>

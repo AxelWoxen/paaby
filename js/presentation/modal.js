@@ -337,6 +337,10 @@ function leggTilModalLyttere(event) {
       følgKnapp.classList.toggle('fulgt', erNåFulgt);
       følgKnapp.textContent = erNåFulgt ? 'følger ✓' : `+ følg ${sted}`;
       følgKnapp.setAttribute('aria-pressed', String(erNåFulgt));
+
+      /* Sporing: kun når man begynner å følge, ikke ved avfølging
+         (samme prinsipp som event_lagret over — track opt-in, ikke opt-out) */
+      if (erNåFulgt) trackEvent('sted_fulgt', { sted });
     });
   }
 

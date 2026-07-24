@@ -170,6 +170,7 @@ function initUkeNav() {
 
   document.getElementById('uke-neste').addEventListener('click', () => {
     tilstand.ukeOffset += 1;
+    trackEvent('uke_neste');
     oppdaterFeed();
   });
 }

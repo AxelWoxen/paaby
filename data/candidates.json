@@ -6054,5 +6054,24 @@
     "bilde": null,
     "sistVerifisert": "2026-07-23T21:48:59.343Z",
     "_status": "godkjent"
+  },
+  {
+    "id": "sushikurs-mathallen-2026-07-25",
+    "tittel": "Sushikurs",
+    "kategori": "mat",
+    "sted": "Kulinarisk Akademi, Mathallen",
+    "adresse": "Vulkan 5, 0178 Oslo",
+    "lat": 59.92225,
+    "lng": 10.75175,
+    "start": "2026-07-25T13:00:00+02:00",
+    "slutt": "2026-07-25T16:00:00+02:00",
+    "pris": 1750,
+    "prisTekst": "1750 kr",
+    "beskrivelse": "Et praktisk kurs i råvarer, ris, kutting og teknikkene som trengs for å lykkes med sushi hjemme.",
+    "kuratortekst": "En konkret lørdagsaktivitet som også gir deg en ny ferdighet.",
+    "lenke": "https://mathallenoslo.no/hva-skjer/sushikurs-8-01/",
+    "bilde": null,
+    "sistVerifisert": "2026-07-15T04:00:00+02:00",
+    "_status": "pending"
   }
 ]
