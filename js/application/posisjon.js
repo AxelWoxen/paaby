@@ -2,6 +2,13 @@
    Eneste ansvar: hente brukerens GPS-posisjon og regne ut avstand.
    Ingen DOM, ingen fetch, ingen import av andre moduler. */
 
+/* Kodene GeolocationPositionError bruker — kun til lesbar konsoll-logging. */
+const POSISJONSFEIL_NAVN = {
+  1: 'PERMISSION_DENIED',
+  2: 'POSITION_UNAVAILABLE',
+  3: 'TIMEOUT',
+};
+
 /**
  * Ber nettleseren om brukerens posisjon via Geolocation API.
  * Returnerer et Promise som løser seg med { lat, lng } hvis OK,
@@ -9,21 +16,40 @@
  *
  * Vi bruker null i stedet for å kaste feil fordi avslått posisjon
  * ikke er en feil — appen skal bare fungere uten avstand.
+ *
+ * VIKTIG: getCurrentPosition() har ELLERS ingen egen timeout (default er
+ * uendelig ventetid) — uten `timeout`-opsjonen under kan et hengende
+ * posisjonsoppslag (f.eks. treg WiFi-basert lokasjon på desktop) gjøre at
+ * verken success- eller error-callback noensinne fyres, og dette Promise-et
+ * aldri løser seg. Da låser tilstand.posisjonLastes seg i main.js og alle
+ * senere klikk på «Vis avstand» blir helt tause.
  */
 export function hentPosisjon() {
   return new Promise((resolve) => {
     /* Sjekk at API-et finnes (gamle nettlesere og HTTP-sider mangler det) */
     if (!navigator.geolocation) {
+      console.log('[posisjon] navigator.geolocation finnes ikke i denne nettleseren/konteksten');
       resolve(null);
       return;
     }
 
+    console.log('[posisjon] ber om posisjon via getCurrentPosition() …');
+
     navigator.geolocation.getCurrentPosition(
       /* Suksess: pakk ut lat/lng fra det komplekse GeolocationPosition-objektet */
-      (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      (pos) => {
+        console.log('[posisjon] suksess:', pos.coords.latitude, pos.coords.longitude);
+        resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      },
 
-      /* Feil (avslått, timeout osv.): returner null i stedet for å krasje */
-      () => resolve(null)
+      /* Feil (avslått, utilgjengelig, timeout): returner null i stedet for å krasje */
+      (feil) => {
+        console.log(`[posisjon] feil: ${POSISJONSFEIL_NAVN[feil.code] ?? feil.code} — ${feil.message}`);
+        resolve(null);
+      },
+
+      /* 10 sek timeout — garanterer at Promise-et alltid løser seg innen rimelig tid */
+      { timeout: 10_000 }
     );
   });
 }

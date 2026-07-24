@@ -269,10 +269,14 @@ async function hentEllerBrukPosisjon() {
   if (tilstand.brukerPosisjon) return tilstand.brukerPosisjon;
 
   tilstand.posisjonLastes = true;
-  const pos = await hentPosisjon();
-  tilstand.posisjonLastes = false;
-
-  return pos;
+  try {
+    return await hentPosisjon();
+  } finally {
+    /* try/finally: garanterer at låsen slippes selv om hentPosisjon() skulle
+       kaste en feil — uten dette kan ALLE senere klikk på «Vis avstand» bli
+       stille avvist for alltid (se posisjonLastes-sjekken under). */
+    tilstand.posisjonLastes = false;
+  }
 }
 
 function initVisAvstandKnapp() {
@@ -298,14 +302,24 @@ function initVisAvstandKnapp() {
     }
 
     /* Slå på — be om posisjon (eller bruk cachet) */
-    if (tilstand.posisjonLastes) return;
+    if (tilstand.posisjonLastes) {
+      /* Et tidligere klikk laster fortsatt — gi tilbakemelding i stedet for
+         å avvise klikket helt tyst (se KRAV: ingen tilstand skal være taus). */
+      visStatus(statusEl, 'Henter posisjon …');
+      return;
+    }
 
     knapp.disabled = true;
     visStatus(statusEl, 'Henter posisjon …');
 
-    const pos = await hentEllerBrukPosisjon();
-
-    knapp.disabled = false;
+    let pos;
+    try {
+      pos = await hentEllerBrukPosisjon();
+    } finally {
+      /* try/finally: knappen skal aldri bli stående deaktivert for alltid,
+         selv om noe uventet skulle kaste en feil over. */
+      knapp.disabled = false;
+    }
 
     if (!pos) {
       visStatus(statusEl, 'Vi trenger posisjonen din for å vise avstand.', true);
@@ -333,6 +347,8 @@ function initSortering() {
     if (erAvstandsSortering(nyVerdi) && !tilstand.visAvstand) {
       /* Brukeren vil sortere etter avstand — be om posisjon */
       if (tilstand.posisjonLastes) {
+        /* Gi tilbakemelding i stedet for å reversere helt tyst. */
+        visStatus(statusEl, 'Henter posisjon …');
         select.value = forrigeVerdi;
         return;
       }
