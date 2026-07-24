@@ -105,8 +105,5 @@ export function erIHelga(dato, nå = new Date()) {
   const søndagK = osloKomponenter(søndagMidnatt);
   const helgSlutt = lagOsloDato(søndagK.år, søndagK.maned, søndagK.dag, 23, 59, 59);
 
-  /* Fredag før 16:00: helgen har ikke startet ennå */
-  if (nåK.ukedag === 5 && nå < helgStart) return false;
-
   return dato >= helgStart && dato <= helgSlutt;
 }

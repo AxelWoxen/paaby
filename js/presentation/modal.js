@@ -402,6 +402,97 @@ function håndterFokusFelle(e) {
 
 
 /* ========================
+   DRA-FOR-Å-LUKKE (mobil bunnark)
+   Lar brukeren dra arket ned med fingeren for å lukke det — i tillegg til
+   kryss-knappen, klikk på bakgrunn og Escape. Kun aktiv når modalen vises
+   som bunnark (< 640px — matcher CSS-brytpunktet i «MODAL DESKTOP», der
+   den blir et sentrert vindu uten denne gesten). Griper bare inn ved
+   nedover-drag når innholdet allerede er scrollet helt til toppen, slik
+   at vanlig scrolling i beskrivelsen ikke forstyrres.
+   ======================== */
+
+const DRA_LUKK_TERSKEL_PX  = 100;  /* dra lenger enn dette → lukk */
+const DRA_LUKK_HASTIGHET   = 0.5;  /* px/ms — rask swipe lukker uansett avstand */
+const DRA_DØDSONE_PX       = 8;    /* skiller drag fra vanlig tap/klikk */
+const BUNNARK_MAKS_BREDDE  = 639;  /* matcher @media (min-width: 640px) i CSS */
+
+function initDraForÅLukke() {
+  const modal     = document.getElementById('modal');
+  const container = modal.querySelector('.modal-container');
+
+  let startY   = null;
+  let startTid = 0;
+  let dragging = false;
+  let pekerId  = null;
+
+  function fullførDrag(deltaY, hurtig) {
+    container.style.transition = 'transform 0.25s ease';
+
+    if (deltaY > DRA_LUKK_TERSKEL_PX || hurtig) {
+      container.style.transform = 'translateY(100%)';
+      lukkModal();
+    } else {
+      container.style.transform = 'translateY(0)';
+    }
+
+    const ryddOpp = () => {
+      /* Tilbake til ren CSS-styring (klasse-basert transform) til neste åpning */
+      container.style.transition = '';
+      container.style.transform  = '';
+      container.removeEventListener('transitionend', ryddOpp);
+    };
+    container.addEventListener('transitionend', ryddOpp);
+  }
+
+  container.addEventListener('pointerdown', (e) => {
+    if (window.innerWidth > BUNNARK_MAKS_BREDDE) return;
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    if (container.scrollTop > 0) return; /* kun ved toppen av innholdet */
+
+    startY   = e.clientY;
+    startTid = performance.now();
+    dragging = false;
+    pekerId  = e.pointerId;
+  });
+
+  container.addEventListener('pointermove', (e) => {
+    if (pekerId === null || e.pointerId !== pekerId || startY === null) return;
+
+    const deltaY = e.clientY - startY;
+    if (deltaY <= 0) return; /* kun nedover-drag lukker */
+
+    if (!dragging) {
+      if (deltaY < DRA_DØDSONE_PX) return;
+      dragging = true;
+      container.style.transition = 'none';
+      try { container.setPointerCapture(pekerId); } catch { /* ignorer */ }
+    }
+
+    e.preventDefault();
+    container.style.transform = `translateY(${deltaY}px)`;
+  }, { passive: false });
+
+  function avslutt(e) {
+    if (pekerId === null || e.pointerId !== pekerId) return;
+
+    if (dragging) {
+      const deltaY   = Math.max(0, e.clientY - startY);
+      const varighet = performance.now() - startTid;
+      const hurtig   = deltaY > 20 && (deltaY / Math.max(varighet, 1)) > DRA_LUKK_HASTIGHET;
+      fullførDrag(deltaY, hurtig);
+    }
+
+    dragging = false;
+    pekerId  = null;
+    startY   = null;
+  }
+
+  container.addEventListener('pointerup', avslutt);
+  container.addEventListener('pointercancel', avslutt);
+}
+
+
+/* ========================
    INITIALISERING
    ======================== */
 
@@ -422,4 +513,6 @@ export function initModal() {
 
   /* Fokus-felle — holder Tab innenfor modalen */
   modal.addEventListener('keydown', håndterFokusFelle);
+
+  initDraForÅLukke();
 }
