@@ -1,7 +1,7 @@
 /* forside.js — redaksjonell forside.
    Viser kuratert utvalg: fremhevede events øverst, fallback fyller opp til 5. */
 
-import { osloKomponenter }                        from '../application/oslo-tid.js';
+import { osloKomponenter, eventTilstand }         from '../application/oslo-tid.js';
 import { formaterTid, formaterPrisTekst,
          kategoriVisningsnavn }                   from '../application/formatering.js';
 import { hentEventbilde }                         from '../application/kategori-bilder.js';
@@ -48,7 +48,7 @@ export function velgUtvalg(alleEventer) {
   const time    = osloKomponenter(nå).time;
 
   const fremhevede = alleEventer
-    .filter(e => e.fremhevet && new Date(e.start) > nå)
+    .filter(e => e.fremhevet && eventTilstand(e.start, nå) !== 'ferdig')
     .sort((a, b) => new Date(a.start) - new Date(b.start));
 
   const fremhevedeIder = new Set(fremhevede.map(e => e.id));
@@ -66,8 +66,10 @@ export function velgUtvalg(alleEventer) {
 /* ─── Render ─────────────────────────────────────────────────────────────────── */
 
 function lagUtvalgKort(event) {
+  const utgattIDag = eventTilstand(event.start) === 'utgatt-i-dag';
+
   const el = document.createElement('article');
-  el.className = 'utvalg-kort';
+  el.className = `utvalg-kort${utgattIDag ? ' utvalg-kort--utgatt' : ''}`;
   el.setAttribute('role', 'button');
   el.setAttribute('tabindex', '0');
   el.setAttribute('aria-label', `Åpne detaljer for ${event.tittel}`);
@@ -111,6 +113,13 @@ function lagUtvalgKort(event) {
   // Innhold
   const innhold = document.createElement('div');
   innhold.className = 'utvalg-innhold';
+
+  if (utgattIDag) {
+    const utgattLabel = document.createElement('span');
+    utgattLabel.className   = 'kort-utgatt-label';
+    utgattLabel.textContent = 'Utgått i dag';
+    innhold.appendChild(utgattLabel);
+  }
 
   const tittel = document.createElement('h2');
   tittel.className   = 'utvalg-tittel';

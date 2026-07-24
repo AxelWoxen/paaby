@@ -67,7 +67,14 @@ body {
   display: flex;
   align-items: center;
   gap: var(--gap-m);
-  padding: var(--gap-l) 0 var(--gap-s);
+  /* Kun topp/bunn her — .topptekst og .topbar-innhold er samme element
+     (<header class="topptekst topbar-innhold">). En padding-shorthand her
+     ville nullstilt topbar-innhold sin venstre/høyre-marg (og safe-area-
+     overstyringene), siden denne regelen kommer senere i cascaden. Det var
+     bugen: logoen lå inntil venstre kant mens lagret-knappens EGEN interne
+     padding ga et falskt inntrykk av luft på høyre side. */
+  padding-top: var(--gap-l);
+  padding-bottom: var(--gap-s);
 }
 
 /* Logo-lockup: merket (symbolet) først, så ordmerket — begge PNG med
@@ -635,6 +642,30 @@ body {
   font-size: 1.1rem;
   font-weight: 600;
   line-height: 1.25;
+}
+
+/* === UTGÅTT I DAG ===
+   Eventet har startet, men dagen (+ nattmargin til kl. 04:00) er ikke over
+   ennå — se eventTilstand() i oslo-tid.js. Gjelder både vanlige feed-kort
+   og forsidens utvalg-kort. Skjules helt (fjernes fra DOM) først når dagen
+   faktisk er omme. */
+.kort--utgatt,
+.utvalg-kort--utgatt {
+  opacity: 0.55;
+}
+
+.kort--utgatt .kort-tittel,
+.utvalg-kort--utgatt .utvalg-tittel {
+  text-decoration: line-through;
+}
+
+.kort-utgatt-label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--graa);
 }
 
 .kort-meta {

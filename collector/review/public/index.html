@@ -415,6 +415,41 @@
 </div>
 
 <script>
+// ─── Oslo-tid ────────────────────────────────────────────────────────────────
+// Reviewer kan sitte i en hvilken som helst tidssone (maskinens lokale tid
+// brukes IKKE her) — all visning av dato/klokkeslett skal være Europe/Oslo,
+// samme regel som selve appen (js/application/oslo-tid.js) bruker.
+
+const OSLO_UKEDAG_NR = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
+function osloKomponenter(dato) {
+  const fmt = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit',
+    weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  });
+  const deler = fmt.formatToParts(dato).reduce((o, d) => {
+    if (d.type !== 'literal') o[d.type] = d.value;
+    return o;
+  }, {});
+  return {
+    år: Number(deler.year), maned: Number(deler.month), dag: Number(deler.day),
+    ukedag: OSLO_UKEDAG_NR[deler.weekday],
+    time: Number(deler.hour), min: Number(deler.minute),
+  };
+}
+
+/* Lager et Date (UTC) for et gitt tidspunkt i Oslo-tid — prøver sommer- og
+   vintertid-offset og velger det som faktisk gir riktig Oslo-klokkeslett. */
+function lagOsloDato(år, maned, dag, time = 0, min = 0, sek = 0) {
+  const p    = (n) => String(n).padStart(2, '0');
+  const base = `${år}-${p(maned)}-${p(dag)}T${p(time)}:${p(min)}:${p(sek)}`;
+  for (const offset of ['+02:00', '+01:00']) {
+    const kandidat = new Date(base + offset);
+    if (osloKomponenter(kandidat).time === time % 24) return kandidat;
+  }
+  return new Date(base + '+01:00');
+}
+
 // ─── Tilstand ────────────────────────────────────────────────────────────────
 
 let alleEvents     = [];
@@ -550,16 +585,15 @@ function oppdaterTeller(delta = 0) {
 }
 
 function oppdaterFremhevTeller(publiserte) {
-  const nå       = new Date();
-  const dag      = nå.getDay(); // 0=søn
-  const dagerTilMan = (dag + 6) % 7;
-  const mandag   = new Date(nå.getTime() - dagerTilMan * 86400000);
-  mandag.setHours(0, 0, 0, 0);
-  const søndag   = new Date(mandag.getTime() + 6 * 86400000);
-  søndag.setHours(23, 59, 59, 999);
+  const nå          = new Date();
+  const k           = osloKomponenter(nå);
+  const dagerTilMan = (k.ukedag + 6) % 7; // ukedag: 0=søn
+  const iDagMidnatt = lagOsloDato(k.år, k.maned, k.dag, 0, 0, 0);
+  const mandag      = new Date(iDagMidnatt.getTime() - dagerTilMan * 86400000);
+  const søndagSlutt = new Date(mandag.getTime() + 7 * 86400000 - 1);
 
   const antall = publiserte.filter(e =>
-    e.fremhevet && new Date(e.start) >= mandag && new Date(e.start) <= søndag
+    e.fremhevet && new Date(e.start) >= mandag && new Date(e.start) <= søndagSlutt
   ).length;
 
   const el = document.getElementById('fremhev-teller');
@@ -571,6 +605,7 @@ function oppdaterFremhevTeller(publiserte) {
 function formaterDato(iso) {
   if (!iso) return '—';
   return new Date(iso).toLocaleDateString('nb-NO', {
+    timeZone: 'Europe/Oslo',
     weekday: 'short', day: 'numeric', month: 'short',
     hour: '2-digit', minute: '2-digit',
   });

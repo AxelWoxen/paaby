@@ -5,39 +5,22 @@
    grupperEtterDag() forventer et allerede sortert array og bevarer
    rekkefølgen fra inndata — både for dager og for arrangementer innad. */
 
-import { lagDagLabel }    from './formatering.js';
-import { osloDataNokkel } from './oslo-tid.js';
-
-/* Standard varighet når slutt mangler (4 timer i millisekunder). */
-const STANDARD_VARIGHET_MS = 4 * 60 * 60 * 1000;
+import { lagDagLabel }              from './formatering.js';
+import { osloDataNokkel, eventTilstand } from './oslo-tid.js';
 
 /**
- * Fjerner arrangementer som er ferdig (slutttidspunktet har passert).
- *
- * Regler:
- *   - Har arrangementet gyldig slutt → aktivt frem til sluttidspunktet.
- *   - Mangler slutt → antas å vare 4 timer etter start.
+ * Fjerner arrangementer som er helt ferdig — dvs. der kalenderdagen
+ * eventet starter på (Oslo-tid, med 4-timers nattmargin inn i morgenen
+ * etter) er over. Events som har startet, men fortsatt er "i dag" (jf.
+ * nattmarginen), beholdes — de skal vises som utgått, ikke skjules
+ * (se eventTilstand() i oslo-tid.js og kort-rendring i feed.js/forside.js).
  *
  * @param {Array} eventer
  * @param {Date}  [nå]   - Valgfri "nå"-referanse (gjør funksjonen testbar).
  * @returns {Array}
  */
 export function skjulPasserte(eventer, nå = new Date()) {
-  return eventer.filter((e) => {
-    const start = new Date(e.start);
-    if (isNaN(start.getTime())) return false; /* ugyldig dato → skjul */
-
-    let slutt;
-    if (e.slutt) {
-      const sluttDato = new Date(e.slutt);
-      /* Ugyldig slutt → fall tilbake til standard varighet */
-      slutt = isNaN(sluttDato.getTime()) ? new Date(start.getTime() + STANDARD_VARIGHET_MS) : sluttDato;
-    } else {
-      slutt = new Date(start.getTime() + STANDARD_VARIGHET_MS);
-    }
-
-    return slutt > nå;
-  });
+  return eventer.filter((e) => eventTilstand(e.start, nå) !== 'ferdig');
 }
 
 /**

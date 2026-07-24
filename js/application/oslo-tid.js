@@ -76,3 +76,44 @@ export function lagOsloDato(år, maned, dag, time = 0, min = 0, sek = 0) {
 export function osloDataNokkel(isoStrengMedOffset) {
   return isoStrengMedOffset.slice(0, 10);
 }
+
+
+/* ========================
+   EVENT-UTLØP (dag-basert, med nattmargin)
+   ======================== */
+
+/** Timer inn i neste morgen (Oslo-tid) et event fortsatt regnes som "i dag". */
+const NATTMARGIN_TIMER = 4;
+
+/**
+ * Tidspunktet (Date, UTC) da et events "dag" er over — starten på eventets
+ * kalenderdag (Oslo-tid) pluss 24 + NATTMARGIN_TIMER timer. Et event som
+ * starter sent på kvelden (f.eks. 23:00) forsvinner dermed ikke ved midnatt,
+ * men først kl. 04:00 morgenen etter.
+ *
+ * @param {string} startISO  event.start, ISO-streng med Oslo-offset
+ * @returns {Date}
+ */
+export function dagensSlutt(startISO) {
+  const k = osloKomponenter(new Date(startISO));
+  const midnattStart = lagOsloDato(k.år, k.maned, k.dag, 0, 0, 0);
+  return new Date(midnattStart.getTime() + (24 + NATTMARGIN_TIMER) * 60 * 60 * 1000);
+}
+
+/**
+ * Klassifiserer et event relativt til "nå", i Oslo-tid:
+ *   'kommende'     — har ikke startet ennå
+ *   'utgatt-i-dag' — har startet, men dagen (inkl. nattmargin) er ikke over
+ *   'ferdig'       — dagen er over — skal skjules helt
+ *
+ * @param {string} startISO
+ * @param {Date}   [nå]
+ * @returns {'kommende'|'utgatt-i-dag'|'ferdig'}
+ */
+export function eventTilstand(startISO, nå = new Date()) {
+  const start = new Date(startISO);
+  if (isNaN(start.getTime())) return 'ferdig';
+  if (nå < start) return 'kommende';
+  if (nå < dagensSlutt(startISO)) return 'utgatt-i-dag';
+  return 'ferdig';
+}

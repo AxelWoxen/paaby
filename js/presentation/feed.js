@@ -10,6 +10,7 @@ import { erLagret, veksleLagret }                               from '../applica
 import { formaterPrisTekst, formaterTid, formaterAvstand,
          kategoriVisningsnavn }                                  from '../application/formatering.js';
 import { hentEventbilde, KATEGORI_BILDER }                       from '../application/kategori-bilder.js';
+import { eventTilstand }                                         from '../application/oslo-tid.js';
 import { åpneModal }                                             from './modal.js';
 
 
@@ -66,10 +67,11 @@ export function gjentasTekst(gjentas) {
    ======================== */
 
 export function lagKort(event) {
-  const lagret = erLagret(event.id);
+  const lagret     = erLagret(event.id);
+  const utgattIDag = eventTilstand(event.start) === 'utgatt-i-dag';
 
   const artikkel = document.createElement('article');
-  artikkel.className = 'kort';
+  artikkel.className = `kort${utgattIDag ? ' kort--utgatt' : ''}`;
   artikkel.dataset.id = event.id;
   artikkel.setAttribute('role', 'button');
   artikkel.setAttribute('tabindex', '0');
@@ -109,6 +111,13 @@ export function lagKort(event) {
   /* Tekstinnhold */
   const innhold = document.createElement('div');
   innhold.className = 'kort-innhold';
+
+  if (utgattIDag) {
+    const utgattLabel = document.createElement('span');
+    utgattLabel.className   = 'kort-utgatt-label';
+    utgattLabel.textContent = 'Utgått i dag';
+    innhold.appendChild(utgattLabel);
+  }
 
   const tittel = document.createElement('h2');
   tittel.className   = 'kort-tittel';

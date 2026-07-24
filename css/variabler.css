@@ -99,7 +99,7 @@
   /* --- FARGER: merke-badges over vilkårlig bilde (kategori-badge, gjentas-ribbon) ---
      Disse ligger OPPÅ eventbilder vi ikke kontrollerer — derfor en FAST mørk
      bakgrunn (#3C3C34, ikke --ink) som alltid er mørk uansett palett eller bilde,
-     med farget tekst oppå. Se ".kort-kategori/.kategori-*/.gjentas-badge" i stil.css. */
+     med farget tekst oppå. Se ".kort-kategori/.kategori-.gjentas-badge" i stil.css. */
   --merke-bg: #3C3C34;
 
   /* Aksent som tekst på --merke-bg (gjentas-ribbon). Samme idé som --aksent-pa-lys,
