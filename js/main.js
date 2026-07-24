@@ -107,7 +107,7 @@ function oppdaterFeed() {
 
   let tomMelding;
   if (tilstand.visLagret) {
-    tomMelding = 'Ingenting lagret enda — trykk hjertet på det du vil på.';
+    tomMelding = 'Ingenting lagret enda — trykk bindersen på det du vil på.';
   } else if (ukeTom) {
     tomMelding = 'Ingenting lagt inn her ennå – vi fyller på.';
   } else {
