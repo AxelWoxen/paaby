@@ -35,7 +35,7 @@
     "lenke": "https://tikkio.com/events/64937-xstalkerx-superspaz-tba-kafe-haerverk",
     "bilde": null,
     "sistVerifisert": "2026-07-15T04:00:00+02:00",
-    "fremhevet": true
+    "fremhevet": false
   },
   {
     "id": "utflod-haerverk-2026-07-24",
@@ -308,7 +308,7 @@
     "lenke": "https://www.facebook.com/events/ingensteds/sommerkvissen-p%C3%A5-ingensteds/1306024228255054/",
     "bilde": null,
     "sistVerifisert": "2026-07-15T04:00:00+02:00",
-    "fremhevet": true
+    "fremhevet": false
   },
   {
     "id": "prinsen-platemesse-folk-2026-07-26",
@@ -644,7 +644,7 @@
     "lenke": null,
     "bilde": null,
     "sistVerifisert": "2026-07-20T00:21:23.262Z",
-    "fremhevet": true
+    "fremhevet": false
   },
   {
     "id": "vestkanttorvet-vestkanttorvet-antikk-og-bruktmarked-2026-07-25",
@@ -721,7 +721,7 @@
     "bilde": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Bridge_over_Akerselva_by_Blaa.jpg/1280px-Bridge_over_Akerselva_by_Blaa.jpg",
     "sistVerifisert": "2026-07-21T05:17:46.240Z",
     "gjentas": "ukentlig:søndag",
-    "fremhevet": false
+    "fremhevet": true
   },
   {
     "id": "bitraf-byggekveld-hos-bitraf-2026-07-23",
@@ -779,7 +779,7 @@
     "lenke": "https://ra.co/events/2493205",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:46:36.468Z",
-    "fremhevet": false
+    "fremhevet": true
   },
   {
     "id": "oppmote-evita-espressobar-fotowalk-industri-murstein-og-gatekunst-pa-lokka-2026-07-25",
@@ -798,7 +798,7 @@
     "lenke": "https://www.meetup.com/takeaphotowalkoslo/events/315752869/",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:46:37.811Z",
-    "fremhevet": false
+    "fremhevet": true
   },
   {
     "id": "gressholmen-kro-quackfestivalen-2026-2026-07-26",
