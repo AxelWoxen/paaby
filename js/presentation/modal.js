@@ -453,6 +453,14 @@ function initDraForÅLukke() {
     startTid = performance.now();
     dragging = false;
     pekerId  = e.pointerId;
+
+    /* Slår av nettleserens egne touch-gester (scroll/bounce) FØR første
+       move-hendelse i det hele tatt når vi allerede vet vi er ved toppen —
+       venter vi til pointermove med bare preventDefault(), rekker mobil-
+       nettlesere (spesielt iOS Safari) å starte sin egen scroll/bounce-
+       gest først, og den vinner over transform-en vår («popper rett opp
+       igjen»). Nullstilles i avslutt() under. */
+    container.style.touchAction = 'none';
   });
 
   container.addEventListener('pointermove', (e) => {
@@ -482,6 +490,7 @@ function initDraForÅLukke() {
       fullførDrag(deltaY, hurtig);
     }
 
+    container.style.touchAction = '';
     dragging = false;
     pekerId  = null;
     startY   = null;
