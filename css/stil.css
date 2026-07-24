@@ -1332,6 +1332,13 @@ body.modal-aapen {
     padding-bottom: calc(var(--bunn-nav-h) + env(safe-area-inset-bottom));
   }
 
+  /* Følger- og lagret-knappene i topplinjen er overflødige her —
+     de samme funksjonene finnes allerede i bunn-navigasjonen. */
+  #vis-følger,
+  #vis-lagret {
+    display: none;
+  }
+
   .bunn-nav {
     display: flex;
     position: fixed;
