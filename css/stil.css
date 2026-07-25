@@ -83,6 +83,12 @@ body {
 @media (max-width: 767px) {
   .topptekst {
     padding-top: var(--gap-s);
+    /* .topbar (forelder) legger env(safe-area-inset-top) OVENPÅ denne
+       raden for å unngå hakk/dynamic island — men kun på toppen. Uten å
+       legge den samme verdien til her også, blir luften over logoen
+       (gap-s + hakk-plass) synlig større enn under (kun gap-s) på
+       telefoner med hakk. Gjør bunnen like stor som toppen faktisk blir. */
+    padding-bottom: calc(var(--gap-s) + env(safe-area-inset-top));
   }
 }
 
