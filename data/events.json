@@ -1001,13 +1001,13 @@
     "lng": 10.6928,
     "start": "2026-07-29T19:00:00+02:00",
     "slutt": "2026-07-29T22:00:00+02:00",
-    "pris": null,
-    "prisTekst": "Se Ticketmaster for pris",
+    "pris": 450,
+    "prisTekst": null,
     "beskrivelse": "Zotora spiller kontemplativ didgeridoo-musikk i det freskomalte mausoleet til Emanuel Vigeland — en sjelden mulighet til å oppleve rommets legendariske akustikk.",
     "kuratortekst": "Et av Oslos mest uvanlige konsertrom, brukt akkurat slik det er ment.",
     "lenke": "https://www.ticketmaster.no/venue/emanuel-vigeland-museum-oslo-billetter/ovm/3",
     "bilde": null,
-    "sistVerifisert": "2026-07-25T01:42:00+02:00"
+    "sistVerifisert": "2026-07-28T05:52:29.555Z"
   },
   {
     "id": "jaeger-frozen-jungle-x-karmaklubb-2026-07-29",
