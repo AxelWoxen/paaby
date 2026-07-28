@@ -586,6 +586,157 @@ function lagGjentasKontroll(gjentas) {
   return { el: rad, hentVerdi: () => byggGjentasStreng(typeSelect.value, dagSelect.value) };
 }
 
+// ─── Rediger-panel (Publiserte-fanen) ─────────────────────────────────────────
+// Fullt redigeringsskjema for et allerede publisert event — alle felt utenom
+// id (identitet, brukt av lagret/følger), gjentas og fremhevet, som har egne
+// alltid-synlige kontroller.
+
+const KATEGORIER = [['musikk', 'Musikk'], ['klubb', 'Klubb'], ['mat', 'Mat'], ['pafunn', 'Påfunn']];
+
+function lagKategoriVelgerEl(aktivKat) {
+  const rad = document.createElement('div');
+  rad.className = 'kategori-velger';
+  let valgt = aktivKat;
+  const knapper = [];
+  KATEGORIER.forEach(([val, txt]) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `kategori-knapp${val === aktivKat ? ' aktiv' : ''}`;
+    btn.textContent = txt;
+    btn.onclick = () => {
+      valgt = val;
+      knapper.forEach(k => k.classList.remove('aktiv'));
+      btn.classList.add('aktiv');
+    };
+    knapper.push(btn);
+    rad.appendChild(btn);
+  });
+  return { el: rad, hentVerdi: () => valgt };
+}
+
+function lagFelt(label, verdi, type = 'text') {
+  const wrap = document.createElement('div');
+  wrap.className = 'skjema-gruppe';
+  const lab = document.createElement('label');
+  lab.className = 'felt-label'; lab.textContent = label;
+  const input = document.createElement('input');
+  input.type = type; input.value = verdi ?? '';
+  wrap.appendChild(lab); wrap.appendChild(input);
+  return { wrap, input };
+}
+
+function lagFeltRad(...felt) {
+  const rad = document.createElement('div');
+  rad.className = 'skjema-rad';
+  felt.forEach(f => rad.appendChild(f.wrap));
+  return rad;
+}
+
+function lagTekstomrade(label, verdi, rows = 3) {
+  const lab = document.createElement('label');
+  lab.className = 'felt-label'; lab.textContent = label;
+  const ta = document.createElement('textarea');
+  ta.rows = rows; ta.value = verdi ?? '';
+  return { lab, ta };
+}
+
+/* Bygger redigeringspanelet for ett publisert event. onLagret(event, gitKommando)
+   kalles etter vellykket lagring, slik at kortet over kan oppdatere tittel/meta. */
+function lagRedigerPanel(event, onLagret) {
+  const panel = document.createElement('div');
+  panel.className = 'pub-rediger-panel';
+  panel.style.display = 'none';
+
+  const katLabel = document.createElement('label');
+  katLabel.className = 'felt-label'; katLabel.textContent = 'Kategori';
+  const kat = lagKategoriVelgerEl(event.kategori);
+
+  const fTittel     = lagFelt('Tittel *', event.tittel);
+  const fStart      = lagFelt('Start (dato og tid) *', osloISOTilDatetimeLocal(event.start), 'datetime-local');
+  const fSlutt      = lagFelt('Slutt', osloISOTilDatetimeLocal(event.slutt), 'datetime-local');
+  const fSted       = lagFelt('Sted', event.sted);
+  const fAdresse    = lagFelt('Adresse', event.adresse);
+  const fLat        = lagFelt('Lat', event.lat ?? '');
+  const fLng        = lagFelt('Lng', event.lng ?? '');
+  const fPris       = lagFelt('Pris (kr, 0 = gratis, tom = ukjent)', event.pris ?? '');
+  const fPrisTekst  = lagFelt('Prisvisning', event.prisTekst);
+  const fLenke      = lagFelt('Lenke (billett / mer info)', event.lenke);
+  const fBilde      = lagFelt('Bilde-URL', event.bilde);
+  const tBesk       = lagTekstomrade('Beskrivelse', event.beskrivelse, 3);
+  const tKur        = lagTekstomrade('Kuratortekst (vises i kortet)', event.kuratortekst, 2);
+
+  panel.appendChild(katLabel);
+  panel.appendChild(kat.el);
+  panel.appendChild(fTittel.wrap);
+  panel.appendChild(lagFeltRad(fStart, fSlutt));
+  panel.appendChild(lagFeltRad(fSted, fAdresse));
+  panel.appendChild(lagFeltRad(fLat, fLng));
+  panel.appendChild(lagFeltRad(fPris, fPrisTekst));
+  panel.appendChild(tBesk.lab);  panel.appendChild(tBesk.ta);
+  panel.appendChild(tKur.lab);   panel.appendChild(tKur.ta);
+  panel.appendChild(fLenke.wrap);
+  panel.appendChild(fBilde.wrap);
+
+  const status = document.createElement('div');
+  status.className = 'pub-rediger-lagre-status';
+
+  const lagreKnapp = document.createElement('button');
+  lagreKnapp.type = 'button';
+  lagreKnapp.className = 'skjema-submit';
+  lagreKnapp.textContent = 'Lagre endringer';
+
+  lagreKnapp.onclick = async () => {
+    const tittel = fTittel.input.value.trim();
+    const start  = fStart.input.value.trim();
+    if (!tittel || !start) {
+      status.className = 'pub-rediger-lagre-status feil';
+      status.textContent = 'Tittel og starttidspunkt er påkrevd.';
+      return;
+    }
+
+    lagreKnapp.disabled = true; lagreKnapp.textContent = '…';
+    status.className = 'pub-rediger-lagre-status';
+
+    const res  = await fetch(`/api/oppdater/${encodeURIComponent(event.id)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tittel,
+        kategori:     kat.hentVerdi(),
+        sted:         fSted.input.value.trim(),
+        adresse:      fAdresse.input.value.trim(),
+        lat:          fLat.input.value.trim(),
+        lng:          fLng.input.value.trim(),
+        start:        datetimeLocalTilOsloISO(start),
+        slutt:        datetimeLocalTilOsloISO(fSlutt.input.value.trim()),
+        pris:         fPris.input.value.trim(),
+        prisTekst:    fPrisTekst.input.value.trim(),
+        beskrivelse:  tBesk.ta.value.trim(),
+        kuratortekst: tKur.ta.value.trim(),
+        lenke:        fLenke.input.value.trim(),
+        bilde:        fBilde.input.value.trim(),
+      }),
+    });
+    const data = await res.json();
+
+    lagreKnapp.disabled = false; lagreKnapp.textContent = 'Lagre endringer';
+
+    if (data.ok) {
+      Object.assign(event, data.event);
+      status.className = 'pub-rediger-lagre-status ok';
+      status.textContent = '✓ Lagret lokalt — husk å committe og pushe.';
+      onLagret?.(event, data.gitKommando);
+    } else {
+      status.className = 'pub-rediger-lagre-status feil';
+      status.textContent = data.feil ?? 'Ukjent feil';
+    }
+  };
+
+  panel.appendChild(status);
+  panel.appendChild(lagreKnapp);
+
+  return panel;
+}
+
 // ─── Tabs ────────────────────────────────────────────────────────────────────
 
 function byttTab(tab, knapp) {
@@ -894,16 +1045,32 @@ async function lastInnPubliserte() {
 
   oppdaterFremhevTeller(publiserte);
 
+  // Kun det som kommer — samme regel som selve appen (eventTilstand !== 'ferdig'):
+  // et event forsvinner herfra automatisk når dagen (+ nattmargin) er over.
+  const kommende  = publiserte.filter(e => eventTilstand(e.start) !== 'ferdig');
+  const antallFerdig = publiserte.length - kommende.length;
+
   feed.innerHTML = '';
-  if (publiserte.length === 0) {
-    feed.innerHTML = '<div class="tom"><strong>Ingen publiserte events</strong></div>';
+  if (kommende.length === 0) {
+    feed.innerHTML = '<div class="tom"><strong>Ingen kommende publiserte events</strong></div>';
+    feed.__events__ = publiserte;
     return;
   }
 
-  for (const event of publiserte) {
+  if (antallFerdig > 0) {
+    const info = document.createElement('div');
+    info.style.cssText = 'text-align:center;color:var(--dempet);font-size:.78rem;margin-bottom:-.4rem';
+    info.textContent = `${antallFerdig} avsluttet${antallFerdig === 1 ? '' : 'e'} event${antallFerdig === 1 ? '' : 'er'} er skjult`;
+    feed.appendChild(info);
+  }
+
+  for (const event of kommende) {
     const kort = document.createElement('div');
     kort.className = `pub-kort${event.fremhevet ? ' er-fremhevet' : ''}`;
     kort.dataset.id = event.id;
+
+    const hoved = document.createElement('div');
+    hoved.className = 'pub-hoved';
 
     const infoDel = document.createElement('div');
     infoDel.className = 'pub-info';
@@ -965,8 +1132,48 @@ async function lastInnPubliserte() {
     kortInnhold.appendChild(infoDel);
     kortInnhold.appendChild(gjKontroll.el);
 
-    kort.appendChild(kortInnhold);
-    kort.appendChild(fKnapp);
+    hoved.appendChild(kortInnhold);
+    hoved.appendChild(fKnapp);
+    kort.appendChild(hoved);
+
+    // Rediger-toggle + fullt redigeringspanel (tittel, kategori, sted,
+    // adresse, koordinater, tid, pris, beskrivelse, lenke, bilde — alt).
+    const redigerKnapp = document.createElement('button');
+    redigerKnapp.type = 'button';
+    redigerKnapp.className = 'knapp-pub-rediger';
+    redigerKnapp.textContent = '✎ Rediger';
+
+    const redigerPanel = lagRedigerPanel(event, (oppdatertEvent, gitKommando) => {
+      tittel.textContent = `${oppdatertEvent.fremhevet ? '★ ' : ''}${oppdatertEvent.tittel}`;
+      m.textContent = `${oppdatertEvent.sted} · ${formaterDato(oppdatertEvent.start)}`;
+
+      let melding = redigerPanel.querySelector('.git-melding');
+      if (!melding) {
+        melding = document.createElement('div');
+        melding.className = 'git-melding';
+        melding.innerHTML = '<strong>Klar til publisering</strong>Kjør fra paaby/-roten:';
+        const btn = document.createElement('button');
+        btn.className = 'git-kommando';
+        btn.onclick = async () => {
+          await navigator.clipboard.writeText(btn.textContent);
+          const opprinnelig = btn.textContent;
+          btn.textContent = '✓ kopiert!';
+          setTimeout(() => btn.textContent = opprinnelig, 2000);
+        };
+        melding.appendChild(btn);
+        redigerPanel.appendChild(melding);
+      }
+      melding.querySelector('.git-kommando').textContent = gitKommando;
+    });
+
+    redigerKnapp.onclick = () => {
+      const synlig = redigerPanel.style.display !== 'none';
+      redigerPanel.style.display = synlig ? 'none' : 'block';
+      redigerKnapp.textContent = synlig ? '✎ Rediger' : '✕ Lukk redigering';
+    };
+
+    kort.appendChild(redigerKnapp);
+    kort.appendChild(redigerPanel);
     feed.appendChild(kort);
   }
 
