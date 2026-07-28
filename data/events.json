@@ -1075,13 +1075,13 @@
     "lng": 10.73126,
     "start": "2026-07-30T19:00:00+02:00",
     "slutt": null,
-    "pris": null,
-    "prisTekst": "Ukjent — sjekk på stedet",
-    "beskrivelse": "Månedlig quiz siste torsdag i måneden — allmennkunnskap pluss et nytt temaparti hver gang. Vinnerlaget får en halvtime på bilbanen.",
-    "kuratortekst": null,
+    "pris": 0,
+    "prisTekst": null,
+    "beskrivelse": "Månedlig quiz siste torsdag i måneden, allmennkunnskap pluss et nytt temaparti hver gang. \nVinnerlaget får en halvtime på bilbanen til verdi av hele 150kr per person!",
+    "kuratortekst": "Å vinne => halv time på bilbane!",
     "lenke": "https://www.pollettbislett.no/quiz-pollett/",
     "bilde": null,
-    "sistVerifisert": "2026-07-25T01:42:00+02:00",
+    "sistVerifisert": "2026-07-28T05:58:15.058Z",
     "gjentas": "månedlig:siste-torsdag"
   },
   {
