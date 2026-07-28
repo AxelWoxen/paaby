@@ -72,24 +72,17 @@ body {
      ville nullstilt topbar-innhold sin venstre/høyre-marg (og safe-area-
      overstyringene), siden denne regelen kommer senere i cascaden. Det var
      bugen: logoen lå inntil venstre kant mens lagret-knappens EGEN interne
-     padding ga et falskt inntrykk av luft på høyre side. */
-  padding-top: var(--gap-l);
-  padding-bottom: var(--gap-s);
-}
+          padding ga et falskt inntrykk av luft på høyre side.
 
-/* Mobil: lik luft over og under logo/slagord — padding-top (gap-l) var
-   tre ganger så stor som padding-bottom (gap-s), som ga en synlig skjev
-   topbar. Kun mobil, siden desktop-visningen ikke var meldt som et problem. */
-@media (max-width: 767px) {
-  .topptekst {
-    padding-top: var(--gap-s);
-    /* .topbar (forelder) legger env(safe-area-inset-top) OVENPÅ denne
-       raden for å unngå hakk/dynamic island — men kun på toppen. Uten å
-       legge den samme verdien til her også, blir luften over logoen
-       (gap-s + hakk-plass) synlig større enn under (kun gap-s) på
-       telefoner med hakk. Gjør bunnen like stor som toppen faktisk blir. */
-    padding-bottom: calc(var(--gap-s) + env(safe-area-inset-top));
-  }
+     Lik luft over og under logo/slagord — gjelder mobil OG desktop (det
+     var tidligere gap-l/gap-s, tre ganger så mye luft over som under).
+     .topbar (forelder) legger env(safe-area-inset-top) OVENPÅ denne raden
+     for å unngå hakk/dynamic island — men kun på toppen. Uten å legge den
+     samme verdien til padding-bottom her også, blir luften over logoen
+     synlig større enn under på telefoner med hakk. På skjermer uten hakk
+     er env(...) uansett 0, så det er trygt å ha med overalt. */
+  padding-top: var(--gap-s);
+  padding-bottom: calc(var(--gap-s) + env(safe-area-inset-top));
 }
 
 /* Logo-lockup: merket (symbolet) først, så ordmerket — begge PNG med
