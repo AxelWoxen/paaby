@@ -441,7 +441,7 @@
     "lenke": "https://fuglen.no/Fuglen-Gamlebyen",
     "bilde": null,
     "sistVerifisert": "2026-07-19T23:16:16.365Z",
-    "fremhevet": true,
+    "fremhevet": false,
     "gjentas": "månedlig:siste-torsdag"
   },
   {
@@ -761,7 +761,7 @@
     "lenke": "https://ra.co/events/2493205",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:46:36.468Z",
-    "fremhevet": true
+    "fremhevet": false
   },
   {
     "id": "oppmote-evita-espressobar-fotowalk-industri-murstein-og-gatekunst-pa-lokka-2026-07-25",
@@ -818,7 +818,7 @@
     "lenke": "https://www.instagram.com/khaolaeng/",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:46:42.490Z",
-    "fremhevet": false
+    "fremhevet": true
   },
   {
     "id": "kaf-haerverk-snick-snack-music-label-night-2026-07-31",
@@ -837,7 +837,7 @@
     "lenke": "https://tikkio.com/events/64934-snick-snack-music-label-night-kafe-haerverk-31-juli",
     "bilde": null,
     "sistVerifisert": "2026-07-23T06:46:45.618Z",
-    "fremhevet": false
+    "fremhevet": true
   },
   {
     "id": "salt-verdens-storste-danske-bingo-2026-07-31",
@@ -1025,7 +1025,8 @@
     "kuratortekst": "Gratis inngang og et av byens mest bevisst inkluderende klubbmiljøer.",
     "lenke": "https://jaegeroslo.no/events/",
     "bilde": null,
-    "sistVerifisert": "2026-07-25T01:42:00+02:00"
+    "sistVerifisert": "2026-07-25T01:42:00+02:00",
+    "fremhevet": true
   },
   {
     "id": "smeltehagen-paella-pop-up-2026-07-31",
@@ -1099,7 +1100,8 @@
     "kuratortekst": "Gjeste-DJ-en er ikke offentliggjort ennå — line-up kan endre seg, sjekk gjerne nærmere dato.",
     "lenke": "https://becco.no/events/",
     "bilde": null,
-    "sistVerifisert": "2026-07-25T01:42:00+02:00"
+    "sistVerifisert": "2026-07-25T01:42:00+02:00",
+    "fremhevet": true
   },
   {
     "id": "fuglen-oslo-sentrum-taiyaki-sunday-2026-08-02",
