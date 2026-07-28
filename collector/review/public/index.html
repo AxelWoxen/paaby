@@ -163,14 +163,15 @@
       display: block; font-size: .75rem; color: var(--dempet);
       text-transform: uppercase; letter-spacing: .06em; margin-bottom: .3rem;
     }
-    textarea, input[type=text] {
+    textarea, input[type=text], input[type=datetime-local] {
       width: 100%; background: var(--flate2); border: 1px solid var(--flate2);
       border-radius: 8px; color: var(--tekst); font-family: var(--font);
       font-size: .875rem; padding: .55rem .75rem; outline: none; margin-bottom: .85rem;
       transition: border-color .15s;
+      color-scheme: dark;
     }
     textarea { resize: vertical; min-height: 56px; }
-    textarea:focus, input[type=text]:focus { border-color: var(--lime); }
+    textarea:focus, input[type=text]:focus, input[type=datetime-local]:focus { border-color: var(--lime); }
 
     .knapp-rad { display: flex; gap: .65rem; flex-wrap: wrap; }
     .knapp {
@@ -218,10 +219,12 @@
       border-radius: 12px;
       padding: .9rem 1.1rem;
       display: flex;
-      align-items: center;
-      gap: .75rem;
+      flex-direction: column;
+      gap: .6rem;
     }
     .pub-kort.er-fremhevet { box-shadow: 0 0 0 2px var(--gull); }
+
+    .pub-hoved { display: flex; align-items: center; gap: .75rem; }
 
     .pub-info { flex: 1; min-width: 0; }
     .pub-tittel { font-weight: 600; font-size: .95rem; margin-bottom: .15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -236,6 +239,26 @@
     }
     .knapp-pub-fremhev.aktiv { background: rgba(255,215,0,.15); border-color: var(--gull); color: var(--gull); }
     .knapp-pub-fremhev:hover { border-color: var(--gull); color: var(--gull); }
+
+    .knapp-pub-rediger {
+      align-self: flex-start;
+      background: none; border: none; color: var(--dempet);
+      font-size: .78rem; cursor: pointer; padding: 0;
+      text-decoration: underline; text-underline-offset: 2px;
+    }
+    .knapp-pub-rediger:hover { color: var(--lime); }
+
+    .pub-rediger-panel {
+      border-top: 1px solid var(--flate2);
+      padding-top: .75rem;
+    }
+    .pub-rediger-panel .skjema-rad:last-of-type,
+    .pub-rediger-panel .kategori-velger { margin-bottom: .85rem; }
+    .pub-rediger-lagre-status {
+      font-size: .8rem; margin-top: -.4rem; margin-bottom: .5rem; display: none;
+    }
+    .pub-rediger-lagre-status.ok  { color: var(--lime); display: block; }
+    .pub-rediger-lagre-status.feil{ color: var(--korall); display: block; }
 
     /* ─── MANUELT SKJEMA ─────────────────────────────────────────── */
     #skjema-panel {
@@ -448,6 +471,59 @@ function lagOsloDato(år, maned, dag, time = 0, min = 0, sek = 0) {
     if (osloKomponenter(kandidat).time === time % 24) return kandidat;
   }
   return new Date(base + '+01:00');
+}
+
+/* Speiler js/application/oslo-tid.js sin eventTilstand()/dagensSlutt() —
+   samme regel her som i selve appen for når et event regnes som "ferdig"
+   (dagen + nattmargin er over), slik at Publiserte-fanen kun viser det
+   samme som faktisk vises på nettsiden. Kan ikke importeres direkte siden
+   review-serveren er en frittstående statisk app. */
+const NATT_TERSKEL_TIME       = 20;
+const NATTMARGIN_TIMER_SENT   = 3;
+const NATTMARGIN_TIMER_TIDLIG = 0;
+
+function dagensSlutt(startISO) {
+  const k = osloKomponenter(new Date(startISO));
+  const midnattStart = lagOsloDato(k.år, k.maned, k.dag, 0, 0, 0);
+  const nattmargin = k.time >= NATT_TERSKEL_TIME ? NATTMARGIN_TIMER_SENT : NATTMARGIN_TIMER_TIDLIG;
+  return new Date(midnattStart.getTime() + (24 + nattmargin) * 60 * 60 * 1000);
+}
+
+function eventTilstand(startISO, nå = new Date()) {
+  const start = new Date(startISO);
+  if (isNaN(start.getTime())) return 'ferdig';
+  if (nå < start) return 'kommende';
+  if (nå < dagensSlutt(startISO)) return 'utgatt-i-dag';
+  return 'ferdig';
+}
+
+// ─── Dato-konvertering for redigeringsskjema ──────────────────────────────────
+// <input type="datetime-local"> ↔ ISO-streng med korrekt Oslo-offset
+// (sommer-/vintertid slått opp faktisk, ikke antatt — samme metode som
+// collector/normalize.js sin tilNorskTid()).
+
+function osloISOTilDatetimeLocal(iso) {
+  if (!iso) return '';
+  const k = osloKomponenter(new Date(iso));
+  const p = (n) => String(n).padStart(2, '0');
+  return `${k.år}-${p(k.maned)}-${p(k.dag)}T${p(k.time)}:${p(k.min)}`;
+}
+
+function datetimeLocalTilOsloISO(local) {
+  if (!local) return null;
+  const [datoDel, tidDel] = local.split('T');
+  const [år, maned, dag]  = datoDel.split('-').map(Number);
+  const [time, min]       = (tidDel ?? '00:00').split(':').map(Number);
+  const dato = lagOsloDato(år, maned, dag, time, min, 0);
+
+  const k       = osloKomponenter(dato);
+  const p       = (n) => String(n).padStart(2, '0');
+  const lokalISO = `${k.år}-${p(k.maned)}-${p(k.dag)}T${p(k.time)}:${p(k.min)}:00`;
+  const diff    = new Date(lokalISO + 'Z') - dato;
+  const timer   = Math.round(diff / 3_600_000);
+  const fortegn = timer >= 0 ? '+' : '-';
+  const offset  = `${fortegn}${String(Math.abs(timer)).padStart(2, '0')}:00`;
+  return lokalISO + offset;
 }
 
 // ─── Tilstand ────────────────────────────────────────────────────────────────
