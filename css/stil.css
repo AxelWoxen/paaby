@@ -171,7 +171,7 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.09em;
-  color: var(--aksent);
+  color: var(--graa);
 }
 
 .filter-chips {
@@ -367,19 +367,10 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--graa);
+  color: var(--aksent);
   padding-bottom: var(--gap-s);
   border-bottom: 1px solid var(--flate-2);
   margin-bottom: var(--gap-m);
-}
-
-/* "I dag" fremheves */
-.dag-overskrift:first-letter {
-  /* Stor I → ingen spesialbehandling, brukes bare for "I dag" */
-}
-
-.dag-gruppe:first-child .dag-overskrift {
-  color: var(--paper);
 }
 
 .dag-kort {
