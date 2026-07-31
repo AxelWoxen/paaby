@@ -36,11 +36,11 @@
 }
 
 [data-palette="c"] {
-  /* --- PALETT C — oransje --- */
-  --palett-bakgrunn:  #2C180F;
-  --palett-kortflate: #E9DDCF;
-  --palett-aksent:    #FE3C07;
-  --palett-sekundaer: #FE3C07;  /* ingen egen sekundærfarge i palett C — gjenbruker aksenten */
+  /* --- PALETT C — grønn --- */
+  --palett-bakgrunn:  #E8F5E9;
+  --palett-kortflate: #A5D6A7;
+  --palett-aksent:    #66BB6A;
+  --palett-sekundaer: #1B5E20;  /* ingen egen sekundærfarge i palett C — gjenbruker aksenten */
 }
 
 
