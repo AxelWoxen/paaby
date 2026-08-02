@@ -423,7 +423,8 @@
       onchange="document.getElementById('f-gjentas-dag').style.display=this.value?'':'none'">
       <option value="">Av (engang)</option>
       <option value="ukentlig">Ukentlig</option>
-      <option value="månedlig">Månedlig (siste …)</option>
+      <option value="månedlig-siste">Månedlig (siste …)</option>
+      <option value="månedlig-første">Månedlig (første …)</option>
     </select>
     <select id="f-gjentas-dag" class="gjentas-select" style="display:none">
       <option>mandag</option><option>tirsdag</option><option>onsdag</option>
@@ -539,14 +540,16 @@ const UKEDAGER = ['mandag','tirsdag','onsdag','torsdag','fredag','lørdag','søn
 
 function parseGjentasKontroll(gjentas) {
   if (!gjentas) return { type: '', dag: 'søndag' };
-  if (gjentas.startsWith('ukentlig:'))       return { type: 'ukentlig', dag: gjentas.slice(9) };
-  if (gjentas.startsWith('månedlig:siste-')) return { type: 'månedlig', dag: gjentas.slice(15) };
+  if (gjentas.startsWith('ukentlig:'))        return { type: 'ukentlig', dag: gjentas.slice(9) };
+  if (gjentas.startsWith('månedlig:siste-'))  return { type: 'månedlig-siste', dag: gjentas.slice(15) };
+  if (gjentas.startsWith('månedlig:første-')) return { type: 'månedlig-første', dag: gjentas.slice(16) };
   return { type: '', dag: 'søndag' };
 }
 
 function byggGjentasStreng(type, dag) {
   if (!type) return null;
-  if (type === 'ukentlig') return `ukentlig:${dag}`;
+  if (type === 'ukentlig')        return `ukentlig:${dag}`;
+  if (type === 'månedlig-første') return `månedlig:første-${dag}`;
   return `månedlig:siste-${dag}`;
 }
 
@@ -563,7 +566,7 @@ function lagGjentasKontroll(gjentas) {
 
   const typeSelect = document.createElement('select');
   typeSelect.className = 'gjentas-select';
-  [['', 'Av (engang)'], ['ukentlig', 'Ukentlig'], ['månedlig', 'Månedlig (siste …)']].forEach(([val, txt]) => {
+  [['', 'Av (engang)'], ['ukentlig', 'Ukentlig'], ['månedlig-siste', 'Månedlig (siste …)'], ['månedlig-første', 'Månedlig (første …)']].forEach(([val, txt]) => {
     const opt = new Option(txt, val, false, val === initType);
     typeSelect.appendChild(opt);
   });
