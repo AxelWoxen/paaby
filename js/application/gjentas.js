@@ -2,8 +2,9 @@
    Rene funksjoner, ingen DOM, ingen fetch.
 
    DATAFORMAT — event.gjentas (valgfritt felt):
-     "ukentlig:søndag"         → vises hver søndag
-     "månedlig:siste-torsdag"  → vises siste torsdag i måneden
+     "ukentlig:søndag"          → vises hver søndag
+     "månedlig:siste-torsdag"   → vises siste torsdag i måneden
+     "månedlig:første-søndag"   → vises første søndag i måneden
 
    Gyldige ukedagnavn: mandag tirsdag onsdag torsdag fredag lørdag søndag
 
@@ -52,17 +53,17 @@ function parseGjentas(gjentas) {
   }
 
   if (type === 'månedlig') {
-    const m = detalj.match(/^siste-(.+)$/);
+    const m = detalj.match(/^(siste|første)-(.+)$/);
     if (!m) {
       console.warn(`Påby gjentas: ukjent månedlig-mønster "${detalj}"`);
       return null;
     }
-    const ukedag = UKEDAG_NR[m[1]];
+    const ukedag = UKEDAG_NR[m[2]];
     if (ukedag === undefined) {
-      console.warn(`Påby gjentas: ukjent ukedag "${m[1]}"`);
+      console.warn(`Påby gjentas: ukjent ukedag "${m[2]}"`);
       return null;
     }
-    return { type: 'månedlig-siste', ukedag };
+    return { type: m[1] === 'siste' ? 'månedlig-siste' : 'månedlig-første', ukedag };
   }
 
   console.warn(`Påby gjentas: ukjent type "${type}"`);
@@ -164,6 +165,38 @@ function genererMånedligSiste(ukedag, baseEvent, fraDato, tilDato, durMs) {
 
 
 /* ========================
+   FØRSTE [UKEDAG] I MÅNEDEN
+   ======================== */
+
+function genererMånedligFørste(ukedag, baseEvent, fraDato, tilDato, durMs) {
+  const { time, min } = osloKomponenter(new Date(baseEvent.start));
+  const resultater    = [];
+
+  const kFra  = osloKomponenter(fraDato);
+  let år      = kFra.år;
+  let maned   = kFra.maned;
+
+  while (true) {
+    /* Finn første dag i denne måneden (Oslo-tid), bruk middag for å unngå DST-kanttilfeller. */
+    const førsteDagDato = lagOsloDato(år, maned, 1, 12, 0, 0);
+    const kFørste        = osloKomponenter(førsteDagDato);
+
+    /* Gå fram til første forekomst av ønsket ukedag */
+    const diff      = (ukedag - kFørste.ukedag + 7) % 7;
+    const forekomst = lagOsloDato(år, maned, kFørste.dag + diff, time, min, 0);
+
+    if (forekomst > tilDato) break;
+    if (forekomst >= fraDato) resultater.push(lagForekomst(baseEvent, forekomst, durMs));
+
+    maned++;
+    if (maned > 12) { maned = 1; år++; }
+  }
+
+  return resultater;
+}
+
+
+/* ========================
    EKSPORT
    ======================== */
 
@@ -198,6 +231,8 @@ export function utvidGjentakende(alleEventer, nå = new Date()) {
       resultat.push(...genererUkentlige(regel.ukedag, event, effektivFra, tilDato, durMs));
     } else if (regel.type === 'månedlig-siste') {
       resultat.push(...genererMånedligSiste(regel.ukedag, event, effektivFra, tilDato, durMs));
+    } else if (regel.type === 'månedlig-første') {
+      resultat.push(...genererMånedligFørste(regel.ukedag, event, effektivFra, tilDato, durMs));
     }
     /* Ukjent regel: base-eventet droppes (parseGjentas har allerede logget advarsel) */
   }
