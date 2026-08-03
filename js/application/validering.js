@@ -2,7 +2,7 @@
    Filtrerer bort ugyldige arrangementer og logger én advarsel per problem.
    Ingen DOM, ingen fetch. */
 
-const TILLATTE_KATEGORIER = new Set(['musikk', 'mat', 'klubb', 'pafunn']);
+const TILLATTE_KATEGORIER = new Set(['musikk', 'klubb', 'pafunn']);
 
 /**
  * Filtrerer en liste med arrangementer.

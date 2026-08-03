@@ -36,9 +36,8 @@ function eventScore(event, osloTime, nå) {
   // Kveld (≥ 17:00): boost kveldseventer (start ≥ 18:00) som er i dag
   if (osloTime >= 17 && dager === 0 && k.time >= 18) s -= 500;
 
-  // Dagtid (< 17:00): boost påfunn og mat i dag
-  if (osloTime < 17 && dager === 0 &&
-      (event.kategori === 'pafunn' || event.kategori === 'mat')) s -= 300;
+  // Dagtid (< 17:00): boost påfunn i dag
+  if (osloTime < 17 && dager === 0 && event.kategori === 'pafunn') s -= 300;
 
   return s;
 }

@@ -125,7 +125,6 @@ export function kapitaliser(str) {
 /** Korrekt visningsnavn for kategori — håndterer ASCII-interne verdier (f.eks. pafunn → Påfunn). */
 const KATEGORI_NAVN = Object.freeze({
   musikk: 'Musikk',
-  mat:    'Mat',
   klubb:  'Klubb',
   pafunn: 'Påfunn',
 });

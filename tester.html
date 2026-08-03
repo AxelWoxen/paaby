@@ -114,7 +114,7 @@
       validerEventer([{ ...GYLDIG, lenke: 'javascript:alert(1)' }]).length, 0);
 
     test('manglende valgfrie felt godtas',
-      validerEventer([{ id:'x', tittel:'T', kategori:'mat', sted:'S', start:'2026-07-18T10:00:00+02:00', pris:0 }]).length, 1);
+      validerEventer([{ id:'x', tittel:'T', kategori:'musikk', sted:'S', start:'2026-07-18T10:00:00+02:00', pris:0 }]).length, 1);
 
 
     /* ══════════════════════════════════════
@@ -230,12 +230,12 @@
 
     const blandede = [
       { id:'a', tittel:'A', kategori:'musikk', sted:'X', start:'2026-07-20T10:00:00+02:00', pris:0 },
-      { id:'b', tittel:'B', kategori:'mat',    sted:'X', start:'2026-07-20T10:00:00+02:00', pris:0 },
+      { id:'b', tittel:'B', kategori:'pafunn', sted:'X', start:'2026-07-20T10:00:00+02:00', pris:0 },
       { id:'c', tittel:'C', kategori:'klubb',  sted:'X', start:'2026-07-20T10:00:00+02:00', pris:300 },
     ];
 
-    test('kategori ELLER: musikk+mat gir 2 resultater',
-      filtrerEventer(blandede, {kategori:['musikk','mat'], tid:null, pris:null, naerhet:false}, null).length, 2);
+    test('kategori ELLER: musikk+pafunn gir 2 resultater',
+      filtrerEventer(blandede, {kategori:['musikk','pafunn'], tid:null, pris:null, naerhet:false}, null).length, 2);
 
     test('kategori OG pris: musikk+gratis gir 1 resultat',
       filtrerEventer(blandede, {kategori:['musikk'], tid:null, pris:'gratis', naerhet:false}, null).length, 1);
@@ -432,7 +432,7 @@
     const blandSort = [
       lagE('ms1','2026-07-20T20:00:00+02:00', 0,   'M1', undefined),
       lagE('ms2','2026-07-20T18:00:00+02:00', 199, 'M2', undefined),
-      { ...lagE('ms3','2026-07-20T10:00:00+02:00', 0), kategori:'mat' },
+      { ...lagE('ms3','2026-07-20T10:00:00+02:00', 0), kategori:'pafunn' },
     ];
 
     const filt = filtrerEventer(blandSort, { kategori:['musikk'], tid:null, pris:null, naerhet:false }, null);
@@ -469,7 +469,6 @@
       validerEventer([{ ...GYLDIG, kategori: 'sport' }]).length, 0);
 
     test('visningsnavn musikk', kategoriVisningsnavn('musikk'), 'Musikk');
-    test('visningsnavn mat',    kategoriVisningsnavn('mat'),    'Mat');
     test('visningsnavn klubb',  kategoriVisningsnavn('klubb'),  'Klubb');
     test('visningsnavn pafunn returnerer Påfunn', kategoriVisningsnavn('pafunn'), 'Påfunn');
 
@@ -493,8 +492,6 @@
 
     test('musikk-bilde slutter på musikk.svg',
       KATEGORI_BILDER.musikk.endsWith('musikk.svg'), true);
-    test('mat-bilde slutter på mat.svg',
-      KATEGORI_BILDER.mat.endsWith('mat.svg'), true);
     test('klubb-bilde slutter på klubb.svg',
       KATEGORI_BILDER.klubb.endsWith('klubb.svg'), true);
     test('pafunn-bilde slutter på pafunn.svg',
@@ -533,7 +530,6 @@
     const kategorier = gyldige.map(e => e.kategori);
     test('musikk-arrangementer: 3',  kategorier.filter(k => k === 'musikk').length,  3);
     test('klubb-arrangementer: 7',   kategorier.filter(k => k === 'klubb').length,   7);
-    test('mat-arrangementer: 4',     kategorier.filter(k => k === 'mat').length,     4);
     test('pafunn-arrangementer: 4',  kategorier.filter(k => k === 'pafunn').length,  4);
 
     const medKoord = gyldige.filter(e => e.lat != null && e.lng != null);
@@ -562,7 +558,6 @@
 
     const over200 = gyldige.filter(e => e.pris != null && e.pris >= 200);
     test('200kr+-filter finner Utflod (250 kr)', over200.some(e => e.id === 'utflod-haerverk-2026-07-24'), true);
-    test('200kr+-filter finner matkursene (1750 kr)', over200.some(e => e.pris === 1750), true);
 
     const nullKoordTest = { ...GYLDIG, lat: null, lng: null };
     test('null-koordinater godtas parvis',

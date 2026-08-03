@@ -138,7 +138,6 @@
     }
     .badge.musikk { background: rgba(200,255,77,.15); color: var(--lime); }
     .badge.klubb  { background: rgba(255,107,91,.15); color: var(--korall); }
-    .badge.mat    { background: rgba(255,200,77,.15); color: #ffc84d; }
     .badge.pafunn { background: rgba(150,77,255,.15); color: #b44dff; }
     .badge.manuell { background: rgba(77,180,255,.15); color: #4db4ff; font-size: .65rem; }
     .badge.fremhevet-badge {
@@ -386,7 +385,6 @@
   <button class="filter-chip aktiv" data-filter="alle"   onclick="velgFilter(this)">Alle</button>
   <button class="filter-chip musikk" data-filter="musikk" onclick="velgFilter(this)">Musikk</button>
   <button class="filter-chip klubb"  data-filter="klubb"  onclick="velgFilter(this)">Klubb</button>
-  <button class="filter-chip"        data-filter="mat"    onclick="velgFilter(this)">Mat</button>
   <button class="filter-chip pafunn" data-filter="pafunn" onclick="velgFilter(this)">Påfunn</button>
 
   <label class="skjul-passerte">
@@ -408,7 +406,6 @@
   <div class="kategori-velger" id="kategori-velger">
     <button class="kategori-knapp aktiv" data-kat="musikk" onclick="velgKategori(this)">Musikk</button>
     <button class="kategori-knapp" data-kat="klubb"  onclick="velgKategori(this)">Klubb</button>
-    <button class="kategori-knapp" data-kat="mat"    onclick="velgKategori(this)">Mat</button>
     <button class="kategori-knapp" data-kat="pafunn" onclick="velgKategori(this)">Påfunn</button>
   </div>
 
@@ -629,7 +626,7 @@ function lagGjentasKontroll(gjentas) {
 // id (identitet, brukt av lagret/følger), gjentas og fremhevet, som har egne
 // alltid-synlige kontroller.
 
-const KATEGORIER = [['musikk', 'Musikk'], ['klubb', 'Klubb'], ['mat', 'Mat'], ['pafunn', 'Påfunn']];
+const KATEGORIER = [['musikk', 'Musikk'], ['klubb', 'Klubb'], ['pafunn', 'Påfunn']];
 
 function lagKategoriVelgerEl(aktivKat) {
   const rad = document.createElement('div');

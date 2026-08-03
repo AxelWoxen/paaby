@@ -74,7 +74,7 @@ Repoet er allerede pushet til GitHub. For å gjøre det tilgjengelig på nett:
 |------|------|---------|
 | `id` | påkrevd | unik, stabil streng |
 | `tittel` | påkrevd | |
-| `kategori` | påkrevd | `musikk` / `mat` / `klubb` / `pafunn` |
+| `kategori` | påkrevd | `musikk` / `klubb` / `pafunn` |
 | `sted` | påkrevd | |
 | `start` | påkrevd | ISO 8601 med tidssone (`+02:00` sommer) |
 | `pris` | påkrevd | tall i kr · `0` = gratis · `null` = ukjent |

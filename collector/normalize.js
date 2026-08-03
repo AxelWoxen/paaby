@@ -68,7 +68,8 @@ function bestemKategori(råEvent, defaultKategori) {
     if (tags.includes('dj') || tags.includes('electronic')) return 'klubb';
     return 'musikk';
   }
-  if (type === 'food' || tags.includes('mat') || tags.includes('food')) return 'mat';
+  // Kategorien "mat" er fjernet fra påby — mat-/food-tagget innhold havner nå i pafunn.
+  if (type === 'food' || tags.includes('mat') || tags.includes('food')) return 'pafunn';
   return defaultKategori ?? 'musikk';
 }
 

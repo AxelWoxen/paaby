@@ -3,7 +3,6 @@
 
 export const KATEGORI_BILDER = Object.freeze({
   musikk: 'bilder/kategorier/musikk.jpg',
-  mat:    'bilder/kategorier/mat.jpg',
   klubb:  'bilder/kategorier/klubb.jpg',
   pafunn: 'bilder/kategorier/pafunn.jpg',
 });
