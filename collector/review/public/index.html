@@ -751,10 +751,22 @@ function lagBildeCropSeksjon(fBilde) {
     status.textContent = tekst ?? '';
   }
 
-  function initCropper(url, kanEksporteres) {
+  // Kortet over (thumbnailen i selve kort-visningen) laster ofte samme URL
+  // som en vanlig <img> UTEN crossorigin — det kan "forgifte" nettleserens
+  // bilde-cache slik at et senere crossOrigin="anonymous"-forsøk på nøyaktig
+  // samme URL stille gjenbruker den ikke-CORS-taggede cache-oppføringen (og
+  // dermed likevel feiler på toDataURL). Cache-buster tvinger et friskt,
+  // riktig CORS-taggede nettverkskall for selve crop-verktøyet.
+  function cacheBust(url) {
+    if (url.startsWith('data:')) return url;
+    const skille = url.includes('?') ? '&' : '?';
+    return `${url}${skille}_paabycrop=${Date.now()}`;
+  }
+
+  function initCropper(url, kanEksporteres, lastetSrc) {
     if (lastetUrl !== url) return; // en nyere URL har overtatt i mellomtiden
     cropImg.crossOrigin = kanEksporteres ? 'anonymous' : '';
-    cropImg.src = url;
+    cropImg.src = lastetSrc;
     imgWrap.style.display = '';
     knapperad.style.display = '';
 
@@ -789,11 +801,12 @@ function lagBildeCropSeksjon(fBilde) {
     }
     tomMelding.style.display = 'none';
 
+    const bustet = cacheBust(url);
     const probe = new Image();
     probe.crossOrigin = 'anonymous';
-    probe.onload  = () => initCropper(url, true);
-    probe.onerror = () => initCropper(url, false);
-    probe.src = url;
+    probe.onload  = () => initCropper(url, true, bustet);
+    probe.onerror = () => initCropper(url, false, url);
+    probe.src = bustet;
   }
 
   brukKnapp.onclick = () => {
