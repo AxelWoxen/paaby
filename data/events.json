@@ -875,7 +875,7 @@
     "lenke": "https://www.ticketmaster.no/artist/ferske-fjes-billetter/1379313",
     "bilde": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTe18xMAPlyTjqkokYQbrxDu102GZT-KCogHqCDeohrpg&s=10",
     "sistVerifisert": "2026-08-02T04:36:30.457Z",
-    "fremhevet": true
+    "fremhevet": false
   },
   {
     "id": "salt-pyramiden-ferske-fjes-2026-08-12",
@@ -1063,7 +1063,8 @@
     "lenke": "https://kampenkaffe.com/",
     "bilde": null,
     "sistVerifisert": "2026-07-25T01:42:00+02:00",
-    "gjentas": "ukentlig:fredag"
+    "gjentas": "ukentlig:fredag",
+    "fremhevet": true
   },
   {
     "id": "pollett-bislett-quiz-2026-07-30",
@@ -1138,7 +1139,8 @@
     "lenke": "https://www.lufthavna.no/mir-events",
     "bilde": null,
     "sistVerifisert": "2026-07-28T06:48:51.408Z",
-    "gjentas": "ukentlig:tirsdag"
+    "gjentas": "ukentlig:tirsdag",
+    "fremhevet": false
   },
   {
     "id": "rabalder-bar-standup-pa-rabalder-2026-07-28",
@@ -1157,7 +1159,8 @@
     "lenke": "https://rabalderbar.no",
     "bilde": null,
     "sistVerifisert": "2026-08-02T04:36:09.988Z",
-    "gjentas": "ukentlig:tirsdag"
+    "gjentas": "ukentlig:tirsdag",
+    "fremhevet": true
   },
   {
     "id": "smelteverket-quiz-pa-smelteverket-2026-07-29",
@@ -1176,7 +1179,8 @@
     "lenke": "https://www.smelteverketoslo.no/",
     "bilde": null,
     "sistVerifisert": "2026-08-02T04:36:21.676Z",
-    "gjentas": "ukentlig:onsdag"
+    "gjentas": "ukentlig:onsdag",
+    "fremhevet": true
   },
   {
     "id": "the-villa-nina-yamada-olefonken-2026-08-01",
@@ -1288,7 +1292,7 @@
     "lenke": "https://ostkanten.ticketco.events/no/nb/e/oestkantbraak_rasfare_nogozone_og_kill_city_bandits",
     "bilde": null,
     "sistVerifisert": "2026-08-02T10:00:00.000Z",
-    "fremhevet": false
+    "fremhevet": true
   },
   {
     "id": "st-hanshaugen-park-musikkbingo-med-liveband-2026-08-07",
