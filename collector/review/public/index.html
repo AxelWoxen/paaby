@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>påby · review</title>
+  <!-- Cropper.js — kun review-verktøyet, brukes til å beskjære bilde-URL-er
+       til 16:7 (samme forhold som .kort-bilde i css/stil.css) før lagring.
+       IKKE lastet i selve appen (index.html i rot). -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -326,6 +331,36 @@
       display: flex; gap: .5rem; align-items: center;
       margin-top: .5rem; flex-wrap: wrap;
     }
+
+    /* ─── BILDE-CROP (Rediger-panel) ─────────────────────────────────── */
+    .pub-crop-seksjon { margin-bottom: .85rem; }
+    .pub-crop-tom {
+      font-size: .8rem; color: var(--dempet); padding: .6rem .75rem;
+      background: var(--flate2); border-radius: 8px; margin-bottom: .5rem;
+    }
+    .pub-crop-img-wrap {
+      max-width: 100%; max-height: 360px; overflow: hidden;
+      border-radius: 8px; margin-bottom: .5rem; background: var(--flate2);
+    }
+    .pub-crop-img { display: block; max-width: 100%; }
+    .pub-crop-knapperad { margin-bottom: .5rem; }
+    .pub-crop-bruk-knapp {
+      background: var(--flate3); border: 1px solid var(--flate3); border-radius: 8px;
+      color: var(--tekst); font-size: .8rem; font-weight: 600; cursor: pointer;
+      padding: .45rem .85rem; transition: all .15s;
+    }
+    .pub-crop-bruk-knapp:hover { border-color: var(--lime); color: var(--lime); }
+    .pub-crop-status { font-size: .78rem; margin-bottom: .5rem; display: none; }
+    .pub-crop-status.ok   { color: var(--lime);   display: block; }
+    .pub-crop-status.feil { color: var(--korall); display: block; }
+    /* Speiler .kort-bilde-wrapper / .kort-bilde i css/stil.css (16:7,
+       object-fit: cover) — kun for forhåndsvisning her, endrer ikke appen. */
+    .pub-crop-forhandsvisning-rad { margin-bottom: .85rem; }
+    .pub-crop-forhandsvisning-wrap {
+      position: relative; aspect-ratio: 16 / 7; overflow: hidden;
+      border-radius: 8px; background: var(--flate2); max-width: 360px;
+    }
+    .pub-crop-forhandsvisning-img { width: 100%; height: 100%; object-fit: cover; display: block; }
   </style>
 </head>
 <body>
@@ -643,6 +678,161 @@ function lagTekstomrade(label, verdi, rows = 3) {
   return { lab, ta };
 }
 
+// ─── Bilde-crop (kun Rediger-panelet) ─────────────────────────────────────────
+// Cropper.js (CDN) lar deg beskjære bilde-URL-en til 16:7 — samme forhold som
+// .kort-bilde-wrapper/.kort-bilde i css/stil.css bruker i selve appen — før
+// lagring. Beskjæringen skjer client-side (canvas) og resultatet lagres som
+// en data-URL rett i fBilde sitt input-felt (som allerede sendes til
+// /api/oppdater/:id uendret), så ingen ny server-endepunkt for filopplasting
+// trengs. Rører IKKE bilde-URL-feltet med mindre man aktivt trykker
+// «Bruk dette utsnittet» — vanlig lagring av andre felt endrer ikke bildet.
+const CROP_BREDDE = 1200;
+const CROP_HOYDE  = Math.round(CROP_BREDDE * 7 / 16); // 525 — 16:7
+
+function lagBildeCropSeksjon(fBilde) {
+  const seksjon = document.createElement('div');
+  seksjon.className = 'pub-crop-seksjon';
+
+  const label = document.createElement('label');
+  label.className = 'felt-label';
+  label.textContent = 'Beskjær bilde (16:7 — samme forhold som kortet i appen)';
+
+  const tomMelding = document.createElement('div');
+  tomMelding.className = 'pub-crop-tom';
+  tomMelding.textContent = 'Lim inn en bilde-URL over for å beskjære.';
+
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'pub-crop-img-wrap';
+  imgWrap.style.display = 'none';
+  const cropImg = document.createElement('img');
+  cropImg.className = 'pub-crop-img';
+  cropImg.alt = '';
+  imgWrap.appendChild(cropImg);
+
+  const knapperad = document.createElement('div');
+  knapperad.className = 'pub-crop-knapperad';
+  knapperad.style.display = 'none';
+  const brukKnapp = document.createElement('button');
+  brukKnapp.type = 'button';
+  brukKnapp.className = 'pub-crop-bruk-knapp';
+  brukKnapp.textContent = '✂ Bruk dette utsnittet';
+  knapperad.appendChild(brukKnapp);
+
+  const status = document.createElement('div');
+  status.className = 'pub-crop-status';
+
+  const fvRad = document.createElement('div');
+  fvRad.className = 'pub-crop-forhandsvisning-rad';
+  fvRad.style.display = 'none';
+  const fvLabel = document.createElement('label');
+  fvLabel.className = 'felt-label';
+  fvLabel.textContent = 'Forhåndsvisning (som på kortet i appen)';
+  const fvWrap = document.createElement('div');
+  fvWrap.className = 'pub-crop-forhandsvisning-wrap';
+  const fvImg = document.createElement('img');
+  fvImg.className = 'pub-crop-forhandsvisning-img';
+  fvImg.alt = '';
+  fvWrap.appendChild(fvImg);
+  fvRad.appendChild(fvLabel);
+  fvRad.appendChild(fvWrap);
+
+  seksjon.appendChild(label);
+  seksjon.appendChild(tomMelding);
+  seksjon.appendChild(imgWrap);
+  seksjon.appendChild(knapperad);
+  seksjon.appendChild(status);
+  seksjon.appendChild(fvRad);
+
+  let cropper   = null;
+  let lastetUrl = null;
+
+  function settStatus(klasse, tekst) {
+    status.className = klasse ? `pub-crop-status ${klasse}` : 'pub-crop-status';
+    status.textContent = tekst ?? '';
+  }
+
+  function initCropper(url, kanEksporteres) {
+    if (lastetUrl !== url) return; // en nyere URL har overtatt i mellomtiden
+    cropImg.crossOrigin = kanEksporteres ? 'anonymous' : '';
+    cropImg.src = url;
+    imgWrap.style.display = '';
+    knapperad.style.display = '';
+
+    if (cropper) { cropper.destroy(); cropper = null; }
+    cropper = new Cropper(cropImg, {
+      aspectRatio: 16 / 7,
+      viewMode: 1,
+      autoCropArea: 1,
+      background: false,
+      responsive: true,
+    });
+
+    if (!kanEksporteres) {
+      settStatus('feil', '⚠ Dette bildet tillater trolig ikke lokal beskjæring (CORS). Du kan fortsatt trykke «Bruk dette utsnittet», men lykkes det ikke beholdes original-URL-en uendret ved lagring.');
+    }
+  }
+
+  // Prøver CORS-lasting først (funker f.eks. for imagekit.io), faller
+  // tilbake til vanlig lasting (vises fint, men kan ikke eksporteres til
+  // canvas) hvis bildeserveren ikke tillater det.
+  function lastBilde(url) {
+    if (cropper) { cropper.destroy(); cropper = null; }
+    settStatus(null, '');
+    fvRad.style.display = 'none';
+    lastetUrl = url;
+
+    if (!url) {
+      imgWrap.style.display = 'none';
+      knapperad.style.display = 'none';
+      tomMelding.style.display = '';
+      return;
+    }
+    tomMelding.style.display = 'none';
+
+    const probe = new Image();
+    probe.crossOrigin = 'anonymous';
+    probe.onload  = () => initCropper(url, true);
+    probe.onerror = () => initCropper(url, false);
+    probe.src = url;
+  }
+
+  brukKnapp.onclick = () => {
+    if (!cropper) return;
+    try {
+      const canvas = cropper.getCroppedCanvas({
+        width:  CROP_BREDDE,
+        height: CROP_HOYDE,
+        imageSmoothingQuality: 'high',
+        fillColor: '#141318',
+      });
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      fBilde.input.value = dataUrl;
+      fvImg.src = dataUrl;
+      fvRad.style.display = '';
+      settStatus('ok', '✓ Utsnitt brukt — lagres som beskåret bilde når du trykker «Lagre endringer».');
+    } catch (e) {
+      settStatus('feil', '⚠ Kunne ikke beskjære dette bildet lokalt (bildeserveren blokkerer det via CORS). Original-URL-en beholdes uendret ved lagring.');
+    }
+  };
+
+  let debounceTimer = null;
+  fBilde.input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      const url = fBilde.input.value.trim();
+      if (url !== lastetUrl) lastBilde(url);
+    }, 500);
+  });
+
+  return {
+    el: seksjon,
+    lastInnVedVisning: () => {
+      const url = fBilde.input.value.trim();
+      if (url && url !== lastetUrl) lastBilde(url);
+    },
+  };
+}
+
 /* Bygger redigeringspanelet for ett publisert event. onLagret(event, gitKommando)
    kalles etter vellykket lagring, slik at kortet over kan oppdatere tittel/meta. */
 function lagRedigerPanel(event, onLagret) {
@@ -665,6 +855,7 @@ function lagRedigerPanel(event, onLagret) {
   const fPrisTekst  = lagFelt('Prisvisning', event.prisTekst);
   const fLenke      = lagFelt('Lenke (billett / mer info)', event.lenke);
   const fBilde      = lagFelt('Bilde-URL', event.bilde);
+  const bildeCrop   = lagBildeCropSeksjon(fBilde);
   const tBesk       = lagTekstomrade('Beskrivelse', event.beskrivelse, 3);
   const tKur        = lagTekstomrade('Kuratortekst (vises i kortet)', event.kuratortekst, 2);
 
@@ -679,6 +870,12 @@ function lagRedigerPanel(event, onLagret) {
   panel.appendChild(tKur.lab);   panel.appendChild(tKur.ta);
   panel.appendChild(fLenke.wrap);
   panel.appendChild(fBilde.wrap);
+  panel.appendChild(bildeCrop.el);
+
+  // Kalles av redigerKnapp.onclick (se lenger ned) første gang panelet vises,
+  // slik at Cropper.js ikke initialiseres mens elementet har display:none
+  // (da ville bredde/høyde-beregningen blitt feil).
+  panel.__lastInnBildeVedVisning = bildeCrop.lastInnVedVisning;
 
   const status = document.createElement('div');
   status.className = 'pub-rediger-lagre-status';
@@ -1173,6 +1370,7 @@ async function lastInnPubliserte() {
       const synlig = redigerPanel.style.display !== 'none';
       redigerPanel.style.display = synlig ? 'none' : 'block';
       redigerKnapp.textContent = synlig ? '✎ Rediger' : '✕ Lukk redigering';
+      if (!synlig) redigerPanel.__lastInnBildeVedVisning?.();
     };
 
     kort.appendChild(redigerKnapp);
