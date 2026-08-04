@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  sitemap.xml — påby
+
+  Vedlikehold: hver gang du legger til en ny uke/YYYY-MM-DD.html (se
+  README.md § "SEO og ukesarkiv"), legg til en tilsvarende <url>-blokk her
+  for den nye siden, og oppdater <lastmod> på "/" og "/uke/" til dagens dato.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://paaby.online/</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <url>
+    <loc>https://paaby.online/uke/</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <url>
+    <loc>https://paaby.online/uke/2026-08-03.html</loc>
+    <lastmod>2026-08-04</lastmod>
+    <changefreq>never</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+</urlset>

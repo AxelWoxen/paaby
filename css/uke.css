@@ -1,0 +1,100 @@
+/* uke.css — enkel, statisk styling for de ukentlige arkivsidene (uke/*.html).
+   Bruker samme fargevariabler/typografi som resten av appen (css/variabler.css),
+   men er sitt eget lettvekts stilark siden arkivsidene er ren tekst/lenker —
+   ingen kort-bilder, filtre eller JS-avhengige komponenter fra stil.css. */
+
+.uke-innhold {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--gap-xl) var(--gap-m) var(--gap-xl);
+  padding-left: max(var(--gap-m), env(safe-area-inset-left));
+  padding-right: max(var(--gap-m), env(safe-area-inset-right));
+}
+
+.uke-tilbake {
+  display: inline-block;
+  color: var(--graa);
+  font-size: 0.85rem;
+  text-decoration: none;
+  margin-bottom: var(--gap-l);
+}
+.uke-tilbake:hover { color: var(--paper); }
+
+.uke-tittel {
+  font-family: var(--font-tittel);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: var(--gap-s);
+}
+
+.uke-intro {
+  color: var(--graa);
+  margin-bottom: var(--gap-xl);
+  max-width: 46ch;
+}
+
+.uke-liste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-l);
+}
+
+.uke-event {
+  background: var(--flate-1);
+  border-radius: var(--radius-m);
+  padding: var(--gap-m) var(--gap-l);
+}
+
+/* .kort, .modal-container og .utvalg-kort omdefinerer --paper/--graa/--flate-2
+   lokalt til sine lys-tilpassede varianter (se stil.css) — samme mønster
+   brukes her, slik at teksten blir lesbar på den lyse kortflaten. */
+.uke-event {
+  --paper:   var(--tekst-kort);
+  --graa:    var(--graa-kort);
+  --flate-2: var(--flate-2-kort);
+  color: var(--paper);
+}
+
+.uke-event-tittel {
+  font-family: var(--font-tittel);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.3rem;
+}
+
+.uke-event-meta {
+  font-size: 0.85rem;
+  color: var(--graa);
+  margin-bottom: var(--gap-s);
+}
+
+.uke-event-kuratortekst {
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+
+.uke-arkiv-liste {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-s);
+}
+
+.uke-arkiv-lenke {
+  display: block;
+  background: var(--flate-1);
+  border-radius: var(--radius-s);
+  padding: var(--gap-m);
+  color: var(--tekst-kort);
+  text-decoration: none;
+  font-weight: 600;
+}
+.uke-arkiv-lenke:hover { opacity: 0.85; }
+
+.uke-arkiv-lenke-dato {
+  display: block;
+  font-weight: 400;
+  font-size: 0.8rem;
+  color: var(--graa-kort);
+  margin-top: 0.2rem;
+}

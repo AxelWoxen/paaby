@@ -15,7 +15,7 @@ Repoet er allerede pushet til GitHub. For å gjøre det tilgjengelig på nett:
 1. Gå til `https://github.com/AxelWoxen/paaby/settings/pages`
 2. Under **Branch**: velg `main` og `/` (root)
 3. Klikk **Save**
-4. Etter noen sekunder er siden live på `https://axelwoxen.github.io/paaby/`
+4. Etter noen sekunder er siden live på `https://paaby.online` (egendomene satt opp via `CNAME`-filen i roten — uten den ville siden ligget på `https://axelwoxen.github.io/paaby/`)
 
 `.nojekyll`-filen i roten sørger for at GitHub Pages serverer filene som de er, uten Jekyll-prosessering.
 
@@ -44,6 +44,43 @@ Repoet er allerede pushet til GitHub. For å gjøre det tilgjengelig på nett:
 ### Bytte datakilde (JSON → Supabase eller annet API)
 
 Åpne `js/network/events-api.js` og bytt ut `fetch('./data/events.json')` med din forespørsel. Resten av appen trenger ingen endringer.
+
+---
+
+## SEO og ukesarkiv
+
+Hver uke postes et håndplukket utvalg på Instagram/TikTok. `uke/`-mappen gjør samme
+utvalg søkbart som en egen side — hver ukeside har sine egne meta-tagger, så den kan
+rangere individuelt i Google i stedet for å konkurrere med forsiden. **Helt manuelt
+foreløpig** — ingen bygg-steg, du oppretter én fil per uke selv. Tar ~2 minutter:
+
+1. **Kopiér forrige ukes fil** som utgangspunkt:
+   ```bash
+   cp uke/2026-08-03.html uke/2026-08-10.html
+   ```
+   (bruk mandagsdatoen for uka som filnavn, `YYYY-MM-DD.html`)
+
+2. **Rediger `uke/2026-08-10.html`:**
+   - `<title>`, `<meta name="description">`, `og:title`, `og:description`,
+     `twitter:title`, `twitter:description` — nytt ukenummer og en kort,
+     treffende oppsummering (samme stil som slide-teksten på Instagram)
+   - `og:url` og `<link rel="canonical">` — oppdater datoen i URL-en
+   - `<h1 class="uke-tittel">` og introteksten under
+   - Bytt ut `.uke-event`-blokkene med denne ukas utvalg — samme innhold
+     som slidesene (tittel, sted, dato, pris, kuratortekst), bare i tekstform
+
+3. **Legg til i arkivlista** — ny `<a class="uke-arkiv-lenke">` øverst
+   (nyeste først) i `uke/index.html`, pekende på den nye filen.
+
+4. **Legg til i `sitemap.xml`** — ny `<url>`-blokk for den nye ukesiden, og
+   oppdater `<lastmod>` på `/` og `/uke/` til dagens dato.
+
+5. **Test lokalt** (`python3 -m http.server 8000` → `http://localhost:8000/uke/2026-08-10.html`),
+   commit og push som vanlig.
+
+Trenger du å endre selve *utseendet* på ukesidene (ikke innholdet), er stilarket
+`css/uke.css` — det gjenbruker fargevariablene fra `css/variabler.css`/`css/stil.css`
+så det matcher resten av appen automatisk.
 
 ---
 
