@@ -39,6 +39,7 @@ function validerEnkelt(e, seneIder) {
   if (!e.id || typeof e.id !== 'string')    return 'mangler id';
   if (seneIder.has(e.id))                   return 'duplikat id';
   if (!e.tittel)                             return 'mangler tittel';
+  if (e.deaktivert === true)                 return 'deaktivert';
   if (!TILLATTE_KATEGORIER.has(e.kategori)) return `ugyldig kategori "${e.kategori}"`;
 
   /* start — påkrevd med eksplisitt tidssone */

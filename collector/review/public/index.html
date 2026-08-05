@@ -227,6 +227,8 @@
       gap: .6rem;
     }
     .pub-kort.er-fremhevet { box-shadow: 0 0 0 2px var(--gull); }
+    .pub-kort.er-deaktivert { opacity: .5; }
+    .pub-kort.er-deaktivert:hover { opacity: .8; }
 
     .pub-hoved { display: flex; align-items: center; gap: .75rem; }
 
@@ -244,6 +246,8 @@
     .knapp-pub-fremhev.aktiv { background: rgba(255,215,0,.15); border-color: var(--gull); color: var(--gull); }
     .knapp-pub-fremhev:hover { border-color: var(--gull); color: var(--gull); }
 
+    .pub-knapp-rad { display: flex; gap: 1rem; align-items: center; }
+
     .knapp-pub-rediger {
       align-self: flex-start;
       background: none; border: none; color: var(--dempet);
@@ -251,6 +255,16 @@
       text-decoration: underline; text-underline-offset: 2px;
     }
     .knapp-pub-rediger:hover { color: var(--lime); }
+
+    .knapp-pub-deaktiver {
+      align-self: flex-start;
+      background: none; border: none; color: var(--dempet);
+      font-size: .78rem; cursor: pointer; padding: 0;
+      text-decoration: underline; text-underline-offset: 2px;
+    }
+    .knapp-pub-deaktiver:hover { color: var(--korall); }
+    .knapp-pub-deaktiver.aktiv { color: var(--korall); }
+    .knapp-pub-deaktiver.aktiv:hover { color: var(--lime); }
 
     .pub-rediger-panel {
       border-top: 1px solid var(--flate2);
@@ -1276,7 +1290,7 @@ async function lastInnPubliserte() {
 
   for (const event of kommende) {
     const kort = document.createElement('div');
-    kort.className = `pub-kort${event.fremhevet ? ' er-fremhevet' : ''}`;
+    kort.className = `pub-kort${event.fremhevet ? ' er-fremhevet' : ''}${event.deaktivert ? ' er-deaktivert' : ''}`;
     kort.dataset.id = event.id;
 
     const hoved = document.createElement('div');
@@ -1292,7 +1306,7 @@ async function lastInnPubliserte() {
 
     const m = document.createElement('div');
     m.className = 'pub-meta';
-    m.textContent = `${event.sted} · ${formaterDato(event.start)}`;
+    m.textContent = `${event.sted} · ${formaterDato(event.start)}${event.deaktivert ? ' · 🚫 deaktivert' : ''}`;
     infoDel.appendChild(m);
 
     const fKnapp = document.createElement('button');
@@ -1353,10 +1367,23 @@ async function lastInnPubliserte() {
     redigerKnapp.className = 'knapp-pub-rediger';
     redigerKnapp.textContent = '✎ Rediger';
 
+    // Deaktiver/aktiver — skjuler eventet fra selve appen uten å slette det
+    // (js/application/validering.js filtrerer bort event.deaktivert===true).
+    // Samme knapp er angre-knappen: trykk igjen for å reaktivere.
+    const dKnapp = document.createElement('button');
+    dKnapp.type = 'button';
+    dKnapp.className = `knapp-pub-deaktiver${event.deaktivert ? ' aktiv' : ''}`;
+    dKnapp.textContent = event.deaktivert ? '↺ Aktiver igjen' : '🚫 Deaktiver';
+
     const redigerPanel = lagRedigerPanel(event, (oppdatertEvent, gitKommando) => {
       tittel.textContent = `${oppdatertEvent.fremhevet ? '★ ' : ''}${oppdatertEvent.tittel}`;
-      m.textContent = `${oppdatertEvent.sted} · ${formaterDato(oppdatertEvent.start)}`;
+      m.textContent = `${oppdatertEvent.sted} · ${formaterDato(oppdatertEvent.start)}${oppdatertEvent.deaktivert ? ' · 🚫 deaktivert' : ''}`;
+      visGitMelding(gitKommando);
+    });
 
+    // Viser/oppdaterer "klar til publisering, kjør denne git-kommandoen"-boksen
+    // nederst i redigerPanel — delt av både Lagre-, Deaktiver- og Fremhev-flyten.
+    function visGitMelding(gitKommando) {
       let melding = redigerPanel.querySelector('.git-melding');
       if (!melding) {
         melding = document.createElement('div');
@@ -1374,7 +1401,22 @@ async function lastInnPubliserte() {
         redigerPanel.appendChild(melding);
       }
       melding.querySelector('.git-kommando').textContent = gitKommando;
-    });
+    }
+
+    dKnapp.onclick = async () => {
+      dKnapp.disabled = true;
+      const res  = await fetch(`/api/deaktiver/${encodeURIComponent(event.id)}`, { method: 'POST' });
+      const data = await res.json();
+      if (data.ok) {
+        event.deaktivert = data.deaktivert;
+        dKnapp.classList.toggle('aktiv', data.deaktivert);
+        dKnapp.textContent = data.deaktivert ? '↺ Aktiver igjen' : '🚫 Deaktiver';
+        kort.classList.toggle('er-deaktivert', data.deaktivert);
+        m.textContent = `${event.sted} · ${formaterDato(event.start)}${data.deaktivert ? ' · 🚫 deaktivert' : ''}`;
+        visGitMelding(data.gitKommando);
+      }
+      dKnapp.disabled = false;
+    };
 
     redigerKnapp.onclick = () => {
       const synlig = redigerPanel.style.display !== 'none';
@@ -1383,7 +1425,12 @@ async function lastInnPubliserte() {
       if (!synlig) redigerPanel.__lastInnBildeVedVisning?.();
     };
 
-    kort.appendChild(redigerKnapp);
+    const knappRad = document.createElement('div');
+    knappRad.className = 'pub-knapp-rad';
+    knappRad.appendChild(redigerKnapp);
+    knappRad.appendChild(dKnapp);
+
+    kort.appendChild(knappRad);
     kort.appendChild(redigerPanel);
     feed.appendChild(kort);
   }
