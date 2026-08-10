@@ -312,7 +312,7 @@
     "lenke": "https://www.ticketmaster.no/event/109674949",
     "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_fP1ozI4zG/tr:w-750",
     "sistVerifisert": "2026-07-19T22:58:44.585Z",
-    "fremhevet": false
+    "fremhevet": true
   },
   {
     "id": "st-hanshaugen-park-quiz-pa-haugen-2026-07-24",
@@ -612,7 +612,7 @@
     "bilde": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Bridge_over_Akerselva_by_Blaa.jpg/1280px-Bridge_over_Akerselva_by_Blaa.jpg",
     "sistVerifisert": "2026-07-21T05:17:46.240Z",
     "gjentas": "ukentlig:søndag",
-    "fremhevet": true
+    "fremhevet": false
   },
   {
     "id": "bitraf-byggekveld-hos-bitraf-2026-07-23",
@@ -977,7 +977,7 @@
     "bilde": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQmDMQ7zYt15nAAaOOrpl0P3LaknXrVSz6nMZtpWEO8kA&s=10",
     "sistVerifisert": "2026-08-03T03:29:10.894Z",
     "gjentas": "ukentlig:onsdag",
-    "fremhevet": true
+    "fremhevet": false
   },
   {
     "id": "the-villa-nina-yamada-olefonken-2026-08-01",
@@ -1227,7 +1227,7 @@
     "sted": "Harlem Bar",
     "adresse": "Youngstorget 2A, 0181 Oslo",
     "lat": 59.9149,
-    "lng": 10.7490,
+    "lng": 10.749,
     "start": "2026-08-11T20:00:00+02:00",
     "slutt": "2026-08-11T22:00:00+02:00",
     "pris": 70,
@@ -1255,7 +1255,8 @@
     "kuratortekst": "En av 2000-tallets viktigste ambient-plater, spilt hel, i BLÅs beste rom.",
     "lenke": "https://www.blaaoslo.no",
     "bilde": null,
-    "sistVerifisert": "2026-08-10T13:00:00.000Z"
+    "sistVerifisert": "2026-08-10T13:00:00.000Z",
+    "fremhevet": true
   },
   {
     "id": "revolver-oya-tirsdag-2026-08-11",
@@ -1273,7 +1274,8 @@
     "kuratortekst": "Gitarbasert underground rett før festivalen tar over byen. Gratis inngang med utvekslet Øya-armbånd ved kapasitet.",
     "lenke": "https://www.revolveroslo.no/",
     "bilde": null,
-    "sistVerifisert": "2026-08-10T13:00:00.000Z"
+    "sistVerifisert": "2026-08-10T13:00:00.000Z",
+    "fremhevet": true
   },
   {
     "id": "vaterland-violent-magic-orchestra-2026-08-12",
@@ -1345,7 +1347,8 @@
     "kuratortekst": null,
     "lenke": "https://www.mela.no/en/festival/melaklubb-2026/",
     "bilde": null,
-    "sistVerifisert": "2026-08-10T13:00:00.000Z"
+    "sistVerifisert": "2026-08-10T13:00:00.000Z",
+    "fremhevet": true
   },
   {
     "id": "hobo-hotel-hobo-market-2026-08-15",
@@ -1363,7 +1366,8 @@
     "kuratortekst": null,
     "lenke": "https://hobohotel.no/calendar",
     "bilde": null,
-    "sistVerifisert": "2026-08-10T13:00:00.000Z"
+    "sistVerifisert": "2026-08-10T13:00:00.000Z",
+    "fremhevet": true
   },
   {
     "id": "last-train-grumphro-maggot-farm-2026-08-15",
@@ -1399,6 +1403,7 @@
     "kuratortekst": "Familievennlig matfest midt i byen — gå fra bod til bod og smak deg gjennom Oslos beste kjøkken.",
     "lenke": "https://sentralenmat.no/",
     "bilde": null,
-    "sistVerifisert": "2026-08-10T13:00:00.000Z"
+    "sistVerifisert": "2026-08-10T13:00:00.000Z",
+    "fremhevet": true
   }
 ]
