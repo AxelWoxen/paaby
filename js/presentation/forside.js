@@ -5,6 +5,7 @@ import { osloKomponenter, eventTilstand }         from '../application/oslo-tid.
 import { formaterTid, formaterPrisTekst,
          kategoriVisningsnavn }                   from '../application/formatering.js';
 import { hentEventbilde }                         from '../application/kategori-bilder.js';
+import { bindBildeLasting, markerBildeLastet }    from '../application/bilde-lasting.js';
 import { åpneModal }                             from './modal.js';
 
 const MAKS = 5;
@@ -82,7 +83,11 @@ function lagUtvalgKort(event) {
   bilde.src       = hentEventbilde(event);
   bilde.alt       = '';
   bilde.loading   = 'lazy';
-  bilde.addEventListener('error', () => bilde.remove(), { once: true });
+  bindBildeLasting(bilde);
+  bilde.addEventListener('error', () => {
+    markerBildeLastet(bilde); /* stopp skeleton-pulsen før elementet fjernes */
+    bilde.remove();
+  }, { once: true });
   bildeWrapper.appendChild(bilde);
 
   // Badge-rad
@@ -148,6 +153,45 @@ function lagUtvalgKort(event) {
   return el;
 }
 
+/* ─── Skeleton-lastetilstand ─────────────────────────────────────────────────── */
+
+function lagUtvalgSkeletonKort() {
+  const el = document.createElement('div');
+  el.className = 'utvalg-kort-skeleton';
+
+  const bilde = document.createElement('div');
+  bilde.className = 'kort-skeleton-bilde';
+  el.appendChild(bilde);
+
+  const innhold = document.createElement('div');
+  innhold.className = 'kort-skeleton-innhold';
+
+  const tittel = document.createElement('div');
+  tittel.className = 'kort-skeleton-linje kort-skeleton-linje--tittel';
+  innhold.appendChild(tittel);
+
+  const meta = document.createElement('div');
+  meta.className = 'kort-skeleton-linje kort-skeleton-linje--meta';
+  innhold.appendChild(meta);
+
+  el.appendChild(innhold);
+  return el;
+}
+
+/**
+ * Viser skeleton-kort i #forside-utvalg mens eventer hentes. Erstattes
+ * automatisk så snart visForside() setter utvalgEl.innerHTML = '' med ekte data.
+ */
+export function visSkeletonUtvalg(antall = 4) {
+  const utvalgEl = document.getElementById('forside-utvalg');
+  utvalgEl.innerHTML = '';
+  utvalgEl.setAttribute('aria-hidden', 'true');
+
+  for (let i = 0; i < antall; i += 1) {
+    utvalgEl.appendChild(lagUtvalgSkeletonKort());
+  }
+}
+
 /* ─── Offentlig API ──────────────────────────────────────────────────────────── */
 
 export function visForside(utvalg) {
@@ -160,6 +204,7 @@ export function visForside(utvalg) {
 
   const utvalgEl = document.getElementById('forside-utvalg');
   utvalgEl.innerHTML = '';
+  utvalgEl.removeAttribute('aria-hidden');
   utvalg.forEach(e => utvalgEl.appendChild(lagUtvalgKort(e)));
 }
 

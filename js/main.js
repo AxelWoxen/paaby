@@ -8,11 +8,12 @@ import { sorterEventer, erAvstandsSortering,
          erTidsSortering }                         from './application/sortering.js';
 import { hentPosisjon, kalkulerAvstand }           from './application/posisjon.js';
 import { hentLagredeIder }                         from './application/lagret.js';
-import { visEventer }                              from './presentation/feed.js';
+import { visEventer, visSkeletonKort }             from './presentation/feed.js';
 import { initModal, åpneModal, lukkModal,
          hentÅpenEvent }                           from './presentation/modal.js';
 import { aktiverSporing, trackEvent }              from './application/sporing.js';
-import { velgUtvalg, visForside, initSeAlt }      from './presentation/forside.js';
+import { velgUtvalg, visForside, initSeAlt,
+         visSkeletonUtvalg }                       from './presentation/forside.js';
 import { utvidGjentakende }                        from './application/gjentas.js';
 import { visFølgerVisning }                        from './presentation/følger.js';
 import { ukeMandag, ukeVindu,
@@ -608,6 +609,56 @@ function initHashRuting() {
    OPPSTART
    ======================== */
 
+/**
+ * Henter eventer og bygger forside/feed. Ved feil vises en feilmelding med
+ * en «Prøv igjen»-knapp som kaller denne funksjonen på nytt — brukeren
+ * trenger aldri refreshe hele siden manuelt.
+ */
+async function lastInnEventer() {
+  try {
+    tilstand.alleEventer = utvidGjentakende(await hentEventer());
+    visForside(velgUtvalg(tilstand.alleEventer));
+    oppdaterFeed();
+    håndterHash();
+  } catch (feil) {
+    visLastefeil();
+    console.error('Påby: feil ved henting av eventer:', feil);
+  }
+}
+
+function visLastefeil() {
+  /* Tøm forsidens skeleton-utvalg også — ellers blir det stående og pulsere
+     for alltid, siden visForside() (som ville erstattet det) aldri nås. */
+  const utvalgEl = document.getElementById('forside-utvalg');
+  utvalgEl.innerHTML = '';
+  utvalgEl.removeAttribute('aria-hidden');
+
+  const feed = document.getElementById('feed');
+  feed.innerHTML = ''; /* fjerner ev. skeleton-kort eller tidligere feilmelding — aldri duplisert i DOM-en */
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'tom-feed';
+
+  const melding = document.createElement('p');
+  melding.textContent = 'klarte ikke laste eventer. er du koblet til internett?';
+  wrapper.appendChild(melding);
+
+  const knapp = document.createElement('button');
+  knapp.type        = 'button';
+  knapp.className   = 'proev-igjen-knapp';
+  knapp.textContent = 'Prøv igjen';
+  knapp.addEventListener('click', async () => {
+    knapp.disabled   = true;
+    knapp.textContent = 'laster …';
+    await lastInnEventer();
+    /* Ved fornyet feil bygger visLastefeil() hele wrapperen (inkl. knapp) på
+       nytt igjen — ingen behov for å tilbakestille knappeteksten her. */
+  });
+  wrapper.appendChild(knapp);
+
+  feed.appendChild(wrapper);
+}
+
 async function startApp() {
   initModal();
   initFiltre();
@@ -624,18 +675,10 @@ async function startApp() {
   initUkeNav();
   initBunnNav();
 
-  try {
-    tilstand.alleEventer = utvidGjentakende(await hentEventer());
-    visForside(velgUtvalg(tilstand.alleEventer));
-    oppdaterFeed();
-    håndterHash();
-  } catch (feil) {
-    const melding = document.createElement('p');
-    melding.className   = 'tom-feed';
-    melding.textContent = 'klarte ikke laste eventer. er du koblet til internett?';
-    document.getElementById('feed').appendChild(melding);
-    console.error('Påby: feil ved henting av eventer:', feil);
-  }
+  visSkeletonKort();
+  visSkeletonUtvalg();
+
+  await lastInnEventer();
 }
 
 startApp();

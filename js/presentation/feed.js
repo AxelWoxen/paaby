@@ -11,6 +11,7 @@ import { formaterPrisTekst, formaterTid, formaterAvstand,
          kategoriVisningsnavn }                                  from '../application/formatering.js';
 import { hentEventbilde, KATEGORI_BILDER }                       from '../application/kategori-bilder.js';
 import { eventTilstand }                                         from '../application/oslo-tid.js';
+import { bindBildeLasting, markerBildeLastet }                   from '../application/bilde-lasting.js';
 import { åpneModal }                                             from './modal.js';
 
 
@@ -36,17 +37,75 @@ function lagBildeEllement(event) {
 
   const harEgetBilde = Boolean(event.bilde);
 
+  bindBildeLasting(img);
+
   img.addEventListener('error', () => {
     const kategoriSrc = KATEGORI_BILDER[event.kategori];
     if (harEgetBilde && kategoriSrc) {
       img.src = kategoriSrc;
-      img.addEventListener('error', () => img.replaceWith(lagPlaceholder(event.kategori)), { once: true });
+      bindBildeLasting(img);
+      img.addEventListener('error', () => {
+        markerBildeLastet(img); /* stopp skeleton-pulsen før vi bytter ut elementet */
+        img.replaceWith(lagPlaceholder(event.kategori));
+      }, { once: true });
     } else {
+      markerBildeLastet(img);
       img.replaceWith(lagPlaceholder(event.kategori));
     }
   }, { once: true });
 
   return img;
+}
+
+
+/* ========================
+   SKELETON-LASTETILSTAND
+   ======================== */
+
+function lagSkeletonKort() {
+  const el = document.createElement('div');
+  el.className = 'kort-skeleton';
+
+  const bilde = document.createElement('div');
+  bilde.className = 'kort-skeleton-bilde';
+  el.appendChild(bilde);
+
+  const innhold = document.createElement('div');
+  innhold.className = 'kort-skeleton-innhold';
+
+  const tittel = document.createElement('div');
+  tittel.className = 'kort-skeleton-linje kort-skeleton-linje--tittel';
+  innhold.appendChild(tittel);
+
+  const meta = document.createElement('div');
+  meta.className = 'kort-skeleton-linje kort-skeleton-linje--meta';
+  innhold.appendChild(meta);
+
+  const footer = document.createElement('div');
+  footer.className = 'kort-skeleton-linje kort-skeleton-linje--footer';
+  innhold.appendChild(footer);
+
+  el.appendChild(innhold);
+  return el;
+}
+
+/**
+ * Viser skeleton-kort i #feed mens eventer hentes. Erstattes automatisk
+ * så snart visEventer() kaller feed.innerHTML = '' med ekte data.
+ */
+export function visSkeletonKort(antall = 5) {
+  const feed = document.getElementById('feed');
+  feed.innerHTML = '';
+
+  const wrapper = document.createElement('div');
+  wrapper.className = 'dag-kort';
+  wrapper.setAttribute('aria-hidden', 'true');
+
+  for (let i = 0; i < antall; i += 1) {
+    wrapper.appendChild(lagSkeletonKort());
+  }
+
+  feed.appendChild(wrapper);
 }
 
 

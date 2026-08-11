@@ -119,3 +119,26 @@ så det matcher resten av appen automatisk.
 | `lat` / `lng` | valgfri | begge satt eller begge `null` |
 | `bilde` | valgfri | `null` = bruk kategoribilde automatisk |
 | `prisTekst` | valgfri | vises til bruker i stedet for beregnet tekst |
+
+---
+
+## Vedlikehold
+
+### Rydde bort gamle eventer
+
+`data/events.json` vokser seg full av passerte engangsarrangementer over tid.
+`scripts/rydd-gamle-eventer.js` fjerner eventer der effektiv sluttid (`slutt`,
+eller `start` + 4 timer dersom `slutt` mangler) er mer enn 5 dager tilbake i
+tid. Eventer med `gjentas` satt røres aldri — de er ankerdatoer
+`utvidGjentakende()` (`js/application/gjentas.js`) bruker til å generere
+fremtidige forekomster, uansett hvor gammel `start` er.
+
+Kjøres manuelt ved behov — **ikke** automatisk ved commit/deploy:
+
+```bash
+node scripts/rydd-gamle-eventer.js
+```
+
+Skriptet skriver ryddet liste tilbake til `data/events.json` og lister ut i
+konsollen hvor mange (og hvilke id-er) som ble fjernet, slik at du kan sjekke
+`git diff` før du committer.

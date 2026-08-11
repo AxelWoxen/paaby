@@ -396,6 +396,30 @@ body {
   margin-top: var(--gap-l);
 }
 
+.proev-igjen-knapp {
+  margin: var(--gap-m) auto 0;
+  display: block;
+  padding: 0.6rem 1.4rem;
+  background: var(--aksent);
+  border: 1.5px solid var(--aksent);
+  border-radius: var(--radius-m);
+  color: var(--aksent-kontrast);
+  font-family: var(--font-tekst);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.proev-igjen-knapp:hover {
+  opacity: 0.85;
+}
+
+.proev-igjen-knapp:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
 
 /* === FØLGER-VISNING === */
 
@@ -476,6 +500,7 @@ body {
   /* Litt flatere enn 16:9 — gjør at flere kort vises */
   aspect-ratio: 16 / 7;
   overflow: hidden;
+  background: var(--flate-2);
 }
 
 .kort-bilde {
@@ -493,6 +518,81 @@ body {
   width: 100%;
   height: 100%;
   background: var(--flate-2);
+}
+
+
+/* === SKELETON-LASTETILSTAND ===
+   To ting deler samme rolige opacity-puls (ingen shimmer-gradient):
+   1. Skeleton-kort (.kort-skeleton / .utvalg-kort-skeleton) vises i #feed og
+      #forside-utvalg mens hentEventer() pågår i main.js.
+   2. Bilde-skeleton (::before på *-bilde-wrapper) vises bak hvert enkelt
+      <img> til det faktisk er ferdig lastet — JS legger til klassen
+      «bilde-lastet» på wrapperen (se bilde-lasting.js), som fader
+      overlegget bort med en transition. Samme mekanikk for feed-kort,
+      forside-kort og modal. */
+
+@keyframes skeleton-puls {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 1; }
+}
+
+.kort-skeleton,
+.utvalg-kort-skeleton {
+  background: var(--flate-1);
+  border-radius: var(--radius-l);
+  overflow: hidden;
+}
+
+.kort-skeleton-bilde {
+  aspect-ratio: 16 / 7;
+  background: var(--flate-2);
+  animation: skeleton-puls 1.6s ease-in-out infinite;
+}
+
+.utvalg-kort-skeleton .kort-skeleton-bilde {
+  aspect-ratio: 16 / 6;
+}
+
+.kort-skeleton-innhold {
+  padding: var(--gap-m);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-s);
+}
+
+.utvalg-kort-skeleton .kort-skeleton-innhold {
+  padding: var(--gap-m) var(--gap-l);
+}
+
+.kort-skeleton-linje {
+  height: 0.9rem;
+  border-radius: var(--radius-s);
+  background: var(--flate-2);
+  animation: skeleton-puls 1.6s ease-in-out infinite;
+}
+
+.kort-skeleton-linje--tittel { width: 70%; height: 1.1rem; }
+.kort-skeleton-linje--meta   { width: 45%; }
+.kort-skeleton-linje--footer { width: 30%; margin-top: var(--gap-s); }
+
+/* Bilde-skeleton — overlegg bak <img>, se forklaring øverst i seksjonen. */
+.kort-bilde-wrapper::before,
+.utvalg-bilde-wrapper::before,
+.modal-bilde-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--flate-2);
+  animation: skeleton-puls 1.6s ease-in-out infinite;
+  transition: opacity 0.25s ease;
+}
+
+.kort-bilde-wrapper.bilde-lastet::before,
+.utvalg-bilde-wrapper.bilde-lastet::before,
+.modal-bilde-wrapper.bilde-lastet::before {
+  opacity: 0;
+  animation: none;
+  pointer-events: none;
 }
 
 .kort-kategori {
@@ -780,11 +880,18 @@ body {
   pointer-events: none;
 }
 
+.modal-bilde-wrapper {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--flate-2);
+  border-radius: var(--radius-l) var(--radius-l) 0 0;
+}
+
 .modal-bilde {
   width: 100%;
-  aspect-ratio: 16 / 9;
+  height: 100%;
   object-fit: cover;
-  border-radius: var(--radius-l) var(--radius-l) 0 0;
   -webkit-user-drag: none;
   user-select: none;
 }
@@ -948,7 +1055,7 @@ body.modal-aapen {
     margin: auto;
   }
 
-  .modal-bilde {
+  .modal-bilde-wrapper {
     border-radius: var(--radius-l) var(--radius-l) 0 0;
   }
 

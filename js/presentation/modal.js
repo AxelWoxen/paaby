@@ -12,6 +12,7 @@ import { formaterPrisTekst, formaterTidKort,
          kategoriVisningsnavn }                        from '../application/formatering.js';
 import { erGyldigUrl }                                 from '../application/validering.js';
 import { hentEventbilde, KATEGORI_BILDER }             from '../application/kategori-bilder.js';
+import { bindBildeLasting, markerBildeLastet }         from '../application/bilde-lasting.js';
 import { trackEvent }                                  from '../application/sporing.js';
 import { synkroniserKortHjerte }                       from './feed.js';
 
@@ -90,6 +91,9 @@ function byggModalInnhold(event) {
 
   /* Bilde — viser alltid kategoribilde som standard, event.bilde overstyrer */
   {
+    const bildeWrapper = document.createElement('div');
+    bildeWrapper.className = 'modal-bilde-wrapper';
+
     const img = document.createElement('img');
     img.src       = hentEventbilde(event);
     img.alt       = '';
@@ -98,16 +102,26 @@ function byggModalInnhold(event) {
     const harEgetBilde  = Boolean(event.bilde);
     const kategoriFallback = KATEGORI_BILDER[event.kategori];
 
+    bindBildeLasting(img);
+
     if (harEgetBilde && kategoriFallback) {
       img.addEventListener('error', () => {
         img.src = kategoriFallback;
-        img.addEventListener('error', () => img.remove(), { once: true });
+        bindBildeLasting(img);
+        img.addEventListener('error', () => {
+          markerBildeLastet(img); /* stopp skeleton-pulsen før elementet fjernes */
+          img.remove();
+        }, { once: true });
       }, { once: true });
     } else {
-      img.addEventListener('error', () => img.remove(), { once: true });
+      img.addEventListener('error', () => {
+        markerBildeLastet(img);
+        img.remove();
+      }, { once: true });
     }
 
-    fragment.appendChild(img);
+    bildeWrapper.appendChild(img);
+    fragment.appendChild(bildeWrapper);
   }
 
   /* Hoveddel */
