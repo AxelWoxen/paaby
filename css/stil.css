@@ -508,6 +508,15 @@ body {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
+  /* position+z-index: uten dette maler den absolutt-posisjonerte skeleton-
+     pulsen (::before på wrapperen) SEG OVENPÅ bildet uansett lastetilstand
+     (posisjonerte elementer males etter inline-nivå-innhold som <img>,
+     jf. CSS2.1 stacking-rekkefølge) — selv et ferdig lastet bilde ville da
+     ligget skjult under en evig pulserende blokk. Dette garanterer at
+     bildet alltid vinner, uavhengig av når/om JS rekker å sette
+     .bilde-lastet på wrapperen. */
+  position: relative;
+  z-index: 1;
 }
 
 .kort:hover .kort-bilde {
@@ -894,6 +903,10 @@ body {
   object-fit: cover;
   -webkit-user-drag: none;
   user-select: none;
+  /* Se forklaring ved .kort-bilde — garanterer at bildet males over
+     skeleton-pulsen uansett JS-timing. */
+  position: relative;
+  z-index: 1;
 }
 
 .modal-body {
@@ -1283,6 +1296,10 @@ body.modal-aapen {
   height: 100%;
   object-fit: cover;
   transition: transform 0.3s ease;
+  /* Se forklaring ved .kort-bilde — garanterer at bildet males over
+     skeleton-pulsen uansett JS-timing. */
+  position: relative;
+  z-index: 1;
 }
 
 .utvalg-kort:hover .utvalg-bilde {
