@@ -1475,17 +1475,29 @@ body.modal-aapen {
 /* === SIDE-FOOTER === */
 
 .side-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0 0.1rem;
   text-align: center;
-  padding: var(--gap-l) var(--gap-m);
-  padding-bottom: max(var(--gap-l), env(safe-area-inset-bottom));
+  padding: var(--gap-s) var(--gap-m);
+  padding-bottom: max(var(--gap-s), env(safe-area-inset-bottom));
 }
 
 .side-footer a {
+  display: inline-block;
+  padding: var(--gap-s) 0.4rem;
   color: var(--graa);
   font-size: 0.75rem;
   text-decoration: underline;
 }
 .side-footer a:hover { color: var(--paper); }
+
+.side-footer span {
+  color: var(--graa);
+  font-size: 0.75rem;
+}
 
 
 /* === BUNN-NAV — kun mobil (< 900px) ===
