@@ -98,3 +98,28 @@
   color: var(--graa-kort);
   margin-top: 0.2rem;
 }
+
+/* === PERSONVERN — statisk tekstinnhold (personvern.html) ===
+   Scoped under .personvern-tekst, ikke bare h2/p, slik at ingenting
+   av dette lekker inn i .uke-event/.uke-arkiv-lenke sine egne h2/p-stiler. */
+
+.personvern-tekst p {
+  color: var(--paper);
+  line-height: 1.6;
+  margin-bottom: var(--gap-m);
+  max-width: 60ch;
+}
+
+.personvern-overskrift {
+  font-family: var(--font-tittel);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-top: var(--gap-xl);
+  margin-bottom: var(--gap-s);
+}
+
+.personvern-tekst a {
+  color: var(--aksent);
+  text-decoration: underline;
+}
+.personvern-tekst a:hover { color: var(--paper); }

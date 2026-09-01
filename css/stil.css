@@ -1472,6 +1472,22 @@ body.modal-aapen {
 }
 
 
+/* === SIDE-FOOTER === */
+
+.side-footer {
+  text-align: center;
+  padding: var(--gap-l) var(--gap-m);
+  padding-bottom: max(var(--gap-l), env(safe-area-inset-bottom));
+}
+
+.side-footer a {
+  color: var(--graa);
+  font-size: 0.75rem;
+  text-decoration: underline;
+}
+.side-footer a:hover { color: var(--paper); }
+
+
 /* === BUNN-NAV — kun mobil (< 900px) ===
    Fast plassert nederst, som en native app-tab-bar.
    Skjult på desktop; der gjelder eksisterende navigering uendret. */
