@@ -4,7 +4,7 @@
 import { osloKomponenter, eventTilstand }         from '../application/oslo-tid.js';
 import { formaterTid, formaterPrisTekst,
          kategoriVisningsnavn }                   from '../application/formatering.js';
-import { hentEventbilde }                         from '../application/kategori-bilder.js';
+import { hentEventbilde, KATEGORI_BILDER }         from '../application/kategori-bilder.js';
 import { bindBildeLasting, markerBildeLastet }    from '../application/bilde-lasting.js';
 import { åpneModal }                             from './modal.js';
 
@@ -13,9 +13,9 @@ const MAKS = 5;
 /* ─── Hilsen ─────────────────────────────────────────────────────────────────── */
 
 function hentGreeting(time) {
-  if (time >= 5  && time < 11) return ['God morgen',       'Her er det vi tror du vil like til uka'];
-  if (time >= 11 && time < 17) return ['God ettermiddag',  'Her er noe å se frem til'];
-  return                               ['God kveld',        'Her er det vi tror du vil like'];
+  if (time >= 5  && time < 11) return ['God morgen!',       'Her er det vi tror du vil like til uka'];
+  if (time >= 11 && time < 17) return ['God ettermiddag!',  'Her er noe å se frem til'];
+  return                               ['God kveld!',        'Her er det vi tror du vil like til uka'];
 }
 
 /* ─── Utvalg ─────────────────────────────────────────────────────────────────── */
@@ -64,6 +64,11 @@ export function velgUtvalg(alleEventer) {
 }
 
 /* ─── Render ─────────────────────────────────────────────────────────────────── */
+function lagUtvalgPlaceholder(kategori) {
+  const div = document.createElement('div');
+  div.className = `kort-bilde-placeholder kategori-${kategori}`;
+  return div;
+}
 
 function lagUtvalgKort(event) {
   const utgattIDag = eventTilstand(event.start) === 'utgatt-i-dag';
@@ -83,10 +88,21 @@ function lagUtvalgKort(event) {
   bilde.src       = hentEventbilde(event);
   bilde.alt       = '';
   bilde.loading   = 'lazy';
+  const harEgetBilde = Boolean(event.bilde);
   bindBildeLasting(bilde);
   bilde.addEventListener('error', () => {
-    markerBildeLastet(bilde); /* stopp skeleton-pulsen før elementet fjernes */
-    bilde.remove();
+    const kategoriSrc = KATEGORI_BILDER[event.kategori];
+    if (harEgetBilde && kategoriSrc) {
+      bilde.src = kategoriSrc;
+      bindBildeLasting(bilde);
+      bilde.addEventListener('error', () => {
+        markerBildeLastet(bilde);
+        bilde.replaceWith(lagUtvalgPlaceholder(event.kategori));
+      }, { once: true });
+    } else {
+      markerBildeLastet(bilde);
+      bilde.replaceWith(lagUtvalgPlaceholder(event.kategori));
+    }
   }, { once: true });
   bildeWrapper.appendChild(bilde);
 

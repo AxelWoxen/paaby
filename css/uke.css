@@ -42,18 +42,9 @@
 
 .uke-event {
   background: var(--flate-1);
+  border: 2px solid var(--aksent);
   border-radius: var(--radius-m);
   padding: var(--gap-m) var(--gap-l);
-}
-
-/* .kort, .modal-container og .utvalg-kort omdefinerer --paper/--graa/--flate-2
-   lokalt til sine lys-tilpassede varianter (se stil.css) — samme mønster
-   brukes her, slik at teksten blir lesbar på den lyse kortflaten. */
-.uke-event {
-  --paper:   var(--tekst-kort);
-  --graa:    var(--graa-kort);
-  --flate-2: var(--flate-2-kort);
-  color: var(--paper);
 }
 
 .uke-event-tittel {
@@ -83,9 +74,10 @@
 .uke-arkiv-lenke {
   display: block;
   background: var(--flate-1);
+  border: 2px solid var(--aksent);
   border-radius: var(--radius-s);
   padding: var(--gap-m);
-  color: var(--tekst-kort);
+  color: var(--paper);
   text-decoration: none;
   font-weight: 600;
 }
@@ -95,7 +87,7 @@
   display: block;
   font-weight: 400;
   font-size: 0.8rem;
-  color: var(--graa-kort);
+  color: var(--graa);
   margin-top: 0.2rem;
 }
 
