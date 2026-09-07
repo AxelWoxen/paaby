@@ -724,17 +724,33 @@ textarea {
 .kort-innhold,
 .utvalg-innhold {
   position: absolute;
-  left: -8px;
-  bottom: -8px;
+  left: 0;
+  bottom: 0;
   z-index: 2;
-  width: fit-content;
-  max-width: 85%;
-  background: var(--flate-1);
+
+  
+  height: 105px;
+  box-sizing: border-box;
+
+  background: var(--aksent);
   padding: var(--gap-s) var(--gap-m);
-  border-radius: 0 12px 0 0;
+
+  border-top-right-radius: 12px;
+
   display: flex;
   flex-direction: column;
+  justify-content: center;
   gap: 2px;
+
+  overflow: hidden;
+}
+
+.kort-innhold {
+  width: 50%;
+}
+
+.utvalg-innhold {
+  width: 38%;
 }
 
 .kort-innhold *,
@@ -1624,18 +1640,25 @@ body.modal-aapen {
   }
 }
 
-@media (max-width: 380px) {
+@media (max-width: 899px) {
   .kort-innhold,
   .utvalg-innhold {
-    max-width: 96%;
-    padding: 0.45rem 0.65rem;
+    width: 82%;
+    max-width: none;
+    height: 95px;
+
+    padding: 0.5rem 0.75rem;
+    gap: 2px;
+    border-radius: 0 10px 0 0;
   }
+}
+
 
   .kort-tittel,
   .utvalg-tittel {
     font-size: 0.96rem;
   }
-}
+
 
 @media (max-width: 899px) and (orientation: landscape) and (max-height: 500px) {
   .bunn-nav-knapp span {

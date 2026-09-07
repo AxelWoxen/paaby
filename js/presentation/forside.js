@@ -2,7 +2,7 @@
    Viser kuratert utvalg: fremhevede events øverst, fallback fyller opp til 5. */
 
 import { osloKomponenter, eventTilstand }         from '../application/oslo-tid.js';
-import { formaterTid, formaterPrisTekst,
+import { formaterTid, formaterPrisKort,formaterPrisTekst,
          kategoriVisningsnavn }                   from '../application/formatering.js';
 import { hentEventbilde, KATEGORI_BILDER }         from '../application/kategori-bilder.js';
 import { bindBildeLasting, markerBildeLastet }    from '../application/bilde-lasting.js';
@@ -148,8 +148,7 @@ function lagUtvalgKort(event) {
 
   const meta = document.createElement('p');
   meta.className   = 'utvalg-meta';
-  meta.textContent = `${event.sted}  ·  ${formaterTid(event.start)}  ·  ${formaterPrisTekst(event.pris, event.prisTekst)}`;
-  innhold.appendChild(meta);
+meta.textContent = `${event.sted} · ${formaterTid(event.start)} · ${formaterPrisKort(event.pris, event.prisTekst)}`;  innhold.appendChild(meta);
 
 
   el.appendChild(innhold);

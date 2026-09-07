@@ -42,6 +42,16 @@ export function formaterPrisTekst(pris, prisTekst) {
   return `${pris} kr`;
 }
 
+export function formaterPrisKort(pris, prisTekst) {
+  const fullPris = formaterPrisTekst(pris, prisTekst);
+
+  if (fullPris.length > 20) {
+    return 'Se prisinfo';
+  }
+
+  return fullPris;
+}
+
 /**
  * Avstand i km til norsk, lesbar streng.
  * Returner tom streng hvis avstand er ukjent, null eller NaN.
