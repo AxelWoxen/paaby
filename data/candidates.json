@@ -6692,5 +6692,24 @@
     "bilde": "https://scontent.fhlz4-1.fna.fbcdn.net/v/t39.30808-6/624718483_1432377375566170_5853350527727819634_n.jpg?stp=dst-jpg_tt6&cstp=mx1280x720&ctp=s1280x720&_nc_cat=109&ccb=1-7&_nc_sid=75d36f&_nc_ohc=o3swabXyuk0Q7kNvwHajJhf&_nc_oc=AdoSgpjYiw0MDwquYdE8FU4CMFB32VgS2wnEkwkBY--lb_A_tdwG4iYiR5EFSWDRY48&_nc_zt=23&_nc_ht=scontent.fhlz4-1.fna&_nc_gid=ChFknksXl62wvHRmR5FUPw&_nc_ss=7b2a8&oh=00_AQIJxdY6MQF-2w9eEhj-b22eIerQxWRojysqSnVO6PT1Jw&oe=6AA4E58F",
     "sistVerifisert": "2026-09-07T21:55:47.641Z",
     "_status": "pending"
+  },
+  {
+    "id": "bogstadveien-markedsdag-i-bogstadveien-2026-09-19",
+    "tittel": "Markedsdag i Bogstadveien",
+    "kategori": "musikk",
+    "sted": "Bogstadveien",
+    "adresse": "Bogstadveien 60A, 0366 Oslo, Norge, Oslo",
+    "lat": null,
+    "lng": null,
+    "start": "2026-09-19T10:00:00+02:00",
+    "slutt": "2026-09-19T18:00:00+02:00",
+    "pris": 0,
+    "prisTekst": "Gratis",
+    "beskrivelse": "\"Lørdag 19. september er det klart for høstens store markedsdag i Bogstadveien, Hegdehaugsveien og Valkyriegata. Hele 1,2 kilometer med boder fulle av gode tilbud - så hold av dagen.\nVelkommen til Norges lengste og hyggeligste markedsdag!\" - Arrangør",
+    "kuratortekst": null,
+    "lenke": null,
+    "bilde": "https://scontent.fhlz4-1.fna.fbcdn.net/v/t39.99422-6/773450447_2106747923527599_7392824949692731884_n.png?stp=dst-jpg_tt6&cstp=mx1334x2000&ctp=s1334x2000&_nc_cat=102&ccb=1-7&_nc_sid=75d36f&_nc_ohc=56DcBI5drzUQ7kNvwFHbi4v&_nc_oc=AdoirOgMK5fziOxvCgIVHlUB8iTF68UeA_hO1wIZDuPmqoOKYYdpiRy5W1dOjuvRpvc&_nc_zt=14&_nc_ht=scontent.fhlz4-1.fna&_nc_gid=4ZKaHhRr0t3prJqXsJa9Mw&_nc_ss=7b2a8&oh=00_AQKciMlrDfVCdIxJbjFZv80TCPah-htEUf82PcCxzoRezg&oe=6AA50887",
+    "sistVerifisert": "2026-09-07T22:00:09.753Z",
+    "_status": "pending"
   }
 ]
