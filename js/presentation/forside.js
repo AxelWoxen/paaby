@@ -118,7 +118,7 @@ function lagUtvalgKort(event) {
   if (event.fremhevet) {
     const fremBadge = document.createElement('span');
     fremBadge.className   = 'utvalg-fremhevet-badge';
-    fremBadge.textContent = '★ Kuratert utvalg';
+  
     badgeRad.appendChild(fremBadge);
   }
 
@@ -151,12 +151,6 @@ function lagUtvalgKort(event) {
   meta.textContent = `${event.sted}  ·  ${formaterTid(event.start)}  ·  ${formaterPrisTekst(event.pris, event.prisTekst)}`;
   innhold.appendChild(meta);
 
-  if (event.kuratortekst) {
-    const kur = document.createElement('p');
-    kur.className   = 'utvalg-kuratortekst';
-    kur.textContent = `"${event.kuratortekst}"`;
-    innhold.appendChild(kur);
-  }
 
   el.appendChild(innhold);
 

@@ -200,22 +200,14 @@ export function lagKort(event) {
   innhold.appendChild(meta);
 
   const footer = document.createElement('div');
-  footer.className = 'kort-footer';
+footer.className = 'kort-footer';
 
-  const tid = document.createElement('span');
-  tid.className   = 'tid';
-  tid.textContent = formaterTid(event.start);
-  footer.appendChild(tid);
+const tidTekst = formaterTid(event.start);
+const prisTekst = formaterPrisTekst(event.pris, event.prisTekst);
 
-  const pris = document.createElement('span');
-  const prisTekst = formaterPrisTekst(event.pris, event.prisTekst);
-  if ((event.pris ?? 0) === 0 && event.pris !== null) {
-    pris.className = 'pris-gratis';
-  }
-  pris.textContent = prisTekst;
-  footer.appendChild(pris);
+footer.textContent = `${tidTekst} · ${prisTekst}`;
 
-  innhold.appendChild(footer);
+innhold.appendChild(footer);
   artikkel.appendChild(innhold);
 
   return artikkel;
