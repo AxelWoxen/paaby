@@ -117,10 +117,25 @@ body {
 .lagret-knapp {
   padding: var(--gap-s);
   border-radius: var(--radius-s);
+
+  border: none;
+  background: none;
+  appearance: none;
+  -webkit-appearance: none;
+
   transition: background 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+}
+.lagret-knapp:focus {
+  outline: none;
+}
+
+.lagret-knapp:focus-visible {
+  outline: 2px solid var(--aksent);
+  outline-offset: 2px;
 }
 
 .lagret-knapp:hover,
@@ -478,13 +493,12 @@ body {
 /* === KORT === */
 
 .kort {
-  background: var(--flate-1);
+  position: relative;
+  background: transparent;
   border-radius: var(--radius-l);
   border: 4px solid var(--aksent);
   overflow: hidden;
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
 }
 
 .kort:hover {
@@ -688,21 +702,27 @@ body {
   position: absolute;
   top: var(--gap-s);
   right: var(--gap-s);
+  z-index: 3;
+
   width: 36px;
   height: 36px;
   border-radius: 50%;
+
+  border: none;
+  appearance: none;
+  -webkit-appearance: none;
+
   background: rgba(20, 19, 24, 0.6);
   backdrop-filter: blur(4px);
+
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s, background 0.15s;
-  outline-offset: 2px;
 }
 
 .hjerte-knapp:hover {
   transform: scale(1.1);
-  background: rgba(20, 19, 24, 0.85);
+  background: var(--aksent);
 }
 
 .hjerte-knapp:hover .binders-ikon {
@@ -742,11 +762,21 @@ body {
   color: var(--aksent-pa-lys);
 }
 
-.kort-innhold {
-  padding: var(--gap-m);
+.kort-innhold,.utvalg-innhold {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  z-index: 2;
+
+  width: fit-content;
+  max-width: 85%;
+
+  background: var(--flate-1);
+  padding: var(--gap-s) var(--gap-m);
+
   display: flex;
   flex-direction: column;
-  gap: var(--gap-s);
+  gap: 2px;
 }
 
 .kort-tittel {
@@ -770,6 +800,12 @@ body {
 .kort--utgatt,
 .utvalg-kort--utgatt {
   opacity: 0.55;
+}
+.kort,
+.utvalg-kort {
+  position: relative;
+  background: transparent;
+  overflow: hidden;
 }
 
 .kort--utgatt .kort-tittel,
@@ -1257,7 +1293,7 @@ body.modal-aapen {
 .forside-tittel {
   font-family: var(--font-tittel);
   font-size: 2rem;
-  font-weight: 700;
+  font-weight: 300;
   line-height: 1.1;
   letter-spacing: -0.02em;
   margin: 0 0 0.35rem;
