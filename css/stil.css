@@ -728,7 +728,7 @@ textarea {
   z-index: 2;
 
   
-  height: 105px;
+  height: 75px;
   box-sizing: border-box;
 
   background: var(--aksent);
@@ -1644,7 +1644,7 @@ body.modal-aapen {
   .utvalg-innhold {
     width: 82%;
     max-width: none;
-    height: 95px;
+    height: 75px;
 
     padding: 0.5rem 0.75rem;
     gap: 2px;
