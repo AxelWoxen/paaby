@@ -8,14 +8,14 @@ import { hentEventbilde, KATEGORI_BILDER }         from '../application/kategori
 import { bindBildeLasting, markerBildeLastet }    from '../application/bilde-lasting.js';
 import { åpneModal }                             from './modal.js';
 
-const MAKS = 5;
+const MAKS = 3;
 
 /* ─── Hilsen ─────────────────────────────────────────────────────────────────── */
 
 function hentGreeting(time) {
-  if (time >= 5  && time < 11) return ['God morgen!',       'Her er det vi tror du vil like til uka'];
+  if (time >= 5  && time < 11) return ['God morgen!',       'Her er våre topp 3 kuraterte eventer vi tror du kommer til å like til uka'];
   if (time >= 11 && time < 17) return ['God ettermiddag!',  'Her er noe å se frem til'];
-  return                               ['God kveld!',        'Her er det vi tror du vil like til uka'];
+  return                               ['God kveld!',        'Her er våre topp 3 utvalgte eventer vi tror du kommer til å like til uka'];
 }
 
 /* ─── Utvalg ─────────────────────────────────────────────────────────────────── */
