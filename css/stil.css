@@ -12,29 +12,12 @@ body {
   min-height: 100dvh;
 }
 
-
-/* === LYS-OVERFLATE-SCOPE ===
-   Kort, forsidekort og modal har lys kortflate mot appens mørke bakgrunn
-   (se --flate-1 i variabler.css). De tre selectorene under omdefinerer
-   --paper/--graa/--flate-2/--sekundaer LOKALT til sine lys-tilpassede
-   motstykker (regnet ut i variabler.css) — alt av tittel, meta, tid,
-   pris og knapper inni arver disse via vanlig CSS-cascading, så teksten
-   blir automatisk mørk-på-lys uten at hver enkelt regel må overstyres.
-
-   NB: "color: var(--paper)" gjentas her med vilje (samme mønster som
-   body). Elementer som .kort-tittel/.modal-tittel setter ingen egen
-   color — de arver den. CSS arver den FERDIG UTREGNEDE fargen, ikke en
-   levende kobling til variabelen, så uten denne linja ville de fortsatt
-   arvet body sin lyse tekstfarge gjennom kortet. Denne linja gjør at
-   arven starter på nytt her, med riktig mørk verdi. */
-.kort,
-.modal-container,
-.utvalg-kort {
-  --paper:     var(--tekst-kort);
-  --graa:      var(--graa-kort);
-  --flate-2:   var(--flate-2-kort);
-  --sekundaer: var(--sekundaer-pa-lys);
-  color: var(--paper);
+/* Skjemakontroller arver samme typografi som resten av Påby. */
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-tekst);
 }
 
 
@@ -67,22 +50,8 @@ body {
   display: flex;
   align-items: center;
   gap: var(--gap-m);
-  /* Kun topp/bunn her — .topptekst og .topbar-innhold er samme element
-     (<header class="topptekst topbar-innhold">). En padding-shorthand her
-     ville nullstilt topbar-innhold sin venstre/høyre-marg (og safe-area-
-     overstyringene), siden denne regelen kommer senere i cascaden. Det var
-     bugen: logoen lå inntil venstre kant mens lagret-knappens EGEN interne
-          padding ga et falskt inntrykk av luft på høyre side.
-
-     Lik luft over og under logo/slagord — gjelder mobil OG desktop (det
-     var tidligere gap-l/gap-s, tre ganger så mye luft over som under).
-     .topbar (forelder) legger env(safe-area-inset-top) OVENPÅ denne raden
-     for å unngå hakk/dynamic island — men kun på toppen. Uten å legge den
-     samme verdien til padding-bottom her også, blir luften over logoen
-     synlig større enn under på telefoner med hakk. På skjermer uten hakk
-     er env(...) uansett 0, så det er trygt å ha med overalt. */
   padding-top: var(--gap-s);
-  padding-bottom: calc(var(--gap-s) + env(safe-area-inset-top));
+  padding-bottom: var(--gap-s);
 }
 
 /* Logo-lockup: merket (symbolet) først, så ordmerket — begge PNG med
@@ -93,19 +62,15 @@ body {
 .logo-lockup {
   display: inline-flex;
   align-items: center;
-  gap: var(--gap-s);
+  flex-shrink: 0;
 }
 
-.logo-merke {
+.logo-hovedlogo {
   display: block;
-  height: 34px;
   width: auto;
-}
-
-.logo-ordmerke {
-  display: block;
-  height: 29px;
-  width: auto;
+  height: 48px;
+  max-width: 160px;
+  object-fit: contain;
 }
 
 .tagline {
@@ -268,7 +233,7 @@ body {
   /* Arver bredde fra hoveddel på mobil */
 }
 
-@media (min-width: 768px) {
+@media (min-width: 900px) {
   .topbar-innhold {
     /* Ingen padding-shorthand her — .topbar-innhold er samme element som
        .topptekst (<header class="topptekst topbar-innhold">), og en
@@ -492,49 +457,63 @@ body {
 
 /* === KORT === */
 
-.kort {
+/* Vanlige kort og utvalgte kort bruker samme grunnstruktur:
+   blå kortflate, fast bildeformat og tekst som overlay nederst til venstre. */
+.kort,
+.utvalg-kort {
   position: relative;
-  background: transparent;
-  border-radius: var(--radius-l);
+  background: var(--aksent);
   border: 4px solid var(--aksent);
+  border-radius: var(--radius-l);
   overflow: hidden;
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.kort:hover {
+.kort:hover,
+.utvalg-kort:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
 }
 
-.kort:active {
+.kort:active,
+.utvalg-kort:active {
   transform: translateY(0);
 }
 
-.kort-bilde-wrapper {
+/* Bildet har en egen radius. Den blå kortflaten ligger bak og blir synlig
+   i de avrundede hjørnene. */
+.kort-bilde-wrapper,
+.utvalg-bilde-wrapper {
   position: relative;
-  /* Litt flatere enn 16:9 — gjør at flere kort vises */
-  aspect-ratio: 16 / 7;
   overflow: hidden;
-  background: var(--flate-2);
+  background: var(--aksent);
+  border-radius: 12px;
 }
 
-.kort-bilde {
+.kort-bilde-wrapper {
+  aspect-ratio: 16 / 7;
+}
+
+.utvalg-bilde-wrapper {
+  aspect-ratio: 16 / 6;
+}
+
+.kort-bilde,
+.utvalg-bilde {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
-  /* position+z-index: uten dette maler den absolutt-posisjonerte skeleton-
-     pulsen (::before på wrapperen) SEG OVENPÅ bildet uansett lastetilstand
-     (posisjonerte elementer males etter inline-nivå-innhold som <img>,
-     jf. CSS2.1 stacking-rekkefølge) — selv et ferdig lastet bilde ville da
-     ligget skjult under en evig pulserende blokk. Dette garanterer at
-     bildet alltid vinner, uavhengig av når/om JS rekker å sette
-     .bilde-lastet på wrapperen. */
+  border-radius: 12px;
   position: relative;
   z-index: 1;
+  transition: transform 0.3s ease;
 }
 
-.kort:hover .kort-bilde {
+.kort:hover .kort-bilde,
+.utvalg-kort:hover .utvalg-bilde {
   transform: scale(1.03);
 }
 
@@ -545,15 +524,7 @@ body {
 }
 
 
-/* === SKELETON-LASTETILSTAND ===
-   To ting deler samme rolige opacity-puls (ingen shimmer-gradient):
-   1. Skeleton-kort (.kort-skeleton / .utvalg-kort-skeleton) vises i #feed og
-      #forside-utvalg mens hentEventer() pågår i main.js.
-   2. Bilde-skeleton (::before på *-bilde-wrapper) vises bak hvert enkelt
-      <img> til det faktisk er ferdig lastet — JS legger til klassen
-      «bilde-lastet» på wrapperen (se bilde-lasting.js), som fader
-      overlegget bort med en transition. Samme mekanikk for feed-kort,
-      forside-kort og modal. */
+/* === SKELETON-LASTETILSTAND === */
 
 @keyframes skeleton-puls {
   0%, 100% { opacity: 0.5; }
@@ -599,7 +570,6 @@ body {
 .kort-skeleton-linje--meta   { width: 45%; }
 .kort-skeleton-linje--footer { width: 30%; margin-top: var(--gap-s); }
 
-/* Bilde-skeleton — overlegg bak <img>, se forklaring øverst i seksjonen. */
 .kort-bilde-wrapper::before,
 .utvalg-bilde-wrapper::before,
 .modal-bilde-wrapper::before {
@@ -619,10 +589,14 @@ body {
   pointer-events: none;
 }
 
+
+/* === BADGES === */
+
 .kort-kategori {
   position: absolute;
   top: var(--gap-s);
   left: var(--gap-s);
+  z-index: 2;
   padding: 0.25rem 0.625rem;
   border-radius: 100px;
   font-size: 0.75rem;
@@ -631,32 +605,18 @@ body {
   letter-spacing: 0.05em;
 }
 
-/* Badge-teksten er samme hvit/papir-farge for alle fire kategorier (ingen
-   fargekoding lenger — kategorien identifiseres av teksten/etiketten selv).
-   Bakgrunnen er --ink — den samme mørke fargen som resten av nettsidens
-   bakgrunn (topbar, forside, sidestolpe) — IKKE en fast/annen gråtone, og
-   ALDRI en lys/transparent bakgrunn, som gjorde badgen nær usynlig oppå
-   lyse bilder. Fortsatt solid og ugjennomsiktig, så teksten er alltid lesbar
-   uansett hvilket bilde ligger bak. */
 .kategori-musikk,
 .kategori-klubb,
 .kategori-pafunn {
   background: var(--ink);
-  color: #F4F1EA;
+  color: var(--merke-tekst);
 }
 
-/* En tynn hvit stripe der bildet møter tekstflaten (eller øverst på kort
-   uten bilde — samme element, samme plassering først i kortet). Samme
-   hvitfarge som badge-teksten — ikke lenger fargekodet per kategori. */
-
-
-/* === GJENTAS-BADGE (ribbon øvre høyre hjørne) ===
-   Samme prinsipp som kategori-badgen: solid --merke-bg, tydelig farget tekst —
-   ikke en lys aksentflate som kan bli utydelig mot enkelte bilder/paletter. */
 .gjentas-badge {
   position: absolute;
   top: 45px;
   right: -40px;
+  z-index: 2;
   width: 180px;
   padding: 3px 0;
   transform: rotate(45deg);
@@ -666,62 +626,58 @@ body {
   letter-spacing: 0.04em;
   text-transform: lowercase;
   background: var(--aksent);
-  color: var(--aksent-kontrast);
+  color: var(--graa);
   pointer-events: none;
 }
 
-/* === BINDERS-IKON (lagre) === */
 
-/* Ikke lagret: dempet hvit */
+/* === BINDERS / LAGRE === */
+
 .binders-ikon {
   display: block;
-  color: rgba(244, 241, 234, 0.55);
+  color: rgba(244, 241, 234, 0.68);
   transition: color 0.15s;
   flex-shrink: 0;
 }
 
-/* Lagret: korall */
 .lagret .binders-ikon {
   color: var(--aksent);
 }
 
-/* Pop-animasjon når man lagrer */
 @keyframes binders-pop {
-  0%   { transform: scale(1)    rotate(0deg);  }
+  0%   { transform: scale(1)    rotate(0deg); }
   30%  { transform: scale(1.35) rotate(-8deg); }
-  60%  { transform: scale(0.88) rotate(3deg);  }
-  100% { transform: scale(1)    rotate(0deg);  }
+  60%  { transform: scale(0.88) rotate(3deg); }
+  100% { transform: scale(1)    rotate(0deg); }
 }
 
 .binders-pop .binders-ikon {
   animation: binders-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
-/* Kort-knapp */
 .hjerte-knapp {
   position: absolute;
   top: var(--gap-s);
   right: var(--gap-s);
   z-index: 3;
-
   width: 36px;
   height: 36px;
+  border: 0;
   border-radius: 50%;
-
-  border: none;
-  appearance: none;
-  -webkit-appearance: none;
-
   background: rgba(20, 19, 24, 0.6);
   backdrop-filter: blur(4px);
-
+  -webkit-backdrop-filter: blur(4px);
+  appearance: none;
+  -webkit-appearance: none;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s;
 }
 
 .hjerte-knapp:hover {
-  transform: scale(1.1);
+  transform: scale(1.08);
   background: var(--aksent);
 }
 
@@ -729,10 +685,14 @@ body {
   color: var(--paper);
 }
 
-/* Topbar-knapp */
+.hjerte-knapp:focus-visible {
+  outline: 2px solid var(--hvit);
+  outline-offset: 2px;
+}
+
+/* Topbar-bindersen bruker samme ikon, men uten native button-border. */
 .lagret-knapp .binders-ikon {
   color: var(--graa);
-  transition: color 0.15s;
 }
 
 .lagret-knapp:hover .binders-ikon {
@@ -740,7 +700,7 @@ body {
 }
 
 .lagret-knapp.aktiv .binders-ikon {
-  color: var(--aksent);
+  color: var(--aksent-tekst);
 }
 
 /* Modal lagre-knapp */
@@ -752,31 +712,35 @@ body {
 
 .modal-hjerte .binders-ikon {
   color: var(--graa);
-  transition: color 0.15s;
 }
 
 .modal-hjerte.lagret .binders-ikon {
-  /* --aksent-pa-lys, ikke --aksent: dette ikonet står direkte på den lyse
-     kortflaten (modal-container), og trenger den mørknede on-lys-varianten
-     for å lese — se KRAV i variabler.css. */
-  color: var(--aksent-pa-lys);
+  color: var(--aksent-tekst);
 }
 
-.kort-innhold,.utvalg-innhold {
+
+/* === KORTINNHOLD === */
+
+.kort-innhold,
+.utvalg-innhold {
   position: absolute;
   left: 0;
   bottom: 0;
   z-index: 2;
-
   width: fit-content;
   max-width: 85%;
-
   background: var(--flate-1);
   padding: var(--gap-s) var(--gap-m);
-
+  border-radius: 0 12px 0 0;
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+.kort-innhold *,
+.utvalg-innhold *,
+.modal-body * {
+  margin: 0;
 }
 
 .kort-tittel {
@@ -786,26 +750,52 @@ body {
   line-height: 1.25;
 }
 
-.kort-innhold *,
-.utvalg-innhold *,
-.modal-body * {
-  margin: 0;
+.kort-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-s);
+  min-width: 0;
+  font-size: 0.85rem;
+  color: var(--graa);
 }
 
-/* === UTGÅTT I DAG ===
-   Eventet har startet, men dagen (+ nattmargin til kl. 04:00) er ikke over
-   ennå — se eventTilstand() i oslo-tid.js. Gjelder både vanlige feed-kort
-   og forsidens utvalg-kort. Skjules helt (fjernes fra DOM) først når dagen
-   faktisk er omme. */
+.sted {
+  min-width: 0;
+}
+
+.avstand::before {
+  content: '· ';
+}
+
+.avstand {
+  color: inherit;
+  flex-shrink: 0;
+}
+
+/* Tid og pris er fakta på samme nivå og skal alltid ha samme grå farge. */
+.kort-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: 0.85rem;
+  color: var(--graa);
+}
+
+.tid,
+.pris-gratis {
+  color: inherit;
+}
+
+.pris-gratis {
+  font-weight: 500;
+}
+
+/* === UTGÅTT I DAG === */
 .kort--utgatt,
 .utvalg-kort--utgatt {
   opacity: 0.55;
-}
-.kort,
-.utvalg-kort {
-  position: relative;
-  background: transparent;
-  overflow: hidden;
 }
 
 .kort--utgatt .kort-tittel,
@@ -820,38 +810,6 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--graa);
-}
-
-.kort-meta {
-  display: flex;
-  align-items: center;
-  gap: var(--gap-s);
-  font-size: 0.85rem;
-  color: var(--graa);
-}
-
-.avstand::before {
-  content: '· ';
-}
-
-.avstand {
-  color: var(--sekundaer);
-}
-
-.kort-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 0.85rem;
-}
-
-.tid {
-  color: var(--graa);
-}
-
-.pris-gratis {
-  color: var(--sekundaer);
-  font-weight: 500;
 }
 
 
@@ -1007,8 +965,8 @@ body {
 
 .følg-knapp.fulgt {
   /* --aksent-pa-lys: knappen står direkte på den lyse modal-kortflaten */
-  border-color: var(--aksent-pa-lys);
-  color: var(--aksent-pa-lys);
+  border-color: var(--aksent-tekst);
+  color: var(--aksent-tekst);
 }
 
 /* Faktarad: Type / Tid / Pris / Avstand */
@@ -1285,8 +1243,7 @@ body.modal-aapen {
 .forside-innhold {
   max-width: 640px;
   margin: 0 auto;
-  padding: 0 var(--gap-m);
-  padding-left:  max(var(--gap-m), env(safe-area-inset-left));
+  padding-left: max(var(--gap-m), env(safe-area-inset-left));
   padding-right: max(var(--gap-m), env(safe-area-inset-right));
 }
 
@@ -1314,56 +1271,18 @@ body.modal-aapen {
   margin-bottom: var(--gap-l);
 }
 
-/* Utvalg-kort: litt større og åpnere enn vanlig feed-kort */
-
-.utvalg-kort {
-  background: var(--flate-1);
-  border-radius: var(--radius-l);
-  border: 4px solid var(--aksent);
-  overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  -webkit-tap-highlight-color: transparent;
-}
-
-.utvalg-kort:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-}
-
-.utvalg-bilde-wrapper {
-  position: relative;
-  aspect-ratio: 16 / 6;
-  overflow: hidden;
-  background: var(--flate-2);
-}
-
-.utvalg-bilde {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-  /* Se forklaring ved .kort-bilde — garanterer at bildet males over
-     skeleton-pulsen uansett JS-timing. */
-  position: relative;
-  z-index: 1;
-}
-
-.utvalg-kort:hover .utvalg-bilde {
-  transform: scale(1.03);
-}
-
+/* Spesifikk typografi for utvalgte kort. Geometri ligger i KORT-seksjonen. */
 .utvalg-badge-rad {
   position: absolute;
   top: var(--gap-s);
   left: var(--gap-s);
+  z-index: 2;
   display: flex;
   gap: var(--gap-s);
   align-items: center;
   flex-wrap: wrap;
 }
 
-/* Gjenbruker .kategori-* klassene som allerede er definert */
 .utvalg-badge {
   padding: 0.25rem 0.625rem;
   border-radius: 100px;
@@ -1384,8 +1303,6 @@ body.modal-aapen {
 
 .utvalg-innhold {
   padding: var(--gap-m) var(--gap-l);
-  display: flex;
-  flex-direction: column;
   gap: 0.35rem;
 }
 
@@ -1403,9 +1320,9 @@ body.modal-aapen {
 
 .utvalg-kuratortekst {
   font-size: 0.9rem;
-  color: var(--sekundaer);
+  color: var(--graa);
   font-style: italic;
-  line-height: 1.55;
+  line-height: 1.45;
   margin-top: 0.15rem;
 }
 
@@ -1416,7 +1333,6 @@ body.modal-aapen {
   border: 1.5px solid var(--aksent);
   border-radius: var(--radius-m);
   color: var(--aksent-kontrast);
-  font-family: var(--font-tekst);
   font-size: 0.95rem;
   font-weight: 500;
   cursor: pointer;
@@ -1427,9 +1343,6 @@ body.modal-aapen {
   opacity: 0.85;
 }
 
-/* Flytende pill-versjon — alltid position:fixed, synlighet styres av JS.
-   Samme grønne aksentflate som knappen over — solid bakgrunn trenger
-   ikke lenger frostet glass-effekten fra den gamle mørke/transparente pillen. */
 .se-alt-flytende {
   position: fixed;
   bottom: calc(1.5rem + env(safe-area-inset-bottom));
@@ -1439,19 +1352,16 @@ body.modal-aapen {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.22s ease, transform 0.22s ease;
-
-  /* Pill-stil: mindre og mer kompakt enn den naturlige knappen */
   white-space: nowrap;
   padding: 0.55rem 1.4rem;
   border-radius: 100px;
   border: 1.5px solid var(--aksent);
   background: var(--aksent);
   color: var(--aksent-kontrast);
-  font-family: var(--font-tekst);
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.22);
 }
 
 .se-alt-flytende.vis {
@@ -1464,15 +1374,14 @@ body.modal-aapen {
   opacity: 0.85;
 }
 
-@media (min-width: 768px) {
+@media (min-width: 900px) {
   .forside {
     padding: var(--gap-xl) 0;
   }
 
   .forside-innhold {
     max-width: 1020px;
-    padding: 0 var(--gap-xl);
-    padding-left:  max(var(--gap-xl), env(safe-area-inset-left));
+    padding-left: max(var(--gap-xl), env(safe-area-inset-left));
     padding-right: max(var(--gap-xl), env(safe-area-inset-right));
   }
 
@@ -1538,8 +1447,12 @@ body.modal-aapen {
   color: var(--graa);
   font-size: 0.75rem;
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
-.side-footer a:hover { color: var(--paper); }
+
+.side-footer a:hover {
+  color: var(--paper);
+}
 
 .side-footer span {
   color: var(--graa);
@@ -1547,26 +1460,105 @@ body.modal-aapen {
 }
 
 
-/* === BUNN-NAV — kun mobil (< 900px) ===
-   Fast plassert nederst, som en native app-tab-bar.
-   Skjult på desktop; der gjelder eksisterende navigering uendret. */
+/* === BUNN-NAV — mobil (< 900px) === */
 
 .bunn-nav {
   display: none;
 }
 
+
+/* === MOBILTILPASNING === */
+
 @media (max-width: 899px) {
   body {
-    padding-bottom: calc(var(--bunn-nav-h) + env(safe-area-inset-bottom));
+    /* Holder siste innhold og side-footer over den faste bunnmenyen. */
+    padding-bottom: calc(var(--bunn-nav-h) + env(safe-area-inset-bottom) + var(--gap-m));
   }
 
-  /* Følger- og lagret-knappene i topplinjen er overflødige her —
-     de samme funksjonene finnes allerede i bunn-navigasjonen. */
+  /* Mobil og tablet bruker én kolonne. */
+  .hoveddel,
+  .forside-innhold,
+  .topbar-innhold {
+    max-width: 640px;
+  }
+
+  .sidestolpe {
+    padding-top: var(--gap-m);
+  }
+
+  /* Kortene trenger mer bildehøyde på smale skjermer, slik at overlayet
+     ikke spiser opp nesten hele motivet. */
+  .kort-bilde-wrapper,
+  .utvalg-bilde-wrapper,
+  .kort-skeleton-bilde,
+  .utvalg-kort-skeleton .kort-skeleton-bilde {
+    aspect-ratio: 4 / 3;
+  }
+
+  .kort-innhold,
+  .utvalg-innhold {
+    max-width: 94%;
+    padding: 0.5rem 0.75rem;
+    gap: 2px;
+    border-radius: 0 10px 0 0;
+  }
+
+  .kort-tittel {
+    font-size: 1rem;
+    line-height: 1.15;
+  }
+
+  .kort-meta,
+  .kort-footer {
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+
+  .kort-footer {
+    gap: 0.6rem;
+  }
+
+  .utvalg-tittel {
+    font-size: 1.08rem;
+    line-height: 1.15;
+  }
+
+  .utvalg-meta {
+    font-size: 0.78rem;
+    line-height: 1.25;
+  }
+
+  /* Én kort kuratorlinje uten vendor-spesifikk line-clamp. */
+  .utvalg-kuratortekst {
+    max-width: 100%;
+    font-size: 0.76rem;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .hjerte-knapp {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* På mobil ligger disse funksjonene i bunn-nav. */
   #vis-følger,
   #vis-lagret {
     display: none;
   }
 
+  /* Treff + sortering får lov til å stable seg på små skjermer. */
+  .treff-linje {
+    align-items: flex-start;
+  }
+
+  .sortering-kontroll {
+    min-width: 0;
+  }
+
+  /* Fast, lys og safe-area-riktig mobilfooter. */
   .bunn-nav {
     display: flex;
     position: fixed;
@@ -1574,24 +1566,35 @@ body.modal-aapen {
     right: 0;
     bottom: 0;
     z-index: 60;
-    height: var(--bunn-nav-h);
+    height: calc(var(--bunn-nav-h) + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
-    background: var(--ink);
+    background: var(--hvit);
     border-top: 1px solid var(--flate-2);
+    box-shadow: 0 -6px 20px rgba(30, 12, 20, 0.06);
   }
 
   .bunn-nav-knapp {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    appearance: none;
+    -webkit-appearance: none;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 2px;
     color: var(--graa);
-    font-family: var(--font-tekst);
     font-size: 0.65rem;
     font-weight: 500;
-    transition: color 0.15s;
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .bunn-nav-knapp:focus-visible {
+    outline: 2px solid var(--aksent-tekst);
+    outline-offset: -3px;
   }
 
   .bunn-nav-ikon {
@@ -1600,22 +1603,70 @@ body.modal-aapen {
   }
 
   .bunn-nav-knapp.aktiv {
-    color: var(--aksent);
+    color: var(--aksent-tekst);
   }
 
-  /* Løft flytende "se alt"-pill og samtykke-stripe over bunn-nav */
   .se-alt-flytende {
-    bottom: calc(var(--bunn-nav-h) + 0.75rem + env(safe-area-inset-bottom));
+    bottom: calc(var(--bunn-nav-h) + env(safe-area-inset-bottom) + 0.75rem);
   }
 
   .samtykke-stripe {
-    bottom: var(--bunn-nav-h);
+    bottom: calc(var(--bunn-nav-h) + env(safe-area-inset-bottom));
     padding-bottom: var(--gap-s);
+  }
+
+  /* Safe-area håndteres av bunn-nav, ikke av side-footeren under den. */
+  .side-footer {
+    padding-bottom: var(--gap-m);
+  }
+}
+
+@media (max-width: 520px) {
+  .sortering-kontroll {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .sortering-select {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .forside-tittel {
+    font-size: 1.85rem;
+  }
+
+  .forside-undertittel {
+    margin-bottom: var(--gap-l);
+  }
+}
+
+@media (max-width: 380px) {
+  .kort-innhold,
+  .utvalg-innhold {
+    max-width: 96%;
+    padding: 0.45rem 0.65rem;
+  }
+
+  .kort-tittel,
+  .utvalg-tittel {
+    font-size: 0.96rem;
   }
 }
 
 @media (max-width: 899px) and (orientation: landscape) and (max-height: 500px) {
   .bunn-nav-knapp span {
     display: none;
+  }
+
+  .kort-bilde-wrapper,
+  .utvalg-bilde-wrapper {
+    aspect-ratio: 16 / 7;
+  }
+}
+@media (max-width: 899px) {
+  .logo-hovedlogo {
+    height: 40px;
+    max-width: 135px;
   }
 }

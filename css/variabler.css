@@ -50,13 +50,10 @@
   --merke-tekst: var(--hvit);
 
 
-  /* --- TYPOGRAFI --- */
 
-  /* Space Grotesk: logo, titler — den tunge, ekspressive fonten */
-  --font-tittel: 'Space Grotesk';
-
-  /* Inter: all brødtekst — lesbar og nøytral */
-  --font-tekst: 'Space Grotesk', sans-serif;
+/* --- TYPOGRAFI --- */
+--font-tittel: 'Space Grotesk', sans-serif;
+--font-tekst: 'Space Grotesk', sans-serif;
 
 
   /* --- SPACING ---
