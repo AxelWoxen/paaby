@@ -1,13 +1,20 @@
+import 'dotenv/config';
 import pg from 'pg';
 
 const { Pool } = pg;
 
+if (!process.env.DATABASE_URL) {
+  throw new Error('DATABASE_URL mangler');
+}
+
 const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 5432,
-  database: process.env.DB_NAME || 'paaby_dev',
-  user: process.env.DB_USER || 'axelwoxen',
-  password: process.env.DB_PASSWORD || undefined
+  connectionString: process.env.DATABASE_URL,
+
+  // Heroku PostgreSQL bruker SSL i produksjon.
+  ssl:
+    process.env.NODE_ENV === 'production'
+      ? { rejectUnauthorized: false }
+      : false
 });
 
 export default pool;
