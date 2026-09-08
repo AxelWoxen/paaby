@@ -218,31 +218,55 @@ export function visForside(utvalg) {
 }
 
 export function initSeAlt() {
-  const knapp  = document.getElementById('se-alt-knapp');
-  const scroll = () => {
-    const topbar   = document.querySelector('.topbar');
-    const offset   = topbar ? topbar.offsetHeight : 0;
-    const topp     = document.getElementById('hoveddel').getBoundingClientRect().top + window.scrollY - offset;
-    window.scrollTo({ top: topp, behavior: 'smooth' });
-  };
-  knapp.addEventListener('click', scroll);
+  const hoveddel = document.getElementById('hoveddel');
 
-  // Flytende pill: separat element i body, aldri i dokumentflyten
+  if (!hoveddel) return;
+
+  const scrollTilEventer = () => {
+    const topbar = document.querySelector('.topbar');
+    const offset = topbar ? topbar.offsetHeight : 0;
+
+    const topp =
+      hoveddel.getBoundingClientRect().top +
+      window.scrollY -
+      offset;
+
+    window.scrollTo({
+      top: topp,
+      behavior: 'smooth'
+    });
+  };
+
+  // Flytende knapp
   const pill = document.createElement('button');
-  pill.className   = 'se-alt-flytende';
-  pill.textContent = knapp.textContent.trim();
-  pill.setAttribute('aria-label', 'Scroll til full arrangementsliste');
-  pill.addEventListener('click', scroll);
+
+  pill.className = 'se-alt-flytende';
+  pill.type = 'button';
+  pill.textContent = 'Se alt som skjer fremover ↓';
+  pill.setAttribute(
+    'aria-label',
+    'Scroll til full arrangementsliste'
+  );
+
+  pill.addEventListener('click', scrollTilEventer);
+
   document.body.appendChild(pill);
 
-  // Vis pill kun når knappen er UNDER viewport (ikke nådd ennå).
-  // Hvis knappen er OVER viewport (scrollet forbi), skjul pillen.
+  // Vis pillen så lenge den fulle eventlisten fortsatt ligger
+  // nedenfor skjermen. Skjul den straks hoveddelen kommer inn i viewport.
   const observer = new IntersectionObserver(
     ([entry]) => {
-      const erUnder = entry.boundingClientRect.top > 0;
-      pill.classList.toggle('vis', !entry.isIntersecting && erUnder);
+      const hoveddelErUnder = entry.boundingClientRect.top > 0;
+
+      pill.classList.toggle(
+        'vis',
+        !entry.isIntersecting && hoveddelErUnder
+      );
     },
-    { threshold: 0 }
+    {
+      threshold: 0
+    }
   );
-  observer.observe(knapp);
+
+  observer.observe(hoveddel);
 }

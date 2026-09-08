@@ -260,7 +260,7 @@ textarea {
     flex-shrink: 0;
     position: sticky;
     top: calc(var(--topbar-h) + env(safe-area-inset-top));
-    padding-top: var(--gap-l);
+    padding-top: var(--gap-m);
   }
 
   .feedkolonne {
@@ -347,7 +347,7 @@ textarea {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--aksent);
+  color: var(--paper);
   padding-bottom: var(--gap-s);
   border-bottom: 1px solid var(--flate-2);
   margin-bottom: var(--gap-m);
@@ -1251,8 +1251,7 @@ body.modal-aapen {
 /* === FORSIDE === */
 
 .forside {
-  border-bottom: 1px solid var(--flate-2);
-  padding: var(--gap-m) 0 var(--gap-xl);
+  padding: var(--gap-xl) 0 var(--gap-m);
 }
 
 .forside-innhold {
@@ -1283,7 +1282,7 @@ body.modal-aapen {
   display: flex;
   flex-direction: column;
   gap: var(--gap-m);
-  margin-bottom: var(--gap-l);
+  margin-bottom: var(--gap-s);
 }
 
 /* Spesifikk typografi for utvalgte kort. Geometri ligger i KORT-seksjonen. */
@@ -1334,23 +1333,6 @@ body.modal-aapen {
 }
 
 
-.se-alt-knapp {
-  width: 100%;
-  padding: var(--gap-m);
-  background: var(--aksent);
-  border: 1.5px solid var(--aksent);
-  border-radius: var(--radius-m);
-  color: var(--aksent-kontrast);
-  font-size: 0.95rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: opacity 0.15s;
-}
-
-.se-alt-knapp:hover {
-  opacity: 0.85;
-}
-
 .se-alt-flytende {
   position: fixed;
   bottom: calc(1.5rem + env(safe-area-inset-bottom));
@@ -1384,7 +1366,7 @@ body.modal-aapen {
 
 @media (min-width: 900px) {
   .forside {
-    padding: var(--gap-xl) 0;
+     padding: var(--gap-xl) 0 var(--gap-s);
   }
 
   .forside-innhold {
@@ -1478,11 +1460,6 @@ body.modal-aapen {
 /* === MOBILTILPASNING === */
 
 @media (max-width: 899px) {
-  body {
-    /* Holder siste innhold og side-footer over den faste bunnmenyen. */
-    padding-bottom: calc(var(--bunn-nav-h) + env(safe-area-inset-bottom) + var(--gap-m));
-  }
-
   /* Mobil og tablet bruker én kolonne. */
   .hoveddel,
   .forside-innhold,
@@ -1541,11 +1518,7 @@ body.modal-aapen {
     height: 34px;
   }
 
-  /* På mobil ligger disse funksjonene i bunn-nav. */
-  #vis-følger,
-  #vis-lagret {
-    display: none;
-  }
+  
 
   /* Treff + sortering får lov til å stable seg på små skjermer. */
   .treff-linje {
@@ -1558,7 +1531,7 @@ body.modal-aapen {
 
   /* Fast, lys og safe-area-riktig mobilfooter. */
   .bunn-nav {
-    display: flex;
+    display: none;
     position: fixed;
     left: 0;
     right: 0;
@@ -1604,14 +1577,18 @@ body.modal-aapen {
     color: var(--aksent-tekst);
   }
 
-  .se-alt-flytende {
-    bottom: calc(var(--bunn-nav-h) + env(safe-area-inset-bottom) + 0.75rem);
-  }
+  .logo-lockup {
+  margin-right: auto;
+}
 
-  .samtykke-stripe {
-    bottom: calc(var(--bunn-nav-h) + env(safe-area-inset-bottom));
-    padding-bottom: var(--gap-s);
-  }
+.topptekst {
+  gap: var(--gap-s);
+}
+
+.tagline {
+  display: none;
+}
+
 
   /* Safe-area håndteres av bunn-nav, ikke av side-footeren under den. */
   .side-footer {
