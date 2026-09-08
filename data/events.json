@@ -1184,5 +1184,24 @@
     "bilde": "https://scontent.fhlz4-1.fna.fbcdn.net/v/t39.99422-6/773450447_2106747923527599_7392824949692731884_n.png?stp=dst-jpg_tt6&cstp=mx1334x2000&ctp=s1334x2000&_nc_cat=102&ccb=1-7&_nc_sid=75d36f&_nc_ohc=56DcBI5drzUQ7kNvwFHbi4v&_nc_oc=AdoirOgMK5fziOxvCgIVHlUB8iTF68UeA_hO1wIZDuPmqoOKYYdpiRy5W1dOjuvRpvc&_nc_zt=14&_nc_ht=scontent.fhlz4-1.fna&_nc_gid=4ZKaHhRr0t3prJqXsJa9Mw&_nc_ss=7b2a8&oh=00_AQKciMlrDfVCdIxJbjFZv80TCPah-htEUf82PcCxzoRezg&oe=6AA50887",
     "sistVerifisert": "2026-09-07T22:03:35.668Z",
     "fremhevet": false
+  },
+  {
+    "id": "bla-by-larm-2026-2026-09-10",
+    "tittel": "by:Larm 2026",
+    "kategori": "musikk",
+    "sted": "BLÅ",
+    "adresse": "Brenneriveien 9c, 0182, Oslo",
+    "lat": 59.92035,
+    "lng": 10.75279,
+    "start": "2026-09-10T17:00:00+02:00",
+    "slutt": "2026-09-12T03:00:00+02:00",
+    "pris": null,
+    "prisTekst": "Se link",
+    "beskrivelse": "Tre dager med konserter på Oslos fineste små scener \n\nFullt program på bylarm.no",
+    "kuratortekst": null,
+    "lenke": "https://bylarm.no/tickets",
+    "bilde": "https://ik.imagekit.io/mfgbmrqfuvo/venues/event_G3NCQjsLo/tr:w-750",
+    "sistVerifisert": "2026-09-08T01:55:44.039Z",
+    "fremhevet": false
   }
 ]
