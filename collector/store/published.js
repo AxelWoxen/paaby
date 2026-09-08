@@ -44,7 +44,23 @@ export async function lesPubliserte() {
     ORDER BY o.starts_at ASC
   `);
 
-  return result.rows;
+  return result.rows.map((event) => ({
+  ...event,
+  start:
+    event.start instanceof Date
+      ? event.start.toISOString()
+      : event.start,
+
+  slutt:
+    event.slutt instanceof Date
+      ? event.slutt.toISOString()
+      : event.slutt,
+
+  sistVerifisert:
+    event.sistVerifisert instanceof Date
+      ? event.sistVerifisert.toISOString()
+      : event.sistVerifisert,
+}));
 }
 
 function lagSlug(tekst) {
