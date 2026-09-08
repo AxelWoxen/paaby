@@ -1,17 +1,19 @@
 /* events-api.js — datahentingslaget.
-   Henter eventer fra data/events.json og kjører validering.
-   Bytt fetch-URLen til en Supabase-forespørsel for å koble til database —
-   resten av appen trenger ingen endringer. */
+   Henter eventer fra Påby API og kjører validering.
+   Resten av appen trenger ikke vite hvor dataene kommer fra. */
 
 import { validerEventer } from '../application/validering.js';
 
+const API_URL = 'http://localhost:3000/api/events';
+
 export async function hentEventer() {
-  const response = await fetch('./data/events.json');
+  const response = await fetch(API_URL);
 
   if (!response.ok) {
     throw new Error(`Kunne ikke hente eventer: ${response.status}`);
   }
 
-  const eventer = await response.json();
-  return validerEventer(eventer);
+  const data = await response.json();
+
+  return validerEventer(data.events);
 }
