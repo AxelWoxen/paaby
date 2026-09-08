@@ -9,29 +9,13 @@
 //  5. Dedupliser mot det vi allerede har
 //  6. Lagre nye events som "pending" i candidates.json
 //  7. Skriv ut oppsummering og neste steg
-
-import fs   from 'fs/promises';
-import path from 'path';
-import { fileURLToPath } from 'url';
-
 import { SOURCES }                           from './config/sources.js';
 import { hentBroadcastEvents }               from './adapters/broadcast-events.js';
 import { normaliserAlle }                    from './normalize.js';
 import { dedupliser }                        from './dedupe.js';
 import { lesCandidates, leggTilCandidates }  from './store/candidates.js';
 import { lesRejected }                       from './store/rejected.js';
-
-const __dirname   = path.dirname(fileURLToPath(import.meta.url));
-const EVENTS_FIL  = path.join(__dirname, '..', 'data', 'events.json');
-
-// Leser events.json (appens publiserte events). Returnerer [] hvis filen mangler.
-async function lesPubliserte() {
-  try {
-    return JSON.parse(await fs.readFile(EVENTS_FIL, 'utf8'));
-  } catch {
-    return [];
-  }
-}
+import { lesPubliserte } from './store/published.js';
 
 // Kaller riktig adapter basert på source.adapter-feltet.
 async function hentRåData(source) {

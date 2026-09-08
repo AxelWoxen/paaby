@@ -142,7 +142,6 @@ export function normaliser(råEvent) {
     bilde:        hentBilde(råEvent),
     sistVerifisert: new Date().toISOString(),
 
-    // Interne felt — fjernes før publisering til events.json
     _broadcastId: råEvent.id,   // original broadcast.events-id, for sporbarhet
   };
 }
