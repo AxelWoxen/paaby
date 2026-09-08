@@ -18,7 +18,6 @@ export function lagHash(event) {
 }
 
 // Returnerer kun de nye eventene fra kandidatlisten —
-// de som ikke allerede finnes i eksisterende (candidates + events.json).
 export function dedupliser(kandidater, eksisterende) {
   const sett = new Set(eksisterende.map(lagHash));
   return kandidater.filter((e) => !sett.has(lagHash(e)));
