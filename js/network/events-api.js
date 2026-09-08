@@ -5,12 +5,12 @@
 import { validerEventer } from '../application/validering.js';
 
   const API_BASE_URL =
-    window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1'
-      ? 'http://localhost:3000'
-      : 'https://paaby-api-86014c6d68c8.herokuapp.com';
+  window.location.hostname === 'localhost' ||
+  window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:3000'
+    : 'https://api.paaby.online';
 
-  const API_URL = `${API_BASE_URL}/api/events`;
+const API_URL = `${API_BASE_URL}/api/events`;
 
 export async function hentEventer() {
   const response = await fetch(API_URL);
