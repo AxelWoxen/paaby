@@ -1,0 +1,14 @@
+{
+  "name": "paaby-collector",
+  "version": "0.1.0",
+  "description": "Henter, normaliserer og klargjør events for påby-appen.",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "collect": "node run.js",
+    "review":  "node review/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
