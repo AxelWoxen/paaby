@@ -5,8 +5,9 @@
   "type": "module",
   "engines": { "node": ">=18" },
   "scripts": {
-    "collect": "node run.js",
-    "review":  "node review/server.js"
+  "collect": "node run.js",
+  "review": "node review/server.js",
+  "review:prod": "DATABASE_URL=\"$(heroku config:get DATABASE_URL -a paaby-api)\" NODE_ENV=production node review/server.js"
   },
   "dependencies": {
     "express": "^4.19.2"
