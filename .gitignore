@@ -4,3 +4,8 @@ node_modules/
 
 server.js
 .env
+
+# Collector runtime data
+data/candidates.json
+data/rejected.json
+collector/.cache/
