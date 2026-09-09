@@ -2,7 +2,7 @@ node_modules/
 .DS_Store
 .claude/settings.local.json
 
-server.js
+/server.js
 .env
 
 # Collector runtime data
