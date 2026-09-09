@@ -164,8 +164,7 @@ textarea {
   transition: background 0.15s;
 }
 
-.meny-knapp:hover,
-.meny-dropdown.apen .meny-knapp {
+.meny-knapp:hover {
   background: var(--flate-2);
 }
 
