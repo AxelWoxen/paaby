@@ -115,13 +115,6 @@ function lagUtvalgKort(event) {
   katBadge.textContent = kategoriVisningsnavn(event.kategori);
   badgeRad.appendChild(katBadge);
 
-  if (event.fremhevet) {
-    const fremBadge = document.createElement('span');
-    fremBadge.className   = 'utvalg-fremhevet-badge';
-  
-    badgeRad.appendChild(fremBadge);
-  }
-
   bildeWrapper.appendChild(badgeRad);
   el.appendChild(bildeWrapper);
 
