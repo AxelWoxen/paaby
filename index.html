@@ -77,6 +77,10 @@
 
       <p class="tagline">Det du ellers hadde gått glipp av</p>
 
+      <!-- Skjult i topbaren — funksjonaliteten ligger nå i hamburgermenyen
+           (.meny-dropdown under). Knappene/JS-en (main.js) beholdes urørt,
+           siden menyen trigger dem direkte i stedet for å duplisere
+           tilstandslogikk. -->
       <button id="vis-følger" class="følger-topbar-knapp" aria-label="Vis fulgte steder" aria-pressed="false">Følger</button>
 
       <button id="vis-lagret" class="lagret-knapp" aria-label="Vis lagrede arrangementer" aria-pressed="false">
@@ -84,6 +88,24 @@
           <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </button>
+
+      <!-- Hamburgermeny — se css/stil.css («HAMBURGERMENY») og js/main.js
+           (initMeny()) for oppførsel. Ikonet er bilder/Vector.svg, inlinet
+           her (fill byttet til currentColor) slik at det følger appens
+           egne tekstfarger i stedet for en hardkodet farge fra filen. -->
+      <div class="meny-dropdown">
+        <button type="button" id="meny-knapp" class="meny-knapp" aria-haspopup="true" aria-expanded="false" aria-controls="meny-panel" aria-label="Meny">
+          <svg class="meny-ikon" viewBox="0 0 106 81" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M0 1.99849V79.0015C0 80.1104 0.763777 81 1.6927 81H104.307C105.247 81 106 80.0982 106 79.0015V1.99849C106 0.889573 105.236 0 104.307 0H1.6927C0.753456 0 0 0.901759 0 1.99849ZM18.7538 14.5378H87.2461C90.7967 14.5378 93.6763 17.9377 93.6763 22.1297V25.8098C93.6763 30.0018 90.7967 33.4017 87.2461 33.4017H18.7538C15.2033 33.4017 12.3237 30.0018 12.3237 25.8098V22.1297C12.3237 17.9377 15.2033 14.5378 18.7538 14.5378ZM12.3237 58.8581V55.0439C12.3237 50.852 15.2033 47.4521 18.7538 47.4521H87.2461C90.7967 47.4521 93.6763 50.852 93.6763 55.0439V58.8581C93.6763 63.0501 90.7967 66.45 87.2461 66.45H18.7538C15.2033 66.45 12.3237 63.0501 12.3237 58.8581Z" fill="currentColor"/>
+          </svg>
+        </button>
+        <div id="meny-panel" class="meny-panel" role="menu">
+          <button type="button" id="meny-folger" class="meny-lenke" role="menuitem">Følger</button>
+          <button type="button" id="meny-lagret" class="meny-lenke" role="menuitem">Lagret</button>
+          <hr class="meny-skille" role="separator" />
+          <a href="/om/" class="meny-lenke" role="menuitem">Om Påby</a>
+        </div>
+      </div>
     </header>
   </div>
 

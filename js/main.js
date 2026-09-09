@@ -533,6 +533,75 @@ function initFilterToggle() {
   });
 }
 
+
+/* ========================
+   HAMBURGERMENY (topbar)
+   Følger/Lagret i menyen trigger de EKSISTERENDE knappene #vis-følger/
+   #vis-lagret (se initFølgerKnapp()/initLagretKnapp() over) i stedet for
+   å duplisere tilstandslogikk — samme mønster som initBunnNav().
+   ======================== */
+
+function initMeny() {
+  const dropdown   = document.querySelector('.meny-dropdown');
+  const knapp      = document.getElementById('meny-knapp');
+  const følgerKn   = document.getElementById('vis-følger');
+  const lagretKn   = document.getElementById('vis-lagret');
+  const menyFølger = document.getElementById('meny-folger');
+  const menyLagret = document.getElementById('meny-lagret');
+  if (!dropdown || !knapp) return;
+
+  function lukkMeny() {
+    dropdown.classList.remove('apen');
+    knapp.setAttribute('aria-expanded', 'false');
+  }
+
+  function åpneMeny() {
+    dropdown.classList.add('apen');
+    knapp.setAttribute('aria-expanded', 'true');
+  }
+
+  knapp.addEventListener('click', () => {
+    if (dropdown.classList.contains('apen')) lukkMeny();
+    else åpneMeny();
+  });
+
+  /* Lukk ved klikk utenfor menyen. */
+  document.addEventListener('click', (hendelse) => {
+    if (dropdown.classList.contains('apen') && !dropdown.contains(hendelse.target)) {
+      lukkMeny();
+    }
+  });
+
+  /* Lukk med Escape, og gi fokus tilbake til knappen. */
+  document.addEventListener('keydown', (hendelse) => {
+    if (hendelse.key === 'Escape' && dropdown.classList.contains('apen')) {
+      lukkMeny();
+      knapp.focus();
+    }
+  });
+
+  /* Speiler .aktiv-tilstanden fra de ekte knappene over på menypunktene
+     (diskret aksentfarge, se .meny-lenke.aktiv i css/stil.css). */
+  const synkroniserAktiv = () => {
+    menyFølger?.classList.toggle('aktiv', Boolean(følgerKn?.classList.contains('aktiv')));
+    menyLagret?.classList.toggle('aktiv', Boolean(lagretKn?.classList.contains('aktiv')));
+  };
+
+  menyFølger?.addEventListener('click', () => {
+    følgerKn?.click();
+    synkroniserAktiv();
+    lukkMeny();
+  });
+
+  menyLagret?.addEventListener('click', () => {
+    lagretKn?.click();
+    synkroniserAktiv();
+    lukkMeny();
+  });
+
+  synkroniserAktiv();
+}
+
 function initBunnNav() {
   const nav = document.querySelector('.bunn-nav');
   if (!nav) return;
@@ -693,6 +762,7 @@ async function startApp() {
   initUkeNav();
   initBunnNav();
   initFilterToggle();
+  initMeny();
 
   visSkeletonKort();
   visSkeletonUtvalg();

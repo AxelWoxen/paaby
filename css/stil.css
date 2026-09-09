@@ -130,6 +130,120 @@ textarea {
   background: rgba(255, 77, 94, 0.08);
 }
 
+/* Skjult — funksjonen ligger nå i hamburgermenyen (.meny-dropdown under).
+   Selve knappene og JS-en som klikker dem beholdes urørt, kun skjult. */
+#vis-følger,
+#vis-lagret {
+  display: none;
+}
+
+
+/* === HAMBURGERMENY ===
+   Enkel, håndbygd meny (ingen ekstern komponent) — se initMeny() i
+   js/main.js for åpne/lukke/tastatur, og «Følger»/«Lagret»-koblingen
+   til de eksisterende knappene over. Ikonet er bilder/Vector.svg,
+   inlinet i index.html med fill="currentColor". */
+
+.meny-dropdown {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.meny-knapp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius-s);
+  color: var(--paper);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.meny-knapp:hover,
+.meny-dropdown.apen .meny-knapp {
+  background: var(--flate-2);
+}
+
+.meny-knapp:focus-visible {
+  outline: 2px solid var(--aksent);
+  outline-offset: 2px;
+}
+
+.meny-ikon {
+  width: 30px;
+  height: auto;
+  transition: transform 0.2s ease;
+}
+
+/* Åpnet — via klikk/trykk/tastatur, likt på alle enheter: full 90° slik
+   at strekene står loddrett. Ingen hover-åpning lenger (den gjorde det
+   umulig å bevege musen ned til et menypunkt uten at panelet lukket seg
+   underveis). */
+.meny-dropdown.apen .meny-ikon {
+  transform: rotate(90deg);
+}
+
+.meny-panel {
+  display: none;
+  position: absolute;
+  top: calc(100% + var(--gap-s));
+  right: 0;
+  z-index: 20;
+  min-width: 170px;
+  flex-direction: column;
+  padding: var(--gap-s);
+  background: var(--hvit);
+  border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-m);
+}
+
+.meny-dropdown.apen .meny-panel {
+  display: flex;
+}
+
+.meny-lenke {
+  display: block;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: none;
+  border-radius: var(--radius-s);
+  background: none;
+  font-family: var(--font-tekst);
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--paper);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.meny-lenke:hover {
+  background: var(--flate-2);
+}
+
+.meny-lenke:focus-visible {
+  outline: 2px solid var(--aksent);
+  outline-offset: -2px;
+}
+
+/* Diskret markering når Følger/Lagret-visningen er aktiv — se
+   synkroniserAktiv() i main.js sin initMeny(). */
+.meny-lenke.aktiv {
+  color: var(--aksent-tekst);
+}
+
+.meny-skille {
+  border: none;
+  border-top: 1px solid var(--flate-2);
+  margin: var(--gap-s) 0.2rem;
+}
+
 
 /* === FILTRE === */
 
