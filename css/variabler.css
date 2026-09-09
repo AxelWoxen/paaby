@@ -8,6 +8,31 @@
    trenger så godt som aldri å style dem manuelt. Vil du endre paletten,
    endre kun de tre variablene under — resten justerer seg selv. */
 
+
+   @font-face {
+  font-family: 'Spartan';
+  src: url('/fonts/SpartanMB-Regular.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Spartan';
+  src: url('/fonts/SpartanMB-SemiBold.otf') format('opentype');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Spartan';
+  src: url('/fonts/SpartanMB-Bold.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* --- RÅFARGER --- */
   --hvit:  #FFFCF7;   /* bakgrunn og kortflate */
