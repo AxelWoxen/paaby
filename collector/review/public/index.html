@@ -1123,11 +1123,30 @@ function lagKort(event) {
   // Info-rad
   const info = document.createElement('div');
   info.className = 'kort-info';
-  info.innerHTML = `
-    <span>${event.sted ?? '—'}</span>
-    <span>${formaterPris(event.pris, event.prisTekst)}</span>
-    ${event.lenke ? `<a href="${event.lenke}" target="_blank" rel="noopener">billett / info ↗</a>` : ''}
-  `;
+  const stedInfo = document.createElement('span');
+stedInfo.textContent = event.sted ?? '—';
+info.appendChild(stedInfo);
+
+const prisInfo = document.createElement('span');
+prisInfo.textContent = formaterPris(event.pris, event.prisTekst);
+info.appendChild(prisInfo);
+
+if (event.lenke) {
+  try {
+    const url = new URL(event.lenke);
+
+    if (url.protocol === 'https:' || url.protocol === 'http:') {
+      const lenke = document.createElement('a');
+      lenke.href = url.href;
+      lenke.target = '_blank';
+      lenke.rel = 'noopener noreferrer';
+      lenke.textContent = 'billett / info';
+      info.appendChild(lenke);
+    }
+  } catch {
+    // Ugyldig URL: ikke vis lenken.
+  }
+}
   kropp.appendChild(info);
 
   // Beskrivelse
