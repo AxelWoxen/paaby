@@ -515,6 +515,24 @@ function oppdaterBunnNavAktiv() {
   });
 }
 
+/* ========================
+   FILTER-TOGGLE (kun mobil)
+   Se @media (max-width: 899px) i css/stil.css — knappen er skjult og
+   .filter-innhold alltid synlig på desktop, så denne funksjonen har
+   ingen synlig effekt der.
+   ======================== */
+
+function initFilterToggle() {
+  const knapp      = document.getElementById('filter-toggle-knapp');
+  const sidestolpe = document.querySelector('.sidestolpe');
+  if (!knapp || !sidestolpe) return;
+
+  knapp.addEventListener('click', () => {
+    const åpen = sidestolpe.classList.toggle('filter-vis');
+    knapp.setAttribute('aria-expanded', String(åpen));
+  });
+}
+
 function initBunnNav() {
   const nav = document.querySelector('.bunn-nav');
   if (!nav) return;
@@ -674,6 +692,7 @@ async function startApp() {
   initSeAlt();
   initUkeNav();
   initBunnNav();
+  initFilterToggle();
 
   visSkeletonKort();
   visSkeletonUtvalg();

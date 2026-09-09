@@ -109,49 +109,69 @@
 
     <!-- Venstre kolonne / mobil-topp: filtre -->
     <aside class="sidestolpe" aria-label="Filtre">
-      <nav class="filtre" aria-label="Filtrer arrangementer">
 
-        <div class="filter-gruppe">
-          <span class="filter-etikett" aria-hidden="true">Type</span>
-          <div class="filter-chips" role="group" aria-label="Kategori">
-            <button class="chip" data-filter="kategori" data-verdi="musikk">Musikk</button>
-            <button class="chip" data-filter="kategori" data-verdi="klubb">Klubb</button>
-            <button class="chip" data-filter="kategori" data-verdi="pafunn">Påfunn</button>
+      <!-- Kun mobil (< 900px, se css/stil.css): åpner/lukker filter-innhold
+           under. Skjult med CSS på desktop, hvor filtrene alltid vises. -->
+      <button
+        id="filter-toggle-knapp"
+        class="filter-toggle-knapp"
+        type="button"
+        aria-expanded="false"
+        aria-controls="filter-innhold"
+      >
+        Filter
+        <svg class="filter-toggle-pil" width="10" height="6" viewBox="0 0 10 6" fill="none" aria-hidden="true">
+          <path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+
+      <div id="filter-innhold" class="filter-innhold">
+
+        <nav class="filtre" aria-label="Filtrer arrangementer">
+
+          <div class="filter-gruppe">
+            <span class="filter-etikett" aria-hidden="true">Type</span>
+            <div class="filter-chips" role="group" aria-label="Kategori">
+              <button class="chip" data-filter="kategori" data-verdi="musikk">Musikk</button>
+              <button class="chip" data-filter="kategori" data-verdi="klubb">Klubb</button>
+              <button class="chip" data-filter="kategori" data-verdi="pafunn">Påfunn</button>
+            </div>
           </div>
+
+          <div class="filter-gruppe">
+            <span class="filter-etikett" aria-hidden="true">Tid</span>
+            <div class="filter-chips" role="group" aria-label="Tidspunkt">
+              <button class="chip" data-filter="tid" data-verdi="i-kveld" aria-pressed="false">I kveld</button>
+              <button class="chip" data-filter="tid" data-verdi="i-helga" aria-pressed="false">I helga</button>
+            </div>
+          </div>
+
+          <div class="filter-gruppe">
+            <span class="filter-etikett" aria-hidden="true">Pris</span>
+            <div class="filter-chips" role="group" aria-label="Pris">
+              <button class="chip" data-filter="pris" data-verdi="gratis"    aria-pressed="false">Gratis</button>
+              <button class="chip" data-filter="pris" data-verdi="under-200" aria-pressed="false">Under 200</button>
+              <button class="chip" data-filter="pris" data-verdi="over-200"  aria-pressed="false">200 kr+</button>
+            </div>
+          </div>
+
+        </nav>
+
+        <div class="filter-bunn-rad">
+          <button
+            id="vis-avstand"
+            class="chip"
+            aria-pressed="false"
+            aria-label="Vis avstand til arrangementer"
+          >Vis avstand</button>
+          <button id="nullstill-knapp" class="nullstill-knapp skjult" aria-label="Nullstill alle filtre">
+            Nullstill
+          </button>
         </div>
 
-        <div class="filter-gruppe">
-          <span class="filter-etikett" aria-hidden="true">Tid</span>
-          <div class="filter-chips" role="group" aria-label="Tidspunkt">
-            <button class="chip" data-filter="tid" data-verdi="i-kveld" aria-pressed="false">I kveld</button>
-            <button class="chip" data-filter="tid" data-verdi="i-helga" aria-pressed="false">I helga</button>
-          </div>
-        </div>
+        <p id="posisjon-status" class="posisjon-status skjult" aria-live="polite" aria-atomic="true"></p>
 
-        <div class="filter-gruppe">
-          <span class="filter-etikett" aria-hidden="true">Pris</span>
-          <div class="filter-chips" role="group" aria-label="Pris">
-            <button class="chip" data-filter="pris" data-verdi="gratis"    aria-pressed="false">Gratis</button>
-            <button class="chip" data-filter="pris" data-verdi="under-200" aria-pressed="false">Under 200</button>
-            <button class="chip" data-filter="pris" data-verdi="over-200"  aria-pressed="false">200 kr+</button>
-          </div>
-        </div>
-
-      </nav>
-
-      <div class="filter-bunn-rad">
-        <button
-          id="vis-avstand"
-          class="chip"
-          aria-pressed="false"
-          aria-label="Vis avstand til arrangementer"
-        >Vis avstand</button>
-        <button id="nullstill-knapp" class="nullstill-knapp skjult" aria-label="Nullstill alle filtre">
-          Nullstill
-        </button>
       </div>
-
-      <p id="posisjon-status" class="posisjon-status skjult" aria-live="polite" aria-atomic="true"></p>
 
     </aside>
 

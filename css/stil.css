@@ -210,6 +210,12 @@ textarea {
   opacity: 0.75;
 }
 
+/* Filter-knapp: skjult på desktop (filtrene vises alltid der).
+   Vises og får funksjon kun på mobil, se @media (max-width: 899px) under. */
+.filter-toggle-knapp {
+  display: none;
+}
+
 
 /* === HOVEDDEL — to-kolonne-layout ===
    Mobil-default: én kolonne, sidestolpe over feedkolonne.
@@ -1520,13 +1526,89 @@ body.modal-aapen {
 
   
 
-  /* Treff + sortering får lov til å stable seg på små skjermer. */
-  .treff-linje {
-    align-items: flex-start;
+  /* === "X forslag" flyttes ned til linja med "Denne uka" (kun mobil) ===
+     .treff-linje "løses opp" med display:contents slik at barna dens
+     (telleren, tilbake-knappen og sorteringskontrollen) blir direkte
+     flex-elementer i .feedkolonne og kan omorganiseres fritt med
+     order/flex-basis — uten å røre selve HTML-strukturen eller JS-en som
+     leser #treff-teller / #vis-alle / #uke-nav via getElementById.
+     Desktop (≥900px) bruker fortsatt den opprinnelige .treff-linje-raden
+     og er helt urørt. */
+  .feedkolonne {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    row-gap: var(--gap-s);
+    column-gap: var(--gap-s);
+    padding-top: var(--gap-m);
   }
 
+  .treff-linje {
+    display: contents;
+  }
+
+  /* Sorter får hele sin egen rad, høyrejustert som før. */
   .sortering-kontroll {
+    order: 1;
+    flex-basis: 100%;
     min-width: 0;
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+
+  /* Neste rad: telleren til venstre, "Denne uka"/"← alle arrangementer"
+     til høyre — de to er aldri synlige samtidig, så de kan dele plass.
+     padding/margin nullstilles slik at teksten linjer opp med telleren
+     (ellers gir .uke-nav sin egen padding-top en liten forskyvning). */
+  #treff-teller {
+    order: 2;
+  }
+
+  #vis-alle,
+  #uke-nav {
+    order: 3;
+    padding-top: 0;
+    margin-top: 0;
+  }
+
+  #lagret-info,
+  #feed {
+    order: 4;
+    flex-basis: 100%;
+  }
+
+
+  /* === Filter-knapp: skjuler filtrene bak "Filter" på mobil ===
+     Filtrene (.filter-innhold) er skjult som default og vises kun når
+     #filter-toggle-knapp er trykket (se initFilterToggle() i js/main.js,
+     som setter/fjerner .filter-vis på .sidestolpe). Desktop (≥900px) har
+     ingen slik regel, så .filter-toggle-knapp forblir display:none der
+     (fra base-stilen) og .filter-innhold vises alltid. */
+  .filter-toggle-knapp {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.3rem 0.9rem;
+    min-height: 40px;
+    border: 1.5px solid var(--flate-2);
+    border-radius: 100px;
+    font-family: var(--font-tekst);
+    font-size: 0.8rem;
+    color: var(--paper);
+    margin-bottom: var(--gap-s);
+  }
+
+  .filter-toggle-pil {
+    transition: transform 0.15s;
+  }
+
+  .sidestolpe.filter-vis .filter-toggle-pil {
+    transform: rotate(180deg);
+  }
+
+  .sidestolpe:not(.filter-vis) .filter-innhold {
+    display: none;
   }
 
   /* Fast, lys og safe-area-riktig mobilfooter. */
