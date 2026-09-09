@@ -634,6 +634,9 @@ textarea {
   color: var(--paper);
   pointer-events: none;
 }
+.gjentas-badge {
+  display: none;
+}
 
 
 /* === BINDERS / LAGRE === */
