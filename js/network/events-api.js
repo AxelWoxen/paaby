@@ -8,7 +8,7 @@ import { validerEventer } from '../application/validering.js';
   window.location.hostname === 'localhost' ||
   window.location.hostname === '127.0.0.1'
     ? 'http://localhost:3000'
-    : 'https://api.paaby.online';
+    : 'https://api.paaby.no';
 
 const API_URL = `${API_BASE_URL}/api/events`;
 
