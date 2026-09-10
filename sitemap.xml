@@ -9,35 +9,35 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
-    <loc>https://paaby.online/</loc>
+    <loc>https://paaby.no/</loc>
     <lastmod>2026-09-01</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://paaby.online/uke/</loc>
+    <loc>https://paaby.no/uke/</loc>
     <lastmod>2026-08-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://paaby.online/uke/2026-08-03.html</loc>
+    <loc>https://paaby.no/uke/2026-08-03.html</loc>
     <lastmod>2026-08-04</lastmod>
     <changefreq>never</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://paaby.online/personvern/</loc>
+    <loc>https://paaby.no/personvern/</loc>
     <lastmod>2026-09-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
 
   <url>
-    <loc>https://paaby.online/om/</loc>
+    <loc>https://paaby.no/om/</loc>
     <lastmod>2026-09-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

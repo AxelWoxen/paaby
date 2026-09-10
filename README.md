@@ -2,7 +2,7 @@
 
 Hyperlokalt oppdagelsesverktøy for Oslo — håndplukkede arrangementer innen musikk, klubb og påfunn.
 
-Live: https://paaby.online
+Live: https://paaby.no
 
 ---
 
@@ -12,10 +12,10 @@ Påby består av fire hoveddeler:
 
 ```text
 Frontend
-paaby.online
+paaby.no
     ↓
 Express API
-api.paaby.online
+api.paaby.no
     ↓
 PostgreSQL
     ↑
@@ -40,7 +40,7 @@ http://localhost:3000/api/events
 
 Produksjon:
 
-https://api.paaby.online/api/events
+https://api.paaby.no/api/events
 Backend
 
 Backend ligger i:
@@ -235,7 +235,7 @@ events
         ↓
 Express API
         ↓
-paaby.online
+paaby.no
 
 Et event trenger ikke Git commit eller deploy for å publiseres.
 
@@ -268,7 +268,7 @@ main
 
 til:
 
-https://paaby.online
+https://paaby.no
 
 Endringer i frontend gjøres gjennom feature branch → Pull Request → main.
 
@@ -280,7 +280,7 @@ paaby-api
 
 Produksjons-API:
 
-https://api.paaby.online
+https://api.paaby.no
 
 Heroku er koblet til GitHub og deployer automatisk fra:
 
@@ -300,7 +300,7 @@ GitHub checks
     ↓
 Heroku automatic deploy
     ↓
-api.paaby.online
+api.paaby.no
 Lokal utvikling
 
 For å kjøre hele Påby lokalt:
