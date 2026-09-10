@@ -3,9 +3,11 @@ import healthRoutes from './routes/healthRoutes.mjs';
 import eventRoutes from './routes/eventRoutes.mjs';
 import cors from 'cors';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
 app.use(helmet());
+app.set('trust proxy', 1);
 
 const PORT = process.env.PORT || 3000;
 
@@ -24,6 +26,18 @@ app.use(express.json());
 
 // Routes
 app.use('/api/health', healthRoutes);
+
+const eventsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: 'error',
+    message: 'For mange forespørsler. Prøv igjen senere.'
+  }
+});
+
 app.use('/api/events', eventRoutes);
 
 app.listen(PORT, () => {
