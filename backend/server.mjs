@@ -2,8 +2,10 @@ import express from 'express';
 import healthRoutes from './routes/healthRoutes.mjs';
 import eventRoutes from './routes/eventRoutes.mjs';
 import cors from 'cors';
+import helmet from 'helmet';
 
 const app = express();
+app.use(helmet());
 
 const PORT = process.env.PORT || 3000;
 
