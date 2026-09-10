@@ -39,6 +39,7 @@ const eventsLimiter = rateLimit({
 });
 
 app.use('/api/events', eventRoutes);
+app.use('/api/events', eventsLimiter);
 
 app.listen(PORT, () => {
   console.log(`Påby API kjører på http://localhost:${PORT}`);
