@@ -140,9 +140,9 @@ textarea {
 
 /* === HAMBURGERMENY ===
    Enkel, håndbygd meny (ingen ekstern komponent) — se initMeny() i
-   js/main.js for åpne/lukke/tastatur, og «Følger»/«Lagret»-koblingen
-   til de eksisterende knappene over. Ikonet er bilder/Vector.svg,
-   inlinet i index.html med fill="currentColor". */
+   js/components/topbar.js for åpne/lukke/tastatur, og «Følger»/«Lagret»-
+   koblingen til de eksisterende knappene over. Ikonet er bilder/Vector.svg,
+   inlinet i topbar.js med fill="currentColor". */
 
 .meny-dropdown {
   position: relative;
@@ -232,7 +232,7 @@ textarea {
 }
 
 /* Diskret markering når Følger/Lagret-visningen er aktiv — se
-   synkroniserAktiv() i main.js sin initMeny(). */
+   synkroniserAktiv() i js/components/topbar.js sin initMeny(). */
 .meny-lenke.aktiv {
   color: var(--aksent-tekst);
 }
