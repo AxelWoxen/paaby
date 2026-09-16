@@ -56,6 +56,10 @@
   --aksent:    var(--blaa);
   --sekundaer: var(--blaa);   /* ingen egen sekundærfarge — gjenbruker aksenten */
 
+   --musikk: #FF4A36;
+   --klubb: #701236;
+   --pafunn: #A0BEFA;
+
   /* Tekst/ikon oppå en flate FYLT med aksenten (aktiv chip, primærknapp) —
      aksenten er lys, så mørk tekst leser klart best oppå den. */
   --aksent-kontrast: var(--svart);
