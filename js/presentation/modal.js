@@ -47,6 +47,7 @@ export function åpneModal(event) {
   innhold.innerHTML = '';
   innhold.appendChild(byggModalInnhold(event));
 
+  modal.dataset.kategori = event.kategori;
   modal.classList.add('aktiv');
   modal.setAttribute('aria-hidden', 'false');
   document.body.classList.add('modal-aapen');

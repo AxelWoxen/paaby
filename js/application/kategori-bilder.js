@@ -7,6 +7,13 @@ export const KATEGORI_BILDER = Object.freeze({
   pafunn: 'bilder/kategorier/pafunn.jpg',
 });
 
+/* Fargede piktogrammer for eventkortenes kategori-identitet. */
+export const KATEGORI_PIKTOGRAM_EVENT = Object.freeze({
+  musikk: '/bilder/piktogrammer/musikk-event.svg',
+  klubb:  '/bilder/piktogrammer/klubb-event.svg',
+  pafunn: '/bilder/piktogrammer/påfunn-event.svg',
+});
+
 const GENERELL_FALLBACK = 'bilder/kategorier/musikk.jpg';
 
 /**

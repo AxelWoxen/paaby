@@ -7,9 +7,10 @@
 const BINDERS_SVG = '<svg class="binders-ikon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 import { erLagret, veksleLagret }                               from '../application/lagret.js';
-import { formaterPrisKort, formaterPrisTekst, formaterTid, formaterAvstand,
-         kategoriVisningsnavn }                                  from '../application/formatering.js';
-import { hentEventbilde, KATEGORI_BILDER }                       from '../application/kategori-bilder.js';
+import { formaterPrisKort, formaterPrisTekst, formaterTid,
+         formaterAvstand }                                       from '../application/formatering.js';
+import { hentEventbilde, KATEGORI_BILDER,
+         KATEGORI_PIKTOGRAM_EVENT }                               from '../application/kategori-bilder.js';
 import { eventTilstand }                                         from '../application/oslo-tid.js';
 import { bindBildeLasting, markerBildeLastet }                   from '../application/bilde-lasting.js';
 import { åpneModal }                                             from './modal.js';
@@ -132,6 +133,7 @@ export function lagKort(event) {
   const artikkel = document.createElement('article');
   artikkel.className = `kort${utgattIDag ? ' kort--utgatt' : ''}`;
   artikkel.dataset.id = event.id;
+  artikkel.dataset.kategori = event.kategori;
   artikkel.setAttribute('role', 'button');
   artikkel.setAttribute('tabindex', '0');
   artikkel.setAttribute('aria-label', `Åpne detaljer for ${event.tittel}`);
@@ -142,18 +144,19 @@ export function lagKort(event) {
 
   bildeWrapper.appendChild(lagBildeEllement(event));
 
-  /* Kategori-badge */
-  const badge = document.createElement('span');
-  badge.className = `kort-kategori kategori-${event.kategori}`;
-  badge.textContent = kategoriVisningsnavn(event.kategori);
-  bildeWrapper.appendChild(badge);
+  /* Kategori-piktogram */
+  const piktogram = document.createElement('img');
+  piktogram.className = 'kategori-piktogram-event';
+  piktogram.src = KATEGORI_PIKTOGRAM_EVENT[event.kategori];
+  piktogram.alt = '';
+  bildeWrapper.appendChild(piktogram);
 
-  /* Gjentas-badge (ribbon øvre venstre hjørne — bak kategoribadge) */
+  /* Gjentas-badge (ribbon øvre venstre hjørne — bak kategoripiktogrammet) */
   if (event.gjentas) {
     const gjentasBadge = document.createElement('div');
     gjentasBadge.className   = 'gjentas-badge';
     gjentasBadge.textContent = 'gjentas';
-    bildeWrapper.insertBefore(gjentasBadge, badge);
+    bildeWrapper.insertBefore(gjentasBadge, piktogram);
   }
 
   /* Hjerte-knapp */

@@ -2,9 +2,10 @@
    Viser kuratert utvalg: fremhevede events øverst, fallback fyller opp til 5. */
 
 import { osloKomponenter, eventTilstand }         from '../application/oslo-tid.js';
-import { formaterTid, formaterPrisKort,formaterPrisTekst,
-         kategoriVisningsnavn }                   from '../application/formatering.js';
-import { hentEventbilde, KATEGORI_BILDER }         from '../application/kategori-bilder.js';
+import { formaterTid, formaterPrisKort,formaterPrisTekst }
+                                                   from '../application/formatering.js';
+import { hentEventbilde, KATEGORI_BILDER,
+         KATEGORI_PIKTOGRAM_EVENT }                from '../application/kategori-bilder.js';
 import { bindBildeLasting, markerBildeLastet }    from '../application/bilde-lasting.js';
 import { åpneModal }                             from './modal.js';
 
@@ -75,6 +76,7 @@ function lagUtvalgKort(event) {
 
   const el = document.createElement('article');
   el.className = `utvalg-kort${utgattIDag ? ' utvalg-kort--utgatt' : ''}`;
+  el.dataset.kategori = event.kategori;
   el.setAttribute('role', 'button');
   el.setAttribute('tabindex', '0');
   el.setAttribute('aria-label', `Åpne detaljer for ${event.tittel}`);
@@ -106,16 +108,13 @@ function lagUtvalgKort(event) {
   }, { once: true });
   bildeWrapper.appendChild(bilde);
 
-  // Badge-rad
-  const badgeRad = document.createElement('div');
-  badgeRad.className = 'utvalg-badge-rad';
+  // Kategori-piktogram
+  const piktogram = document.createElement('img');
+  piktogram.className = 'kategori-piktogram-event';
+  piktogram.src = KATEGORI_PIKTOGRAM_EVENT[event.kategori];
+  piktogram.alt = '';
+  bildeWrapper.appendChild(piktogram);
 
-  const katBadge = document.createElement('span');
-  katBadge.className   = `utvalg-badge kategori-${event.kategori}`;
-  katBadge.textContent = kategoriVisningsnavn(event.kategori);
-  badgeRad.appendChild(katBadge);
-
-  bildeWrapper.appendChild(badgeRad);
   el.appendChild(bildeWrapper);
 
   // Tynn hvit stripe der bildet møter tekstflaten

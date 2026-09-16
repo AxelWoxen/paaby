@@ -295,6 +295,21 @@ textarea {
   outline-offset: 2px;
 }
 
+.kategori-chip {
+  gap: 0.4rem;
+  --kort-farge: var(--aksent);
+}
+
+.kategori-chip[data-verdi="musikk"] { --kort-farge: var(--musikk); }
+.kategori-chip[data-verdi="klubb"]  { --kort-farge: var(--klubb); }
+.kategori-chip[data-verdi="pafunn"] { --kort-farge: var(--pafunn); }
+
+.kategori-filter-ikon {
+  display: block;
+  width: auto;
+  height: 14px;
+}
+
 .chip:hover {
   border-color: var(--graa);
   color: var(--paper);
@@ -303,6 +318,12 @@ textarea {
 .chip.aktiv {
   background: var(--aksent);
   border-color: var(--aksent);
+  color: var(--aksent-kontrast);
+}
+
+.kategori-chip.aktiv {
+  background: var(--kort-farge);
+  border-color: var(--kort-farge);
   color: var(--aksent-kontrast);
 }
 
@@ -580,14 +601,30 @@ textarea {
    blå kortflate, fast bildeformat og tekst som overlay nederst til venstre. */
 .kort,
 .utvalg-kort {
+  --kort-farge: var(--aksent);
   position: relative;
-  background: var(--aksent);
-  border: 8px solid var(--aksent);
+  background: var(--kort-farge);
+  border: 8px solid var(--kort-farge);
   border-radius: var(--radius-l);
   overflow: hidden;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
   -webkit-tap-highlight-color: transparent;
+}
+
+.kort[data-kategori="musikk"],
+.utvalg-kort[data-kategori="musikk"] {
+  --kort-farge: var(--musikk);
+}
+
+.kort[data-kategori="klubb"],
+.utvalg-kort[data-kategori="klubb"] {
+  --kort-farge: var(--klubb);
+}
+
+.kort[data-kategori="pafunn"],
+.utvalg-kort[data-kategori="pafunn"] {
+  --kort-farge: var(--pafunn);
 }
 
 .kort:hover,
@@ -606,7 +643,7 @@ textarea {
 .utvalg-bilde-wrapper {
   position: relative;
   overflow: hidden;
-  background: var(--aksent);
+  background: var(--kort-farge);
   border-radius: 12px;
 }
 
@@ -710,24 +747,14 @@ textarea {
 
 /* === BADGES === */
 
-.kort-kategori {
+.kategori-piktogram-event {
   position: absolute;
   top: var(--gap-s);
   left: var(--gap-s);
   z-index: 2;
-  padding: 0.25rem 0.625rem;
-  border-radius: 100px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.kategori-musikk,
-.kategori-klubb,
-.kategori-pafunn {
-  background: var(--ink);
-  color: var(--merke-tekst);
+  display: block;
+  width: auto;
+  height: 28px;
 }
 
 .gjentas-badge {
@@ -836,7 +863,7 @@ textarea {
 }
 
 .modal-hjerte.lagret .binders-ikon {
-  color: var(--aksent-tekst);
+  color: color-mix(in srgb, var(--kort-farge) 55%, var(--svart) 45%);
 }
 
 
@@ -853,7 +880,7 @@ textarea {
   height: 75px;
   box-sizing: border-box;
 
-  background: var(--aksent);
+  background: var(--kort-farge);
   padding: var(--gap-s) var(--gap-m);
 
   border-top-right-radius: 12px;
@@ -971,9 +998,10 @@ textarea {
 }
 
 .modal-container {
+  --kort-farge: var(--aksent);
   background: var(--hvit);
   border-radius: var(--radius-l) var(--radius-l) 0 0;
-  border: 4px solid var(--aksent);
+  border: 4px solid var(--kort-farge);
   width: 100%;
   max-height: 90dvh;
   overflow-y: auto;
@@ -989,6 +1017,18 @@ textarea {
 
 .modal.aktiv .modal-container {
   transform: translateY(0);
+}
+
+.modal[data-kategori="musikk"] .modal-container {
+  --kort-farge: var(--musikk);
+}
+
+.modal[data-kategori="klubb"] .modal-container {
+  --kort-farge: var(--klubb);
+}
+
+.modal[data-kategori="pafunn"] .modal-container {
+  --kort-farge: var(--pafunn);
 }
 
 .modal-lukk {
@@ -1063,6 +1103,8 @@ textarea {
   font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+  background: var(--ink);
+  color: var(--merke-tekst);
 }
 
 .modal-tittel {
@@ -1101,9 +1143,10 @@ textarea {
 }
 
 .følg-knapp.fulgt {
-  /* --aksent-pa-lys: knappen står direkte på den lyse modal-kortflaten */
-  border-color: var(--aksent-tekst);
-  color: var(--aksent-tekst);
+  /* Mørknet mot svart, samme teknikk som --aksent-tekst, slik at teksten
+     leser klart på den lyse modal-flaten uansett kategorifarge. */
+  border-color: color-mix(in srgb, var(--kort-farge) 55%, var(--svart) 45%);
+  color: color-mix(in srgb, var(--kort-farge) 55%, var(--svart) 45%);
 }
 
 /* Faktarad: Type / Tid / Pris / Avstand */
@@ -1126,7 +1169,7 @@ textarea {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--aksent);
+  color: var(--kort-farge);
 }
 
 .faktarad-verdi {
@@ -1159,7 +1202,7 @@ textarea {
 .knapp:active { transform: scale(0.98); }
 
 .knapp-primaer {
-  background: var(--aksent);
+  background: var(--kort-farge);
   color: var(--aksent-kontrast);
   flex: 1;
 }
@@ -1405,27 +1448,6 @@ body.modal-aapen {
   flex-direction: column;
   gap: var(--gap-m);
   margin-bottom: var(--gap-s);
-}
-
-/* Spesifikk typografi for utvalgte kort. Geometri ligger i KORT-seksjonen. */
-.utvalg-badge-rad {
-  position: absolute;
-  top: var(--gap-s);
-  left: var(--gap-s);
-  z-index: 2;
-  display: flex;
-  gap: var(--gap-s);
-  align-items: center;
-  flex-wrap: wrap;
-}
-
-.utvalg-badge {
-  padding: 0.25rem 0.625rem;
-  border-radius: 100px;
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
 }
 
 .utvalg-fremhevet-badge {
