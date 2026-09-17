@@ -43,4 +43,11 @@
     <priority>0.3</priority>
   </url>
 
+  <url>
+    <loc>https://paaby.no/send-inn/</loc>
+    <lastmod>2026-09-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
 </urlset>

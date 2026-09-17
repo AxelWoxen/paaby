@@ -31,6 +31,7 @@
           <button type="button" id="meny-folger" class="meny-lenke" role="menuitem">Følger</button>
           <button type="button" id="meny-lagret" class="meny-lenke" role="menuitem">Lagret</button>
           <hr class="meny-skille" role="separator" />
+          <a href="/send-inn/" class="meny-lenke" role="menuitem">Send inn event</a>
           <a href="/om/" class="meny-lenke" role="menuitem">Om Påby</a>
         </div>
       </div>

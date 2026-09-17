@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="no" data-palette="a">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Send inn event – påby</title>
+  <meta name="description" content="Arrangerer du noe folk ikke bør gå glipp av? Send inn eventet ditt til påby." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://paaby.no/send-inn/" />
+  <meta name="theme-color" content="#141318" />
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://paaby.no/send-inn/" />
+  <meta property="og:title"       content="Send inn event – påby" />
+  <meta property="og:description" content="Arrangerer du noe folk ikke bør gå glipp av? Send inn eventet ditt til påby." />
+  <meta property="og:image"       content="https://paaby.no/bilder/og-bilde.png" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="Send inn event – påby" />
+  <meta name="twitter:description" content="Arrangerer du noe folk ikke bør gå glipp av? Send inn eventet ditt til påby." />
+  <meta name="twitter:image"       content="https://paaby.no/bilder/og-bilde.png" />
+
+  <link rel="icon" type="image/png" href="/bilder/favicon.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="/css/reset.css" />
+  <link rel="stylesheet" href="/css/variabler.css" />
+  <link rel="stylesheet" href="/css/stil.css" />
+  <link rel="stylesheet" href="/css/uke.css" />
+
+  <!-- Samme Umami-oppsett som index.html — trengs for at trackEvent()
+       (event_innsendt) faktisk skal nå frem herfra. -->
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="da8bf02b-0671-4e3c-afb6-255a4afeb357"></script>
+  <script>
+    window.__paaby_track = (navn, data) => window.umami?.track(navn, data);
+  </script>
+</head>
+<body>
+
+  <!-- TOPBAR — felles komponent, se js/components/topbar.js -->
+  <script src="/js/components/topbar.js"></script>
+
+  <main class="uke-innhold send-inn-innhold">
+    <a class="uke-tilbake" href="/">← Forsiden</a>
+
+    <h1 class="uke-tittel">Send inn event</h1>
+    <p class="uke-intro">Arrangerer du noe folk ikke bør gå glipp av? Send det inn. Vi går gjennom alt manuelt, og påby er kuratert, så ikke alt kommer med.</p>
+
+    <form id="innsending-skjema" novalidate>
+
+      <!-- Honeypot — usynlig for ekte brukere, fanger enkle bots. -->
+      <div class="send-inn-honeypot" aria-hidden="true">
+        <label for="nettside">Ikke fyll ut dette feltet</label>
+        <input type="text" id="nettside" name="nettside" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <!-- ==============================
+           SELVE EVENTKORTET — stylet med samme klasser som den ekte
+           modalen i css/stil.css (.modal-container/.modal-bilde-wrapper/
+           .modal-body/.modal-faktarad osv.), med tydelig markerte
+           utfyllingsfelt der innholdet ellers står.
+           ============================== -->
+      <div class="modal-container send-inn-kort" id="event-kort">
+
+        <div class="modal-bilde-wrapper send-inn-bilde-wrapper" id="bilde-wrapper">
+          <img id="bilde-forhandsvisning" class="modal-bilde" alt="" hidden />
+          <p class="send-inn-bilde-placeholder" id="bilde-placeholder">Bilde (valgfritt)</p>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="send-inn-felt-gruppe">
+            <span class="send-inn-label">Kategori *</span>
+            <div class="send-inn-kategori-velger" role="group" aria-label="Kategori">
+              <button type="button" class="chip kategori-chip" data-kategori="musikk" aria-pressed="false">
+                <img class="kategori-filter-ikon" src="/bilder/piktogrammer/musikk.svg" alt="" />
+                <span>Musikk</span>
+              </button>
+              <button type="button" class="chip kategori-chip" data-kategori="klubb" aria-pressed="false">
+                <img class="kategori-filter-ikon" src="/bilder/piktogrammer/klubb.svg" alt="" />
+                <span>Klubb</span>
+              </button>
+              <button type="button" class="chip kategori-chip" data-kategori="pafunn" aria-pressed="false">
+                <img class="kategori-filter-ikon" src="/bilder/piktogrammer/påfunn.svg" alt="" />
+                <span>Påfunn</span>
+              </button>
+            </div>
+            <input type="hidden" id="kategori" name="kategori" value="" />
+            <p class="send-inn-feil" data-feil-for="kategori"></p>
+          </div>
+
+          <div class="send-inn-felt-gruppe">
+            <label class="send-inn-label" for="tittel">Tittel *</label>
+            <input type="text" id="tittel" name="tittel" class="modal-tittel send-inn-input send-inn-input--tittel" placeholder="Navn på arrangementet" maxlength="120" required />
+            <p class="send-inn-feil" data-feil-for="tittel"></p>
+          </div>
+
+          <div class="send-inn-felt-gruppe">
+            <label class="send-inn-label" for="sted">Sted / venue *</label>
+            <input type="text" id="sted" name="sted" class="send-inn-input" placeholder="F.eks. Blå" required />
+            <p class="send-inn-feil" data-feil-for="sted"></p>
+          </div>
+
+          <div class="send-inn-felt-gruppe">
+            <label class="send-inn-label" for="adresse">Adresse *</label>
+            <input type="text" id="adresse" name="adresse" class="send-inn-input" placeholder="Gate og nummer, ev. postnummer" required />
+            <p class="send-inn-feil" data-feil-for="adresse"></p>
+          </div>
+
+          <!-- Faktarad — samme visuelle plassering som i den ekte modalen -->
+          <div class="modal-faktarad send-inn-faktarad">
+            <div class="faktarad-felt">
+              <label class="faktarad-etikett" for="dato">Dato *</label>
+              <input type="date" id="dato" name="dato" class="faktarad-verdi send-inn-input" required />
+            </div>
+            <div class="faktarad-felt">
+              <label class="faktarad-etikett" for="start-tid">Starttid *</label>
+              <input type="time" id="start-tid" name="startTid" class="faktarad-verdi send-inn-input" required />
+            </div>
+            <div class="faktarad-felt">
+              <label class="faktarad-etikett" for="slutt-tid">Sluttid</label>
+              <input type="time" id="slutt-tid" name="sluttTid" class="faktarad-verdi send-inn-input" />
+            </div>
+          </div>
+          <p class="send-inn-hjelpetekst">Slutter arrangementet etter midnatt? Velg bare klokkeslettet — vi regner det automatisk til natten over.</p>
+          <p class="send-inn-feil" data-feil-for="dato"></p>
+          <p class="send-inn-feil" data-feil-for="startTid"></p>
+          <p class="send-inn-feil" data-feil-for="sluttTid"></p>
+
+          <div class="send-inn-felt-gruppe">
+            <span class="send-inn-label">Gjentas</span>
+            <div class="send-inn-gjentas-rad">
+              <select id="gjentas-type" name="gjentasType" class="send-inn-select">
+                <option value="">Nei, engangsarrangement</option>
+                <option value="ukentlig">Hver …</option>
+                <option value="månedlig-siste">Siste … i måneden</option>
+                <option value="månedlig-første">Første … i måneden</option>
+              </select>
+              <select id="gjentas-dag" name="gjentasDag" class="send-inn-select" hidden>
+                <option>mandag</option><option>tirsdag</option><option>onsdag</option>
+                <option>torsdag</option><option>fredag</option><option>lørdag</option>
+                <option selected>søndag</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="send-inn-felt-gruppe">
+            <span class="send-inn-label">Pris *</span>
+            <div class="send-inn-pris-velger" role="group" aria-label="Pris">
+              <label class="send-inn-radio"><input type="radio" name="prisType" value="gratis" checked /> Gratis</label>
+              <label class="send-inn-radio"><input type="radio" name="prisType" value="kr" /> Pris i kr</label>
+              <label class="send-inn-radio"><input type="radio" name="prisType" value="ukjent" /> Ukjent / i døra</label>
+            </div>
+            <input type="number" id="pris-kr" name="prisKr" class="send-inn-input" placeholder="150" min="0" step="1" hidden />
+            <input type="text" id="pris-tekst" name="prisTekst" class="send-inn-input" placeholder="Valgfri pristekst, f.eks. «150 kr / 100 kr student»" />
+            <p class="send-inn-feil" data-feil-for="prisType"></p>
+            <p class="send-inn-feil" data-feil-for="prisKr"></p>
+          </div>
+
+          <div class="send-inn-felt-gruppe">
+            <label class="send-inn-label" for="beskrivelse">Beskrivelse *</label>
+            <textarea id="beskrivelse" name="beskrivelse" class="modal-beskrivelse send-inn-textarea" rows="4" maxlength="500" required></textarea>
+            <p class="send-inn-teller"><span id="beskrivelse-teller">0</span>/500 tegn</p>
+            <p class="send-inn-feil" data-feil-for="beskrivelse"></p>
+          </div>
+
+          <div class="send-inn-felt-gruppe">
+            <label class="send-inn-label" for="lenke">Lenke til billetter / mer info</label>
+            <input type="url" id="lenke" name="lenke" class="send-inn-input" placeholder="https://…" />
+            <p class="send-inn-feil" data-feil-for="lenke"></p>
+          </div>
+
+          <div class="send-inn-felt-gruppe">
+            <label class="send-inn-label" for="bilde-fil">Bilde</label>
+            <input type="file" id="bilde-fil" name="bilde" accept="image/*" class="send-inn-fil" />
+            <p class="send-inn-hjelpetekst">Bildet krympes automatisk i nettleseren din før det sendes inn.</p>
+            <label class="send-inn-label" for="bilde-lenke">…eller lim inn en bildelenke</label>
+            <input type="url" id="bilde-lenke" name="bildeLenke" class="send-inn-input" placeholder="https://…" />
+            <p class="send-inn-feil" data-feil-for="bilde"></p>
+            <p class="send-inn-feil" data-feil-for="bildeLenke"></p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ==============================
+           BONUSBOKS — ser bevisst annerledes ut enn kortet over, og er
+           tydelig merket som ikke-offentlig.
+           ============================== -->
+      <div class="send-inn-bonusboks">
+        <label class="send-inn-label" for="kommentar">Noe du vil si til oss i påby? <span class="send-inn-privat-merke">vises ikke offentlig</span></label>
+        <textarea id="kommentar" name="kommentar" class="send-inn-textarea" rows="3" maxlength="1000" placeholder="Valgfritt"></textarea>
+        <p class="send-inn-teller"><span id="kommentar-teller">0</span>/1000 tegn</p>
+        <p class="send-inn-feil" data-feil-for="kommentar"></p>
+      </div>
+
+      <!-- ==============================
+           OM DEG — ikke-offentlig innsenderinfo.
+           ============================== -->
+      <div class="send-inn-omdeg-boks">
+        <h2 class="send-inn-omdeg-tittel">Om deg <span class="send-inn-privat-merke">vises ikke offentlig</span></h2>
+
+        <div class="send-inn-felt-gruppe">
+          <label class="send-inn-label" for="navn">Navn *</label>
+          <input type="text" id="navn" name="navn" class="send-inn-input" required />
+          <p class="send-inn-feil" data-feil-for="navn"></p>
+        </div>
+
+        <div class="send-inn-felt-gruppe">
+          <label class="send-inn-label" for="organisasjon">Arrangør / organisasjon</label>
+          <input type="text" id="organisasjon" name="organisasjon" class="send-inn-input" />
+        </div>
+
+        <div class="send-inn-felt-gruppe">
+          <label class="send-inn-label" for="kontakt">E-post eller Instagram-håndtak *</label>
+          <input type="text" id="kontakt" name="kontakt" class="send-inn-input" placeholder="deg@epost.no eller @dittbrukernavn" required />
+          <p class="send-inn-feil" data-feil-for="kontakt"></p>
+        </div>
+
+        <label class="send-inn-checkbox-rad">
+          <input type="checkbox" id="bekreft" name="bekreft" required />
+          Informasjonen stemmer, og vi har rett til å bruke bildet.
+        </label>
+        <p class="send-inn-feil" data-feil-for="bekreft"></p>
+
+        <p class="send-inn-feil send-inn-feil--generelt" data-feil-for="generelt"></p>
+
+        <button type="submit" id="send-knapp" class="knapp knapp-primaer send-inn-send-knapp">
+          Send inn event
+        </button>
+      </div>
+
+    </form>
+
+    <!-- ==============================
+         BEKREFTELSE — vises i stedet for skjemaet etter vellykket innsending.
+         ============================== -->
+    <div class="send-inn-bekreftelse" id="bekreftelse" hidden>
+      <p class="send-inn-bekreftelse-tekst">Takk! Vi ser på det og tar kontakt hvis noe er uklart.</p>
+      <button type="button" class="knapp knapp-sekundaer" id="send-enda-en-knapp">Send inn ett til</button>
+    </div>
+
+  </main>
+
+  <script type="module" src="/js/presentation/send-inn.js"></script>
+
+</body>
+</html>

@@ -1601,6 +1601,232 @@ body.modal-aapen {
 }
 
 
+/* === SEND INN (send-inn/index.html) ===
+   Skjemaet gjenbruker eksisterende kort-/modal-klasser (.modal-container,
+   .modal-bilde-wrapper, .modal-body, .modal-tittel, .modal-beskrivelse,
+   .modal-faktarad/.faktarad-*, .chip/.kategori-chip, .knapp/.knapp-primaer)
+   for at siden skal se ut som selve eventkortet. Denne seksjonen inneholder
+   KUN det som ikke fantes fra før: selve input/textarea/select-feltene,
+   bildeopplasting, tegnteller, honeypot og de to boksene under kortet som
+   bevisst ser annerledes ut (bonusboks og "om deg"). */
+
+.send-inn-innhold {
+  max-width: 640px;
+}
+
+/* Kategorifargen kobles til --kort-farge på nøyaktig samme måte som
+   .modal[data-kategori] gjør for den ekte modalen — se css/variabler.css
+   og .modal-container sin egen --kort-farge-fallback. */
+.send-inn-kort[data-kategori="musikk"] { --kort-farge: var(--musikk); }
+.send-inn-kort[data-kategori="klubb"]  { --kort-farge: var(--klubb); }
+.send-inn-kort[data-kategori="pafunn"] { --kort-farge: var(--pafunn); }
+
+.send-inn-honeypot {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.send-inn-bilde-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.send-inn-bilde-placeholder {
+  color: var(--graa);
+  font-size: 0.85rem;
+}
+
+.send-inn-label {
+  display: block;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--graa);
+  margin-bottom: 0.3rem;
+}
+
+.send-inn-privat-merke {
+  text-transform: none;
+  letter-spacing: normal;
+  font-style: italic;
+  color: var(--graa);
+}
+
+.send-inn-felt-gruppe {
+  margin-bottom: var(--gap-m);
+}
+
+.send-inn-input,
+.send-inn-textarea,
+.send-inn-select {
+  display: block;
+  width: 100%;
+  background: var(--flate-2);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-s);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.95rem;
+  color: var(--paper);
+  transition: border-color 0.15s;
+}
+
+.send-inn-input:focus,
+.send-inn-textarea:focus,
+.send-inn-select:focus {
+  outline: none;
+  border-color: var(--kort-farge, var(--aksent));
+}
+
+.send-inn-textarea {
+  resize: vertical;
+  min-height: 4.5rem;
+}
+
+/* Tittel-feltet skal se ut som .modal-tittel (stor overskrift), ikke som et
+   vanlig inputfelt — men beholder en diskré bunnlinje som viser at det kan
+   redigeres. */
+.send-inn-input--tittel {
+  background: none;
+  border: none;
+  border-bottom: 1.5px solid var(--flate-2);
+  border-radius: 0;
+  padding: 0.2rem 0;
+}
+.send-inn-input--tittel:focus {
+  border-bottom-color: var(--kort-farge, var(--aksent));
+}
+
+.send-inn-fil {
+  display: block;
+  width: 100%;
+  font-size: 0.85rem;
+  color: var(--graa);
+  margin-bottom: 0.4rem;
+}
+
+.send-inn-kategori-velger {
+  display: flex;
+  gap: var(--gap-s);
+  flex-wrap: wrap;
+}
+
+.send-inn-faktarad {
+  align-items: end;
+}
+.send-inn-faktarad .faktarad-verdi {
+  width: auto;
+  min-width: 0;
+}
+
+.send-inn-gjentas-rad {
+  display: flex;
+  gap: var(--gap-s);
+  flex-wrap: wrap;
+}
+.send-inn-gjentas-rad .send-inn-select {
+  width: auto;
+  flex: 1;
+  min-width: 8rem;
+}
+
+.send-inn-pris-velger {
+  display: flex;
+  gap: var(--gap-m);
+  flex-wrap: wrap;
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.send-inn-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+}
+
+.send-inn-teller {
+  font-size: 0.75rem;
+  color: var(--graa);
+  text-align: right;
+  margin-top: 0.2rem;
+}
+
+.send-inn-feil {
+  font-size: 0.8rem;
+  color: #D9342B;
+  margin-top: 0.3rem;
+  min-height: 0;
+}
+.send-inn-feil:empty {
+  display: none;
+}
+.send-inn-feil--generelt {
+  margin-top: var(--gap-s);
+  font-size: 0.85rem;
+}
+
+.send-inn-hjelpetekst {
+  font-size: 0.78rem;
+  color: var(--graa);
+  margin-top: -0.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.send-inn-checkbox-rad {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  margin: var(--gap-s) 0;
+  cursor: pointer;
+}
+.send-inn-checkbox-rad input {
+  margin-top: 0.2rem;
+  cursor: pointer;
+}
+
+.send-inn-send-knapp {
+  width: 100%;
+  margin-top: var(--gap-s);
+}
+
+/* Bonusboks og "om deg" — skal bevisst se annerledes ut enn selve
+   eventkortet (stiplet kant, ingen kategorifarge). */
+.send-inn-bonusboks,
+.send-inn-omdeg-boks {
+  max-width: 520px;
+  margin: var(--gap-l) auto 0;
+  padding: var(--gap-m) var(--gap-l);
+  border: 1.5px dashed var(--flate-2);
+  border-radius: var(--radius-m);
+}
+
+.send-inn-omdeg-tittel {
+  font-family: var(--font-tittel);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: var(--gap-m);
+}
+
+.send-inn-bekreftelse {
+  max-width: 520px;
+  margin: var(--gap-xl) auto 0;
+  padding: var(--gap-xl) var(--gap-l);
+  text-align: center;
+  border: 2px solid var(--kort-farge, var(--aksent));
+  border-radius: var(--radius-m);
+}
+
+.send-inn-bekreftelse-tekst {
+  font-size: 1.05rem;
+  margin-bottom: var(--gap-m);
+}
+
+
 /* === MOBILTILPASNING === */
 
 @media (max-width: 899px) {
