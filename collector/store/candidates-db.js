@@ -7,12 +7,21 @@ function tilLegacyStatus(status) {
 }
 
 // Hent alle candidates i samme format resten av collectoren kjenner.
+// source og innsenderfeltene returneres som interne _-felt, på samme måte
+// som _status — de skal aldri havne i selve payloadet.
 export async function lesCandidates() {
   const result = await pool.query(`
     SELECT
       legacy_id,
       payload,
-      status
+      status,
+      source,
+      submitter_name,
+      submitter_org,
+      submitter_contact,
+      submitter_note,
+      possible_duplicate,
+      duplicate_hint
     FROM event_candidates
     ORDER BY created_at ASC
   `);
@@ -21,12 +30,19 @@ export async function lesCandidates() {
     ...row.payload,
     id: row.legacy_id,
     _status: tilLegacyStatus(row.status),
+    _kilde: row.source,
+    _innsenderNavn: row.submitter_name,
+    _innsenderOrg: row.submitter_org,
+    _innsenderKontakt: row.submitter_contact,
+    _innsenderNotat: row.submitter_note,
+    _muligDuplikat: row.possible_duplicate,
+    _duplikatHint: row.duplicate_hint,
   }));
 }
 
 // Legg nye candidates i databasen.
 // Eksisterende legacy_id hoppes over.
-export async function leggTilCandidates(eventer) {
+export async function leggTilCandidates(eventer, { source = 'collector' } = {}) {
   if (!eventer.length) return 0;
 
   const client = await pool.connect();
@@ -44,9 +60,10 @@ export async function leggTilCandidates(eventer) {
           INSERT INTO event_candidates (
             legacy_id,
             payload,
-            status
+            status,
+            source
           )
-          VALUES ($1, $2::jsonb, 'pending')
+          VALUES ($1, $2::jsonb, 'pending', $3)
 
           ON CONFLICT (legacy_id)
           DO NOTHING
@@ -56,6 +73,7 @@ export async function leggTilCandidates(eventer) {
         [
           event.id,
           JSON.stringify(payload),
+          source,
         ],
       );
 
@@ -71,6 +89,22 @@ export async function leggTilCandidates(eventer) {
   } finally {
     client.release();
   }
+}
+
+// Oppdater payload for en candidate (brukes av "Lagre endringer" i review-
+// verktøyet, både for vanlige candidates og innsendte).
+export async function oppdaterCandidatePayload(legacyId, payload) {
+  const result = await pool.query(
+    `
+      UPDATE event_candidates
+      SET payload = $2::jsonb
+      WHERE legacy_id = $1
+      RETURNING id
+    `,
+    [legacyId, JSON.stringify(payload)],
+  );
+
+  return result.rowCount > 0;
 }
 
 // Marker candidate som godkjent og koble den til publisert event.
@@ -97,21 +131,42 @@ export async function markerGodkjent(
   return result.rowCount > 0;
 }
 
-// Marker candidate som avslått.
+// Marker candidate som avslått. Sletter samtidig et evt. opplastet bilde
+// (candidate_images) — avslåtte innsendinger skal ikke fortsette å ligge
+// tilgjengelig på /api/bilder/:id.
 export async function markerAvslatt(legacyId) {
-  const result = await pool.query(
-    `
-      UPDATE event_candidates
-      SET
-        status = 'rejected',
-        reviewed_at = NOW()
-      WHERE legacy_id = $1
-      RETURNING id
-    `,
-    [legacyId],
-  );
+  const client = await pool.connect();
 
-  return result.rowCount > 0;
+  try {
+    await client.query('BEGIN');
+
+    const result = await client.query(
+      `
+        UPDATE event_candidates
+        SET
+          status = 'rejected',
+          reviewed_at = NOW()
+        WHERE legacy_id = $1
+        RETURNING id
+      `,
+      [legacyId],
+    );
+
+    if (result.rowCount > 0) {
+      await client.query(
+        `DELETE FROM candidate_images WHERE candidate_id = $1`,
+        [result.rows[0].id],
+      );
+    }
+
+    await client.query('COMMIT');
+    return result.rowCount > 0;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // Returnerer bare id-ene, samme format som gamle rejected.json.

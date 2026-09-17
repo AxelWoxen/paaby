@@ -16,11 +16,13 @@ import {
   leggTilCandidates,
   markerGodkjent,
   markerAvslatt,
+  oppdaterCandidatePayload,
 } from '../store/candidates-db.js';
 
 import { normaliser } from '../normalize.js';
 import { dedupliser } from '../dedupe.js';
 import { utvidGjentakende } from '../../js/application/gjentas.js';
+import { osloLokalTilISO } from '../../js/application/oslo-tid.js';
 
 import {
   lesPubliserte,
@@ -163,6 +165,84 @@ await markerGodkjent(
 
     res.status(500).json({
       feil: 'Kunne ikke publisere event',
+    });
+  }
+});
+
+
+// Oppdater felt på en candidate (brukes av «Lagre endringer» i Innsendte-
+// og Review-fanene). Kandidaten er fortsatt 'pending' etterpå — dette
+// endrer kun payload, ikke status.
+app.post('/api/kandidat/:id/oppdater', async (req, res) => {
+  const { id } = req.params;
+  const body = req.body ?? {};
+
+  const tittel = body.tittel?.trim();
+  const start = body.start?.trim();
+
+  if (!tittel || !start) {
+    return res.status(400).json({
+      feil: 'Tittel og starttidspunkt er påkrevd',
+    });
+  }
+
+  const alle = await lesCandidates();
+  const event = alle.find((candidate) => candidate.id === id);
+
+  if (!event) {
+    return res.status(404).json({
+      feil: 'Event ikke funnet',
+    });
+  }
+
+  // Interne _-felt (status, kilde, innsenderdata, duplikat-varsel) hører
+  // hjemme i egne kolonner, ikke i payload — fjernes før lagring.
+  const {
+    _status, _kilde,
+    _innsenderNavn, _innsenderOrg, _innsenderKontakt, _innsenderNotat,
+    _muligDuplikat, _duplikatHint,
+    ...basisPayload
+  } = event;
+
+  const payload = {
+    ...basisPayload,
+    tittel,
+    kategori: body.kategori ?? event.kategori,
+
+    sted: tekstEllerNull(body.sted),
+    adresse: tekstEllerNull(body.adresse),
+
+    lat: tallEllerNull(body.lat),
+    lng: tallEllerNull(body.lng),
+
+    start,
+    slutt: tekstEllerNull(body.slutt),
+
+    pris: tallEllerNull(body.pris),
+    prisTekst: tekstEllerNull(body.prisTekst),
+
+    beskrivelse: tekstEllerNull(body.beskrivelse),
+    kuratortekst: tekstEllerNull(body.kuratortekst),
+
+    lenke: tekstEllerNull(body.lenke),
+    bilde: tekstEllerNull(body.bilde),
+  };
+
+  try {
+    const ok = await oppdaterCandidatePayload(id, payload);
+
+    if (!ok) {
+      return res.status(404).json({
+        feil: 'Event ikke funnet',
+      });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Kunne ikke oppdatere kandidat:', err);
+
+    res.status(500).json({
+      feil: 'Kunne ikke oppdatere kandidat',
     });
   }
 });
@@ -363,12 +443,17 @@ app.post('/api/manuell', async (req, res) => {
       ? Number(body.pris)
       : null;
 
-  // Review-formen sender lokal Oslo-tid uten timezone.
-  // Denne gjøres om til ISO-formatet som normalize.js forventer.
-  const tilOsloISO = (verdi) =>
-    verdi
-      ? `${verdi.trim().slice(0, 16)}:00+02:00`
-      : null;
+  // Review-formen sender lokal Oslo-tid uten timezone ("YYYY-MM-DDTHH:MM").
+  // Offset slås opp faktisk (sommer-/vintertid) via osloLokalTilISO —
+  // IKKE hardkodet, ellers blir manuelt lagt inn-eventer én time feil
+  // etter at sommertiden slutter (25. oktober 2026).
+  const tilOsloISO = (verdi) => {
+    if (!verdi) return null;
+    const m = verdi.trim().match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
+    if (!m) return null;
+    const [, år, maned, dag, time, min] = m;
+    return osloLokalTilISO(Number(år), Number(maned), Number(dag), Number(time), Number(min));
+  };
 
   // Bygg et råobjekt som normalize.js kan behandle på samme måte
   // som events fra broadcast-adapteren.
@@ -470,7 +555,7 @@ app.post('/api/manuell', async (req, res) => {
     });
   }
 
-  await leggTilCandidates(nye);
+  await leggTilCandidates(nye, { source: 'manuell' });
 
   res.json({
     ok: true,

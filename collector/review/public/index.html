@@ -144,6 +144,33 @@
       background: rgba(255,215,0,.2); color: var(--gull);
       font-size: .65rem;
     }
+    .badge.duplikat-badge { background: rgba(255,107,91,.15); color: var(--korall); }
+
+    /* ─── INNSENDTE ──────────────────────────────────────────────────── */
+    .innsender-boks {
+      background: var(--flate2);
+      border-left: 3px solid var(--lime);
+      border-radius: 6px;
+      padding: .7rem .85rem;
+      margin-bottom: .85rem;
+      font-size: .85rem;
+    }
+    .innsender-boks strong { color: var(--tekst); }
+    .innsender-boks a { color: var(--lime); }
+    .innsender-rad { margin-bottom: .3rem; }
+    .innsender-rad:last-child { margin-bottom: 0; }
+    .innsender-notat {
+      white-space: pre-wrap;
+      color: var(--tekst);
+    }
+    .duplikat-varsel {
+      background: rgba(255,107,91,.12);
+      color: var(--korall);
+      border-radius: 6px;
+      padding: .55rem .75rem;
+      margin-bottom: .85rem;
+      font-size: .82rem;
+    }
 
     .kort-tittel { font-size: 1.1rem; font-weight: 700; margin-bottom: .2rem; }
 
@@ -390,6 +417,7 @@
 <!-- ─── TABS ────────────────────────────────────────────────────────────── -->
 <div class="tabs">
   <button class="tab aktiv" data-tab="review"     onclick="byttTab('review', this)">Review</button>
+  <button class="tab"       data-tab="innsendte"  onclick="byttTab('innsendte', this)">📥 Innsendte (<span id="innsendte-teller">0</span>)</button>
   <button class="tab"       data-tab="publiserte" onclick="byttTab('publiserte', this)">★ Publiserte</button>
   <button class="tab"       data-tab="legg-til"   onclick="byttTab('legg-til', this)">+ Legg til manuelt</button>
 </div>
@@ -408,6 +436,9 @@
 
 <!-- ─── REVIEW FEED ──────────────────────────────────────────────────────── -->
 <div id="feed"></div>
+
+<!-- ─── INNSENDTE FEED ───────────────────────────────────────────────────── -->
+<div id="innsendte-feed" style="display:none"></div>
 
 <!-- ─── PUBLISERTE FEED ──────────────────────────────────────────────────── -->
 <div id="publiserte-feed" style="display:none"></div>
@@ -969,6 +1000,7 @@ function byttTab(tab, knapp) {
 
   document.getElementById('feed').style.display            = tab === 'review'     ? '' : 'none';
   document.getElementById('filtre-panel').style.display    = tab === 'review'     ? '' : 'none';
+  document.getElementById('innsendte-feed').style.display  = tab === 'innsendte'  ? '' : 'none';
   document.getElementById('publiserte-feed').style.display = tab === 'publiserte' ? '' : 'none';
   document.getElementById('skjema-panel').style.display    = tab === 'legg-til'   ? 'block' : 'none';
 
@@ -991,6 +1023,7 @@ function erPassert(event) {
 
 function skalVises(event) {
   if (event._status !== 'pending') return false;
+  if (event._kilde === 'innsending') return false; // vises kun i Innsendte-fanen
   if (skjulPasserte && erPassert(event)) return false;
   if (aktivFilter !== 'alle' && event.kategori !== aktivFilter) return false;
   return true;
@@ -1016,7 +1049,7 @@ function oppdaterVisning() {
 function oppdaterTeller(delta = 0) {
   antallSynlig += delta;
   if (antallSynlig < 0) antallSynlig = 0;
-  const totalt  = alleEvents.filter(e => e._status === 'pending').length;
+  const totalt  = alleEvents.filter(e => e._status === 'pending' && e._kilde !== 'innsending').length;
   const el      = document.getElementById('teller');
   el.textContent = antallSynlig === totalt
     ? `${totalt} pending`
@@ -1260,6 +1293,279 @@ if (event.lenke) {
   return kort;
 }
 
+// ─── Innsendte (source === 'innsending') ──────────────────────────────────────
+
+function lagKontaktLenke(kontakt) {
+  if (!kontakt) return null;
+  const verdi = kontakt.trim();
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(verdi)) {
+    const a = document.createElement('a');
+    a.href = `mailto:${verdi}`;
+    a.textContent = verdi;
+    return a;
+  }
+  const handle = verdi.replace(/^@/, '');
+  const a = document.createElement('a');
+  a.href = `https://instagram.com/${encodeURIComponent(handle)}`;
+  a.target = '_blank'; a.rel = 'noopener noreferrer';
+  a.textContent = verdi.startsWith('@') ? verdi : `@${handle}`;
+  return a;
+}
+
+function lagInnsenderBoks(event) {
+  const boks = document.createElement('div');
+  boks.className = 'innsender-boks';
+
+  const navnRad = document.createElement('div');
+  navnRad.className = 'innsender-rad';
+  const navnLabel = document.createElement('strong');
+  navnLabel.textContent = 'Innsendt av: ';
+  navnRad.appendChild(navnLabel);
+  navnRad.appendChild(document.createTextNode(event._innsenderNavn ?? '—'));
+  if (event._innsenderOrg) navnRad.appendChild(document.createTextNode(` (${event._innsenderOrg})`));
+  boks.appendChild(navnRad);
+
+  const kontaktRad = document.createElement('div');
+  kontaktRad.className = 'innsender-rad';
+  const kontaktLabel = document.createElement('strong');
+  kontaktLabel.textContent = 'Kontakt: ';
+  kontaktRad.appendChild(kontaktLabel);
+  const lenke = lagKontaktLenke(event._innsenderKontakt);
+  kontaktRad.appendChild(lenke ?? document.createTextNode(event._innsenderKontakt ?? '—'));
+  boks.appendChild(kontaktRad);
+
+  if (event._innsenderNotat) {
+    const notatRad = document.createElement('div');
+    notatRad.className = 'innsender-rad';
+    const notatLabel = document.createElement('strong');
+    notatLabel.textContent = 'Kommentar:';
+    notatRad.appendChild(notatLabel);
+    notatRad.appendChild(document.createElement('br'));
+    const notatTekst = document.createElement('span');
+    notatTekst.className = 'innsender-notat';
+    notatTekst.textContent = event._innsenderNotat;
+    notatRad.appendChild(notatTekst);
+    boks.appendChild(notatRad);
+  }
+
+  return boks;
+}
+
+/* Fullt redigerbart kort for én innsending: samme felt-byggeklosser som
+   Publiserte-fanens redigeringspanel (lagKategoriVelgerEl/lagFelt/
+   lagFeltRad/lagTekstomrade/lagGjentasKontroll/lagBildeCropSeksjon), pluss
+   innsenderboks, duplikat-varsel og Lagre/Godkjenn/Avslå/Fremhev — alt synlig
+   direkte, uten en «Rediger»-toggle (i motsetning til Publiserte, der det
+   kun er én ting å redigere i utgangspunktet). */
+function lagInnsendtKort(event) {
+  const kort = document.createElement('article');
+  kort.className = 'kort';
+  kort.dataset.id = event.id;
+
+  const kropp = document.createElement('div');
+  kropp.className = 'kort-kropp';
+
+  const meta = document.createElement('div');
+  meta.className = 'kort-meta';
+  const badge = document.createElement('span');
+  badge.className = `badge ${event.kategori}`; badge.textContent = event.kategori;
+  meta.appendChild(badge);
+  if (event._muligDuplikat) {
+    const db = document.createElement('span');
+    db.className = 'badge duplikat-badge'; db.textContent = '⚠ Mulig duplikat';
+    meta.appendChild(db);
+  }
+  const dato = document.createElement('span');
+  dato.style.cssText = 'color:var(--dempet);font-size:.8rem';
+  dato.textContent = formaterDato(event.start);
+  meta.appendChild(dato);
+  kropp.appendChild(meta);
+
+  const tittelEl = document.createElement('h2');
+  tittelEl.className = 'kort-tittel'; tittelEl.textContent = event.tittel;
+  kropp.appendChild(tittelEl);
+
+  kropp.appendChild(lagInnsenderBoks(event));
+
+  if (event._muligDuplikat && event._duplikatHint) {
+    const varsel = document.createElement('div');
+    varsel.className = 'duplikat-varsel';
+    varsel.textContent = `⚠ ${event._duplikatHint}`;
+    kropp.appendChild(varsel);
+  }
+
+  const katLabel = document.createElement('label');
+  katLabel.className = 'felt-label'; katLabel.textContent = 'Kategori';
+  const kat = lagKategoriVelgerEl(event.kategori);
+
+  const fTittel    = lagFelt('Tittel *', event.tittel);
+  const fStart     = lagFelt('Start (dato og tid) *', osloISOTilDatetimeLocal(event.start), 'datetime-local');
+  const fSlutt     = lagFelt('Slutt', osloISOTilDatetimeLocal(event.slutt), 'datetime-local');
+  const fSted      = lagFelt('Sted', event.sted);
+  const fAdresse   = lagFelt('Adresse', event.adresse);
+  const fLat       = lagFelt('Lat', event.lat ?? '');
+  const fLng       = lagFelt('Lng', event.lng ?? '');
+  const fPris      = lagFelt('Pris (kr, 0 = gratis, tom = ukjent)', event.pris ?? '');
+  const fPrisTekst = lagFelt('Prisvisning', event.prisTekst);
+  const fLenke     = lagFelt('Lenke (billett / mer info)', event.lenke);
+  const fBilde     = lagFelt('Bilde-URL', event.bilde);
+  const bildeCrop  = lagBildeCropSeksjon(fBilde);
+  const tBesk      = lagTekstomrade('Beskrivelse', event.beskrivelse, 3);
+  const tKur       = lagTekstomrade('Kuratortekst (vises i kortet)', event.kuratortekst, 2);
+
+  kropp.appendChild(katLabel);
+  kropp.appendChild(kat.el);
+  kropp.appendChild(fTittel.wrap);
+  kropp.appendChild(lagFeltRad(fStart, fSlutt));
+  kropp.appendChild(lagFeltRad(fSted, fAdresse));
+  kropp.appendChild(lagFeltRad(fLat, fLng));
+  kropp.appendChild(lagFeltRad(fPris, fPrisTekst));
+  kropp.appendChild(tBesk.lab);  kropp.appendChild(tBesk.ta);
+  kropp.appendChild(tKur.lab);   kropp.appendChild(tKur.ta);
+  kropp.appendChild(fLenke.wrap);
+  kropp.appendChild(fBilde.wrap);
+  kropp.appendChild(bildeCrop.el);
+
+  const gjentasKontroll = lagGjentasKontroll(event.gjentas ?? null);
+  kropp.appendChild(gjentasKontroll.el);
+
+  const status = document.createElement('div');
+  status.className = 'pub-rediger-lagre-status';
+
+  const rad = document.createElement('div');
+  rad.className = 'knapp-rad';
+
+  const lagreKnapp = document.createElement('button');
+  lagreKnapp.className = 'knapp';
+  lagreKnapp.style.cssText = 'background:var(--flate3);color:var(--tekst)';
+  lagreKnapp.textContent = '💾 Lagre endringer';
+
+  const gKnapp = document.createElement('button');
+  gKnapp.className = 'knapp knapp-godkjenn'; gKnapp.textContent = '✓ Godkjenn';
+
+  const aKnapp = document.createElement('button');
+  aKnapp.className = 'knapp knapp-avslaa'; aKnapp.textContent = '✕ Avslå';
+
+  const fKnapp = document.createElement('button');
+  fKnapp.className = 'knapp-fremhev';
+  fKnapp.title = 'Fremhev';
+  fKnapp.textContent = '★';
+  let fremhevet = false;
+  fKnapp.onclick = () => {
+    fremhevet = !fremhevet;
+    fKnapp.classList.toggle('aktiv', fremhevet);
+    fKnapp.title = fremhevet ? 'Fjern fremheving' : 'Fremhev';
+  };
+
+  function settKnapperDisabled(v) {
+    lagreKnapp.disabled = gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = v;
+  }
+
+  rad.appendChild(lagreKnapp); rad.appendChild(gKnapp); rad.appendChild(aKnapp); rad.appendChild(fKnapp);
+  kropp.appendChild(status);
+  kropp.appendChild(rad);
+  kort.appendChild(kropp);
+
+  lagreKnapp.onclick = async () => {
+    const tittel = fTittel.input.value.trim();
+    const start  = fStart.input.value.trim();
+    if (!tittel || !start) {
+      status.className = 'pub-rediger-lagre-status feil';
+      status.textContent = 'Tittel og starttidspunkt er påkrevd.';
+      return;
+    }
+    lagreKnapp.disabled = true;
+    status.className = 'pub-rediger-lagre-status';
+    const res = await fetch(`/api/kandidat/${encodeURIComponent(event.id)}/oppdater`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        tittel,
+        kategori:     kat.hentVerdi(),
+        sted:         fSted.input.value.trim(),
+        adresse:      fAdresse.input.value.trim(),
+        lat:          fLat.input.value.trim(),
+        lng:          fLng.input.value.trim(),
+        start:        datetimeLocalTilOsloISO(start),
+        slutt:        datetimeLocalTilOsloISO(fSlutt.input.value.trim()),
+        pris:         fPris.input.value.trim(),
+        prisTekst:    fPrisTekst.input.value.trim(),
+        beskrivelse:  tBesk.ta.value.trim(),
+        kuratortekst: tKur.ta.value.trim(),
+        lenke:        fLenke.input.value.trim(),
+        bilde:        fBilde.input.value.trim(),
+      }),
+    });
+    const data = await res.json();
+    lagreKnapp.disabled = false;
+    if (data.ok) {
+      status.className = 'pub-rediger-lagre-status ok';
+      status.textContent = '✓ Lagret.';
+      event.tittel = tittel;
+      tittelEl.textContent = tittel;
+    } else {
+      status.className = 'pub-rediger-lagre-status feil';
+      status.textContent = data.feil ?? 'Ukjent feil';
+    }
+  };
+
+  gKnapp.onclick = async () => {
+    settKnapperDisabled(true);
+    gKnapp.textContent = '…';
+    const res = await fetch(`/api/godkjenn/${encodeURIComponent(event.id)}`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kuratortekst: tKur.ta.value, fremhevet, gjentas: gjentasKontroll.hentVerdi() }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      kort.style.transition = 'opacity .25s'; kort.style.opacity = '0';
+      setTimeout(() => { kort.remove(); event._status = 'godkjent'; oppdaterInnsendteTeller(); }, 250);
+    } else {
+      settKnapperDisabled(false);
+      gKnapp.textContent = '✓ Godkjenn';
+      alert(data.feil);
+    }
+  };
+
+  aKnapp.onclick = async () => {
+    settKnapperDisabled(true);
+    aKnapp.textContent = '…';
+    const res = await fetch(`/api/avslaa/${encodeURIComponent(event.id)}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      kort.style.transition = 'opacity .25s'; kort.style.opacity = '0';
+      setTimeout(() => { kort.remove(); event._status = 'avslatt'; oppdaterInnsendteTeller(); }, 250);
+    } else {
+      settKnapperDisabled(false);
+      aKnapp.textContent = '✕ Avslå';
+    }
+  };
+
+  return { el: kort, lastInnBilde: bildeCrop.lastInnVedVisning };
+}
+
+function oppdaterInnsendteTeller() {
+  const antall = alleEvents.filter(e => e._kilde === 'innsending' && e._status === 'pending').length;
+  document.getElementById('innsendte-teller').textContent = antall;
+}
+
+function renderInnsendteFeed() {
+  const feed = document.getElementById('innsendte-feed');
+  feed.innerHTML = '';
+  const innsendte = alleEvents.filter(e => e._kilde === 'innsending' && e._status === 'pending');
+
+  if (innsendte.length === 0) {
+    feed.innerHTML = '<div class="tom"><strong>Ingen ventende innsendinger</strong></div>';
+  } else {
+    innsendte.forEach(e => {
+      const { el, lastInnBilde } = lagInnsendtKort(e);
+      feed.appendChild(el);
+      lastInnBilde();
+    });
+  }
+
+  oppdaterInnsendteTeller();
+}
+
 // ─── Last inn pending ────────────────────────────────────────────────────────
 
 async function lastInn() {
@@ -1272,6 +1578,8 @@ async function lastInn() {
   feed.innerHTML = '';
   alleEvents.forEach(e => feed.appendChild(lagKort(e)));
   oppdaterVisning();
+
+  renderInnsendteFeed();
 
   // Oppdater fremhev-teller fra publiserte
   fetch('/api/publiserte').then(r => r.json()).then(oppdaterFremhevTeller);
