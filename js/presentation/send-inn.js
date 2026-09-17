@@ -25,7 +25,6 @@ const MAKS_BESKRIVELSE  = 500;
 const MAKS_KOMMENTAR    = 1000;
 
 const skjema        = document.getElementById('innsending-skjema');
-const eventKort      = document.getElementById('event-kort');
 const kategoriInput  = document.getElementById('kategori');
 const kategoriKnapper = document.querySelectorAll('.send-inn-kategori-velger .kategori-chip');
 
@@ -56,7 +55,9 @@ kategoriKnapper.forEach((knapp) => {
     knapp.classList.add('aktiv');
     knapp.setAttribute('aria-pressed', 'true');
     kategoriInput.value = knapp.dataset.kategori;
-    eventKort.dataset.kategori = knapp.dataset.kategori;
+    // Settes på selve <form>-en, ikke bare kortet — send-knappen ligger
+    // utenfor kortet og trenger samme --kort-farge (se css/stil.css).
+    skjema.dataset.kategori = knapp.dataset.kategori;
     settFeil('kategori', '');
   });
 });
@@ -295,7 +296,7 @@ function tilbakestillSkjema() {
     b.setAttribute('aria-pressed', 'false');
   });
   kategoriInput.value = '';
-  delete eventKort.dataset.kategori;
+  delete skjema.dataset.kategori;
   gjentasDag.hidden = true;
   prisKrInput.hidden = true;
   document.getElementById('beskrivelse-teller').textContent = '0';

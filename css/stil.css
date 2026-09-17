@@ -1614,12 +1614,34 @@ body.modal-aapen {
   max-width: 640px;
 }
 
-/* Kategorifargen kobles til --kort-farge på nøyaktig samme måte som
-   .modal[data-kategori] gjør for den ekte modalen — se css/variabler.css
-   og .modal-container sin egen --kort-farge-fallback. */
-.send-inn-kort[data-kategori="musikk"] { --kort-farge: var(--musikk); }
-.send-inn-kort[data-kategori="klubb"]  { --kort-farge: var(--klubb); }
-.send-inn-kort[data-kategori="pafunn"] { --kort-farge: var(--pafunn); }
+/* Kategorifargen settes på selve <form>-en (felles forelder for kortet OG
+   send-knappen under), slik at BÅDE kortkanten og den fargede knappen får
+   riktig farge — .modal[data-kategori] i den ekte modalen trenger ikke dette
+   siden knappen der ligger inni selve modal-container. */
+#innsending-skjema { --kort-farge: var(--aksent); }
+#innsending-skjema[data-kategori="musikk"] { --kort-farge: var(--musikk); }
+#innsending-skjema[data-kategori="klubb"]  { --kort-farge: var(--klubb); }
+#innsending-skjema[data-kategori="pafunn"] { --kort-farge: var(--pafunn); }
+
+/* .modal-container setter --kort-farge: var(--aksent) på seg selv (for den
+   ekte modalen, som ikke har noen fargesatt forelder) — det ville stjålet
+   fargen tilbake her, så vi ber den heller arve fra <form> over. */
+.send-inn-kort {
+  --kort-farge: inherit;
+}
+
+/* .modal-container er designet som en SKJULT bunnark-modal som glir inn når
+   en .modal.aktiv-forelder finnes (se MODAL/MODAL DESKTOP lenger opp). Uten
+   den forelderen her blir kortet stående dyttet ned (transform) og med en
+   intern scroll-boks (max-height) — begge deler nulles ut, siden dette
+   kortet skal ligge rett i sidens vanlige flyt. */
+.send-inn-kort {
+  transform: none;
+  transition: none;
+  max-height: none;
+  overflow-y: visible;
+  max-width: none;
+}
 
 .send-inn-honeypot {
   position: absolute;
@@ -1798,8 +1820,7 @@ body.modal-aapen {
    eventkortet (stiplet kant, ingen kategorifarge). */
 .send-inn-bonusboks,
 .send-inn-omdeg-boks {
-  max-width: 520px;
-  margin: var(--gap-l) auto 0;
+  margin-top: var(--gap-l);
   padding: var(--gap-m) var(--gap-l);
   border: 1.5px dashed var(--flate-2);
   border-radius: var(--radius-m);
