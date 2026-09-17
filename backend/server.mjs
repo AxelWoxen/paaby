@@ -1,6 +1,8 @@
 import express from 'express';
 import healthRoutes from './routes/healthRoutes.mjs';
 import eventRoutes from './routes/eventRoutes.mjs';
+import innsendingRoutes from './routes/innsendingRoutes.mjs';
+import bildeRoutes from './routes/bildeRoutes.mjs';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -40,6 +42,22 @@ const eventsLimiter = rateLimit({
 
 app.use('/api/events', eventsLimiter);
 app.use('/api/events', eventRoutes);
+
+// Strengere grense enn /api/events — innsendinger skriver til databasen og
+// er et naturlig mål for spam/bot-trafikk.
+const innsendingerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: 'error',
+    message: 'For mange innsendinger. Prøv igjen om en stund.',
+  },
+});
+
+app.use('/api/innsendinger', innsendingerLimiter, innsendingRoutes);
+app.use('/api/bilder', bildeRoutes);
 
 app.listen(PORT, () => {
   console.log(`Påby API kjører på http://localhost:${PORT}`);

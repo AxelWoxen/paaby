@@ -52,6 +52,24 @@ export function osloKomponenter(dato) {
  * @returns {Date}
  */
 export function lagOsloDato(år, maned, dag, time = 0, min = 0, sek = 0) {
+  return new Date(osloLokalTilISO(år, maned, dag, time, min, sek));
+}
+
+/**
+ * Lager en ISO-streng MED korrekt Oslo-offset (+01:00 vinter / +02:00 sommer)
+ * for et gitt lokalt Oslo-tidspunkt. Offset slås faktisk opp (Intl), aldri
+ * hardkodet — brukes av både innsendings-endepunktet (backend) og
+ * /api/manuell (collector/review), som tidligere hardkodet +02:00 året rundt.
+ *
+ * @param {number} år
+ * @param {number} maned  (1–12)
+ * @param {number} dag    (1–31)
+ * @param {number} time   (0–23)
+ * @param {number} min    (0–59)
+ * @param {number} sek    (0–59)
+ * @returns {string}  f.eks. "2026-11-14T20:00:00+01:00"
+ */
+export function osloLokalTilISO(år, maned, dag, time = 0, min = 0, sek = 0) {
   const pad  = (n) => String(n).padStart(2, '0');
   const base = `${år}-${pad(maned)}-${pad(dag)}T${pad(time)}:${pad(min)}:${pad(sek)}`;
 
@@ -59,10 +77,10 @@ export function lagOsloDato(år, maned, dag, time = 0, min = 0, sek = 0) {
      Bruk den offseten som faktisk gir riktig Oslo-time. */
   for (const offset of ['+02:00', '+01:00']) {
     const kandidat = new Date(base + offset);
-    if (osloKomponenter(kandidat).time === time % 24) return kandidat;
+    if (osloKomponenter(kandidat).time === time % 24) return base + offset;
   }
 
-  return new Date(base + '+01:00'); /* fallback */
+  return base + '+01:00'; /* fallback */
 }
 
 /**
