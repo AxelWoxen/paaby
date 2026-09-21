@@ -4,13 +4,26 @@
    de returnerer alltid serverens JSON-svar ({ ok, feil, ... }), slik at
    views kan vise feilmeldingen serveren faktisk sendte. */
 
+// Sender-du en session utløper (f.eks. etter innaktivitet), sender serveren
+// 401 på ethvert /api/-kall — send brukeren til innlogging i stedet for å
+// la resten av appen stå og feile stille.
+function håndterUtlogget(status) {
+  if (status === 401) location.href = '/login';
+}
+
 async function post(url, body) {
   try {
     const res = await fetch(url, {
       method: 'POST',
-      headers: body !== undefined ? { 'Content-Type': 'application/json' } : undefined,
+      // x-paaby-admin: enkel, egendefinert header et fremmed opphav ikke
+      // kan sette (server.js sin krevPaabyHeader) — CSRF-forsvar i dybden.
+      headers: {
+        'X-Paaby-Admin': '1',
+        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+      },
       body: body !== undefined ? JSON.stringify(body) : undefined,
     });
+    håndterUtlogget(res.status);
     const data = await res.json().catch(() => ({}));
     if (!res.ok && data.feil === undefined) {
       data.feil = `Serverfeil (${res.status})`;
@@ -24,12 +37,14 @@ async function post(url, body) {
 
 async function get(url) {
   const res = await fetch(url);
+  håndterUtlogget(res.status);
   if (!res.ok) throw new Error(`${url} → ${res.status}`);
   return res.json();
 }
 
 export const api = {
   miljo:            () => get('/api/miljo').catch(() => ({ produksjon: false, ukjent: true })),
+  meg:              () => get('/api/meg').catch(() => ({ epost: null })),
 
   hentCandidates:    () => get('/api/candidates'),
   hentPubliserte:    () => get('/api/publiserte'),

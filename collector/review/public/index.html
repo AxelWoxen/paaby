@@ -103,6 +103,9 @@
       max-width: 980px; margin: 0 auto; padding: var(--gap-l) var(--gap-m) var(--gap-m);
     }
     .topbar-venstre { display: flex; align-items: center; gap: var(--gap-m); }
+    .topbar-hoyre { display: flex; align-items: center; gap: var(--gap-m); }
+    .innlogget-som { font-size: 0.78rem; color: var(--graa); }
+    .innlogget-som:empty { display: none; }
     .logo { font-size: 1.15rem; font-weight: 700; }
 
     .miljo-badge {
@@ -453,6 +456,12 @@
   <div class="topbar-venstre">
     <span class="logo">Påby Admin</span>
     <span id="miljo-badge" class="miljo-badge" hidden></span>
+  </div>
+  <div class="topbar-hoyre">
+    <span id="innlogget-som" class="innlogget-som"></span>
+    <form method="POST" action="/logout">
+      <button type="submit" class="lenke-knapp">Logg ut</button>
+    </form>
   </div>
 </header>
 

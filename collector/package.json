@@ -11,6 +11,11 @@
   "review:prod": "DATABASE_URL=\"$(heroku config:get DATABASE_URL -a paaby-api)\" NODE_ENV=production node review/server.js"
 },
   "dependencies": {
-    "express": "^4.19.2"
+    "express": "^4.19.2",
+    "express-session": "^1.18.1",
+    "connect-pg-simple": "^10.0.0",
+    "bcryptjs": "^2.4.3",
+    "helmet": "^8.0.0",
+    "express-rate-limit": "^7.4.1"
   }
 }

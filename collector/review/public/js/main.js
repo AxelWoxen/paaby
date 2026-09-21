@@ -65,8 +65,17 @@ function oppdaterFaneTeller() {
 
 document.addEventListener('paaby:candidates-endret', lastInnCandidates);
 
+// ─── Innlogget som ──────────────────────────────────────────────────────────
+async function visInnloggetSom() {
+  const el = document.getElementById('innlogget-som');
+  if (!el) return;
+  const { epost } = await api.meg();
+  el.textContent = epost ?? '';
+}
+
 async function start() {
   visMiljo();
+  visInnloggetSom();
   await Promise.all([
     lastInnCandidates(),
     publiserte.lastInnPubliserte(),

@@ -9,7 +9,14 @@
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import helmet from 'helmet';
+import session from 'express-session';
+import connectPgSimple from 'connect-pg-simple';
+import rateLimit from 'express-rate-limit';
 
+import pool from '../../backend/db/pool.mjs';
+import { loggInn } from './auth/brukere.mjs';
+import { krevInnlogging, krevPaabyHeader } from './auth/middleware.mjs';
 
 import {
   lesCandidates,
@@ -34,6 +41,12 @@ import {
 } from '../store/published.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+if (!process.env.SESSION_SECRET) {
+  throw new Error(
+    'SESSION_SECRET mangler. Sett den i .env (lokalt) eller som config var (Heroku) — se README/rapport for Fase 2.',
+  );
+}
 
 
 // ─── Hjelpefunksjoner ───────────────────────────────────────────────────────
@@ -76,10 +89,117 @@ function tallEllerNull(verdi) {
 // ─── Express ────────────────────────────────────────────────────────────────
 
 const app = express();
+const ER_PROD = process.env.NODE_ENV === 'production';
+
+// Nødvendig for at `cookie.secure` skal virke riktig bak Herokus proxy
+// (samme oppsett som backend/server.mjs).
+app.set('trust proxy', 1);
+
+// Content-Security-Policy m.m. Adminpanelet har akkurat to eksterne
+// avhengigheter (Cropper.js fra jsdelivr) — alt annet er 'self'.
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", 'https://cdn.jsdelivr.net'],
+      styleSrc: ["'self'", 'https://cdn.jsdelivr.net', "'unsafe-inline'"],
+      // Event-bilder kommer fra vilkårlige https-verter (ImageKit, RA, …),
+      // pluss data:-URL-er fra bilde-beskjæringen — kan ikke låses til én vert.
+      imgSrc: ["'self'", 'data:', 'https:'],
+      fontSrc: ["'self'"],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      frameAncestors: ["'self'"],
+    },
+  },
+}));
 
 // Standardgrensen på 100kb er for lav når review-verktøyet sender
 // beskårne bilder som data-URL.
 app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: false })); // for /login-skjemaet
+
+const PgSession = connectPgSimple(session);
+
+app.use(session({
+  store: new PgSession({
+    pool,
+    tableName: 'session',
+    // Skjemaet er allerede opprettet via migrasjon (004_admin_auth.sql).
+    // Ingen stille auto-migrering i produksjon.
+    createTableIfMissing: false,
+  }),
+  name: 'paaby_admin_sid',
+  secret: process.env.SESSION_SECRET,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: ER_PROD,
+    sameSite: 'lax',
+    maxAge: 12 * 60 * 60 * 1000, // 12 timer
+  },
+}));
+
+// Beskytter login/logout mot brute force. Svarer med redirect (ikke JSON) —
+// /login er et vanlig skjema-innsendt POST, ikke et fetch-kall.
+const loginBegrensning = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  handler: (_req, res) => res.redirect('/login?feil=for-mange'),
+});
+
+
+// ─── Innlogging ─────────────────────────────────────────────────────────────
+// Eneste åpne ruter i hele appen. Ingen registrering — brukere opprettes kun
+// via collector/review/scripts/opprett-bruker.mjs, kjørt manuelt av eieren.
+
+app.get('/login', (req, res) => {
+  if (req.session?.brukerId) return res.redirect('/');
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+app.post('/login', loginBegrensning, async (req, res) => {
+  const bruker = await loggInn(req.body.epost, req.body.passord);
+
+  if (!bruker) {
+    return res.redirect('/login?feil=1');
+  }
+
+  // Session regenereres ved innlogging (session fixation-forsvar).
+  req.session.regenerate((err) => {
+    if (err) {
+      console.error('Kunne ikke opprette session ved innlogging:', err);
+      return res.redirect('/login?feil=1');
+    }
+    req.session.brukerId = bruker.id;
+    req.session.brukerEpost = bruker.email;
+    req.session.rolle = bruker.role;
+    res.redirect('/');
+  });
+});
+
+app.post('/logout', (req, res) => {
+  req.session.destroy(() => {
+    res.clearCookie('paaby_admin_sid');
+    res.redirect('/login');
+  });
+});
+
+
+// ─── Håndhev innlogging for RESTEN av appen ────────────────────────────────
+// Både statiske filer (HTML/JS/CSS) og /api/*-endepunkter beskyttes —
+// frontend-skjuling er ikke autentisering.
+
+app.use(krevInnlogging);
+app.use(krevPaabyHeader);
+
+app.get('/api/meg', (req, res) => {
+  res.json({ epost: req.session.brukerEpost, rolle: req.session.rolle });
+});
 
 // Server review-grensesnittet fra collector/review/public.
 app.use(express.static(path.join(__dirname, 'public')));
@@ -96,7 +216,7 @@ app.use('/fonts', express.static(path.join(__dirname, '../../fonts')));
 // Robust signal: NODE_ENV settes eksplisitt av `npm run review:prod`
 // (collector/package.json) — ingen gjetting ut fra f.eks. DATABASE_URL.
 app.get('/api/miljo', (_req, res) => {
-  res.json({ produksjon: process.env.NODE_ENV === 'production' });
+  res.json({ produksjon: ER_PROD });
 });
 
 
@@ -581,7 +701,9 @@ app.post('/api/manuell', async (req, res) => {
 
 // ─── Start ──────────────────────────────────────────────────────────────────
 
-const PORT = 3001;
+// process.env.PORT er påkrevd på Heroku (plattformen tildeler porten selv
+// og ruter kun til den) — 3001 er kun en lokal default.
+const PORT = process.env.PORT || 3001;
 
 app.listen(PORT, () => {
   console.log(
