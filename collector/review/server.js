@@ -84,6 +84,21 @@ app.use(express.json({ limit: '10mb' }));
 // Server review-grensesnittet fra collector/review/public.
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Adminpanelet gjenbruker Påbys ekte font i stedet for å duplisere filene —
+// den ligger i repo-roten, utenfor review sin egen public-mappe, så den
+// trenger en egen statisk rute.
+app.use('/fonts', express.static(path.join(__dirname, '../../fonts')));
+
+
+// ─── Miljø ──────────────────────────────────────────────────────────────────
+
+// Forteller adminpanelet om det kjører mot produksjon eller lokalt.
+// Robust signal: NODE_ENV settes eksplisitt av `npm run review:prod`
+// (collector/package.json) — ingen gjetting ut fra f.eks. DATABASE_URL.
+app.get('/api/miljo', (_req, res) => {
+  res.json({ produksjon: process.env.NODE_ENV === 'production' });
+});
+
 
 // ─── Candidates ─────────────────────────────────────────────────────────────
 

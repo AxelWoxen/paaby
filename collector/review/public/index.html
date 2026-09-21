@@ -3,1827 +3,615 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>påby · review</title>
-  <!-- Cropper.js — kun review-verktøyet, brukes til å beskjære bilde-URL-er
-       til 16:7 (samme forhold som .kort-bilde i css/stil.css) før lagring.
-       IKKE lastet i selve appen (index.html i rot). -->
+  <title>Påby Admin</title>
+
+  <!-- Cropper.js — kun adminpanelet, brukes til å beskjære bilde-URL-er
+       til 16:7 (samme forhold som .kort-bilde i css/stil.css på hovedsiden)
+       før lagring. IKKE lastet i selve appen (index.html i rot). -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    :root {
-      --bakgrunn:  #141318;
-      --flate:     #1E1C24;
-      --flate2:    #2A2830;
-      --flate3:    #332F3E;
-      --tekst:     #F0EEF8;
-      --dempet:    #9896A4;
-      --lime:      #C8FF4D;
-      --korall:    #FF6B5B;
-      --gull:      #FFD700;
-      --font:      'Inter', system-ui, sans-serif;
+  <style>
+    /* ─── Design-tokens ──────────────────────────────────────────────────
+       Speiler css/variabler.css (hovedsidens ekte palett/font) 1:1.
+       Adminpanelet er en frittstående statisk app (egen express-server),
+       så tokens duplisert her i stedet for importert — men ALDRI gjettet:
+       samme hex-verdier og font som resten av Påby. */
+
+    @font-face {
+      font-family: 'Spartan';
+      src: url('/fonts/SpartanMB-Regular.otf') format('opentype');
+      font-weight: 400; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'Spartan';
+      src: url('/fonts/SpartanMB-SemiBold.otf') format('opentype');
+      font-weight: 600; font-style: normal; font-display: swap;
+    }
+    @font-face {
+      font-family: 'Spartan';
+      src: url('/fonts/SpartanMB-Bold.otf') format('opentype');
+      font-weight: 700; font-style: normal; font-display: swap;
     }
 
+    :root {
+      --hvit:  #FFFCF7;
+      --svart: #1E0C14;
+      --blaa:  #8CB1F4;
+
+      --paper: var(--svart);
+      --graa:  color-mix(in srgb, var(--svart) 55%, var(--hvit) 45%);
+
+      --flate-1: var(--hvit);
+      --flate-2: color-mix(in srgb, var(--svart) 8%, var(--hvit) 92%);
+      --flate-3: color-mix(in srgb, var(--svart) 14%, var(--hvit) 86%);
+
+      --aksent:          var(--blaa);
+      --aksent-kontrast: var(--svart);
+      --aksent-tekst:    color-mix(in srgb, var(--blaa) 55%, var(--svart) 45%);
+
+      --musikk: #FF4A36;
+      --klubb:  #701236;
+      --pafunn: #A0BEFA;
+
+      /* Sparsomt brukt — kun suksess-feedback og destruktive handlinger. */
+      --suksess:   #2F8F5B;
+      --faresone:  #C4443B;
+
+      --font: 'Spartan', system-ui, sans-serif;
+
+      --gap-s: 0.5rem;
+      --gap-m: 1rem;
+      --gap-l: 1.5rem;
+      --gap-xl: 2rem;
+
+      --radius-s: 8px;
+      --radius-m: 12px;
+
+      /* .knapp-primaer/.chip.aktiv fyller med --kort-farge — uten en
+         kategorikontekst (som på hovedsiden) faller den tilbake på aksenten. */
+      --kort-farge: var(--aksent);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      background: var(--bakgrunn);
-      color: var(--tekst);
+      background: var(--flate-1);
+      color: var(--paper);
       font-family: var(--font);
       font-size: 15px;
       line-height: 1.5;
-      padding: 2rem 1rem 6rem;
+      padding-bottom: 4rem;
     }
 
-    /* ─── TOPBAR ─────────────────────────────────────────────────── */
+    button, input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+    button { cursor: pointer; background: none; border: none; }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+    a { color: var(--aksent-tekst); }
+
+    :focus-visible { outline: 2px solid var(--blaa); outline-offset: 2px; }
+
+    /* ─── Toppbar / navigasjon ───────────────────────────────────────────── */
     .topbar {
-      max-width: 780px;
-      margin: 0 auto 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: var(--gap-m);
+      max-width: 980px; margin: 0 auto; padding: var(--gap-l) var(--gap-m) var(--gap-m);
     }
-    .topbar-logo { font-size: 1rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-    .topbar-meta { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
-    #teller { color: var(--dempet); font-size: .85rem; }
-    #fremhev-teller {
-      font-size: .85rem; font-weight: 600;
-      color: var(--gull);
-      background: rgba(255, 215, 0, 0.12);
-      border-radius: 20px;
-      padding: .2rem .75rem;
-    }
-    #fremhev-teller:empty { display: none; }
+    .topbar-venstre { display: flex; align-items: center; gap: var(--gap-m); }
+    .logo { font-size: 1.15rem; font-weight: 700; }
 
-    /* ─── TABS ───────────────────────────────────────────────────── */
-    .tabs {
-      max-width: 780px;
-      margin: 0 auto 1.5rem;
-      display: flex;
-      gap: .5rem;
-      border-bottom: 1px solid var(--flate2);
-      padding-bottom: .75rem;
+    .miljo-badge {
+      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
+      padding: 0.25rem 0.7rem; border-radius: 100px;
     }
-    .tab {
-      background: none;
-      border: 1px solid var(--flate2);
-      border-radius: 8px;
-      color: var(--dempet);
-      cursor: pointer;
-      font-size: .85rem;
-      padding: .4rem .9rem;
-      transition: all .15s;
-    }
-    .tab.aktiv { background: var(--flate2); color: var(--tekst); border-color: var(--flate3); }
+    .miljo-badge.miljo-lokal      { background: var(--flate-2); color: var(--graa); }
+    .miljo-badge.miljo-produksjon { background: rgba(196,68,59,0.12); color: var(--faresone); }
 
-    /* ─── FILTRE ──────────────────────────────────────────────────── */
-    .filtre {
-      max-width: 780px;
-      margin: 0 auto 1.25rem;
-      display: flex;
-      flex-wrap: wrap;
-      gap: .5rem;
-      align-items: center;
+    .faner {
+      max-width: 980px; margin: 0 auto; padding: 0 var(--gap-m);
+      display: flex; gap: var(--gap-s); flex-wrap: wrap;
+      border-bottom: 1.5px solid var(--flate-2);
     }
-    .filter-chip {
-      background: var(--flate);
-      border: 1px solid var(--flate2);
-      border-radius: 20px;
-      color: var(--dempet);
-      cursor: pointer;
-      font-size: .8rem;
-      padding: .3rem .85rem;
-      transition: all .15s;
+    .fane-knapp {
+      padding: 0.7rem 1rem; margin-bottom: -1.5px;
+      border-bottom: 2px solid transparent;
+      color: var(--graa); font-weight: 600; font-size: 0.9rem;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      transition: color .15s, border-color .15s;
     }
-    .filter-chip.aktiv { background: var(--flate3); color: var(--tekst); border-color: var(--flate3); }
-    .filter-chip.aktiv.musikk  { color: var(--lime);   border-color: var(--lime);   background: rgba(200,255,77,.1); }
-    .filter-chip.aktiv.klubb   { color: var(--korall); border-color: var(--korall); background: rgba(255,107,91,.1); }
-    .filter-chip.aktiv.pafunn  { color: #b44dff;       border-color: #b44dff;       background: rgba(180,77,255,.1); }
+    .fane-knapp:hover { color: var(--paper); }
+    .fane-knapp.aktiv { color: var(--paper); border-color: var(--aksent); }
 
-    .skjul-passerte {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: .4rem;
-      font-size: .8rem;
-      color: var(--dempet);
-      cursor: pointer;
+    .fane-teller {
+      font-size: 0.7rem; font-weight: 700; min-width: 1.4em; text-align: center;
+      background: var(--flate-2); color: var(--graa);
+      border-radius: 100px; padding: 0.05rem 0.4rem;
     }
-    .skjul-passerte input { cursor: pointer; accent-color: var(--lime); }
+    .fane-teller:empty, .fane-teller[data-null] { display: none; }
 
-    /* ─── FEED ───────────────────────────────────────────────────── */
-    #feed, #publiserte-feed {
-      max-width: 780px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
+    /* ─── Innhold / paneler ──────────────────────────────────────────────── */
+    .innhold { max-width: 980px; margin: 0 auto; padding: var(--gap-l) var(--gap-m) 0; }
+    .panel[hidden] { display: none; }
+
+    .verktoylinje {
+      display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-s) var(--gap-m);
+      margin-bottom: var(--gap-m);
     }
-
-    /* ─── KORT ───────────────────────────────────────────────────── */
-    .kort { background: var(--flate); border-radius: 12px; overflow: hidden; }
-    .kort.er-fremhevet { box-shadow: 0 0 0 2px var(--gull); }
-
-    .kort-bilde { width: 100%; height: 180px; object-fit: cover; display: block; background: var(--flate2); }
-
-    .kort-kropp { padding: 1.1rem; }
-
-    .kort-meta { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; flex-wrap: wrap; }
-
-    .badge {
-      font-size: .7rem; font-weight: 700; letter-spacing: .06em;
-      text-transform: uppercase; padding: .2em .6em; border-radius: 4px;
-      background: var(--flate2); color: var(--dempet);
-    }
-    .badge.musikk { background: rgba(200,255,77,.15); color: var(--lime); }
-    .badge.klubb  { background: rgba(255,107,91,.15); color: var(--korall); }
-    .badge.pafunn { background: rgba(150,77,255,.15); color: #b44dff; }
-    .badge.manuell { background: rgba(77,180,255,.15); color: #4db4ff; font-size: .65rem; }
-    .badge.fremhevet-badge {
-      background: rgba(255,215,0,.2); color: var(--gull);
-      font-size: .65rem;
-    }
-    .badge.duplikat-badge { background: rgba(255,107,91,.15); color: var(--korall); }
-
-    /* ─── INNSENDTE ──────────────────────────────────────────────────── */
-    .innsender-boks {
-      background: var(--flate2);
-      border-left: 3px solid var(--lime);
-      border-radius: 6px;
-      padding: .7rem .85rem;
-      margin-bottom: .85rem;
-      font-size: .85rem;
-    }
-    .innsender-boks strong { color: var(--tekst); }
-    .innsender-boks a { color: var(--lime); }
-    .innsender-rad { margin-bottom: .3rem; }
-    .innsender-rad:last-child { margin-bottom: 0; }
-    .innsender-notat {
-      white-space: pre-wrap;
-      color: var(--tekst);
-    }
-    .duplikat-varsel {
-      background: rgba(255,107,91,.12);
-      color: var(--korall);
-      border-radius: 6px;
-      padding: .55rem .75rem;
-      margin-bottom: .85rem;
-      font-size: .82rem;
-    }
-
-    .kort-tittel { font-size: 1.1rem; font-weight: 700; margin-bottom: .2rem; }
-
-    .kort-info {
-      color: var(--dempet); font-size: .85rem;
-      display: flex; flex-wrap: wrap; gap: .2rem .75rem; margin-bottom: .65rem;
-    }
-    .kort-info a { color: var(--lime); }
-
-    .kort-beskrivelse {
-      font-size: .85rem; color: var(--dempet); margin-bottom: .85rem;
-      max-height: 72px; overflow: hidden;
-    }
-    .kort-beskrivelse.vis-mer { max-height: none; }
-    .les-mer {
-      background: none; border: none; color: var(--lime); cursor: pointer;
-      font-size: .78rem; padding: 0; margin-bottom: .85rem; display: block;
-    }
-
-    .felt-label {
-      display: block; font-size: .75rem; color: var(--dempet);
-      text-transform: uppercase; letter-spacing: .06em; margin-bottom: .3rem;
-    }
-    textarea, input[type=text], input[type=datetime-local] {
-      width: 100%; background: var(--flate2); border: 1px solid var(--flate2);
-      border-radius: 8px; color: var(--tekst); font-family: var(--font);
-      font-size: .875rem; padding: .55rem .75rem; outline: none; margin-bottom: .85rem;
+    .sok-input {
+      flex: 1 1 220px; min-width: 0;
+      background: var(--flate-2); border: 1.5px solid transparent;
+      border-radius: var(--radius-s); padding: 0.6rem 0.9rem;
       transition: border-color .15s;
-      color-scheme: dark;
     }
-    textarea { resize: vertical; min-height: 56px; }
-    textarea:focus, input[type=text]:focus, input[type=datetime-local]:focus { border-color: var(--lime); }
+    .sok-input:focus { border-color: var(--blaa); outline: none; }
 
-    .knapp-rad { display: flex; gap: .65rem; flex-wrap: wrap; }
+    .kategori-filtre { display: flex; gap: var(--gap-s); flex-wrap: wrap; }
+
+    .kategori-filter-chip {
+      padding: 0.35rem 0.85rem; min-height: 36px;
+      border: 1.5px solid var(--flate-2); border-radius: 100px;
+      color: var(--graa); font-size: 0.82rem;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .kategori-filter-chip:hover { border-color: var(--graa); color: var(--paper); }
+    .kategori-filter-chip.aktiv { background: var(--aksent); border-color: var(--aksent); color: var(--aksent-kontrast); }
+    .kategori-filter-chip.aktiv[data-filter="musikk"] { background: var(--musikk); border-color: var(--musikk); color: var(--hvit); }
+    .kategori-filter-chip.aktiv[data-filter="klubb"]  { background: var(--klubb);  border-color: var(--klubb);  color: var(--hvit); }
+    .kategori-filter-chip.aktiv[data-filter="pafunn"] { background: var(--pafunn); border-color: var(--pafunn); color: var(--svart); }
+
+    .avkryssing {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-size: 0.82rem; color: var(--graa); cursor: pointer;
+    }
+    .avkryssing input { cursor: pointer; accent-color: var(--blaa); }
+
+    .feed-teller { color: var(--graa); font-size: 0.82rem; margin-bottom: var(--gap-m); }
+
+    .feed { display: flex; flex-direction: column; gap: var(--gap-m); }
+
+    .tom-tilstand, .tom-melding {
+      text-align: center; padding: 3rem 1rem; color: var(--graa);
+    }
+    .tom-tilstand strong { display: block; color: var(--paper); font-size: 1.05rem; margin-bottom: 0.4rem; }
+    .tom-tilstand p { font-size: 0.88rem; }
+
+    /* ─── Badges ──────────────────────────────────────────────────────────── */
+    .badge {
+      display: inline-flex; align-items: center;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; padding: 0.22em 0.6em; border-radius: 5px;
+      background: var(--flate-2); color: var(--graa);
+    }
+    .badge-musikk { background: color-mix(in srgb, var(--musikk) 15%, var(--hvit) 85%); color: var(--musikk); }
+    .badge-klubb  { background: color-mix(in srgb, var(--klubb) 15%, var(--hvit) 85%); color: var(--klubb); }
+    .badge-pafunn { background: color-mix(in srgb, var(--pafunn) 45%, var(--svart) 20%); color: var(--svart); }
+    .badge-fremhevet { background: color-mix(in srgb, var(--blaa) 20%, var(--hvit) 80%); color: var(--aksent-tekst); }
+    .badge-notoy     { background: var(--flate-2); color: var(--graa); }
+    .badge-duplikat  { background: color-mix(in srgb, var(--faresone) 15%, var(--hvit) 85%); color: var(--faresone); }
+    .badge-passert   { background: var(--flate-2); color: var(--graa); font-style: italic; }
+
+    /* ─── Kandidat-kort (Til vurdering / Innsendte) ───────────────────────── */
+    .kandidat-kort {
+      background: var(--hvit); border: 1.5px solid var(--flate-2);
+      border-radius: var(--radius-m); padding: 1.1rem 1.25rem;
+    }
+    .kort-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .kort-dato { color: var(--graa); font-size: 0.82rem; margin-left: auto; }
+    .kort-tittel { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .kort-info {
+      color: var(--graa); font-size: 0.85rem;
+      display: flex; flex-wrap: wrap; gap: 0.2rem 0.75rem; margin-bottom: 0.5rem;
+    }
+    .kort-innsender-kort { font-size: 0.82rem; color: var(--aksent-tekst); margin-bottom: 0.4rem; }
+    .kort-beskrivelse-kort {
+      font-size: 0.85rem; color: var(--graa); margin-bottom: 0.6rem;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    .kandidat-panel { border-top: 1.5px solid var(--flate-2); margin: 0.75rem 0; padding-top: 0.9rem; }
+
+    .innsender-boks {
+      background: var(--flate-2); border-left: 3px solid var(--blaa);
+      border-radius: 6px; padding: 0.7rem 0.85rem; margin-bottom: 0.85rem; font-size: 0.85rem;
+    }
+    .innsender-rad { margin-bottom: 0.3rem; }
+    .innsender-rad:last-child { margin-bottom: 0; }
+    .innsender-notat { white-space: pre-wrap; }
+
+    .duplikat-varsel {
+      background: color-mix(in srgb, var(--faresone) 12%, var(--hvit) 88%); color: var(--faresone);
+      border-radius: 6px; padding: 0.55rem 0.75rem; margin-bottom: 0.85rem; font-size: 0.82rem;
+    }
+
+    .lenke-knapp {
+      color: var(--graa); font-size: 0.82rem; text-decoration: underline; text-underline-offset: 2px;
+      padding: 0.3rem 0;
+    }
+    .lenke-knapp:hover { color: var(--paper); }
+    .lenke-knapp-faresone:hover { color: var(--faresone); }
+    .lenke-knapp-faresone.aktiv { color: var(--faresone); }
+
+    .beslutning-rad { display: flex; flex-direction: column; gap: 0.6rem; margin: 0.75rem 0; }
+    .kuratortekst-label { margin-bottom: -0.3rem; }
+
+    .knapp-rad { display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: stretch; }
+
+    /* ─── Knapper (delt) ──────────────────────────────────────────────────── */
     .knapp {
-      flex: 1; padding: .55rem 1rem; border: none; border-radius: 8px;
-      font-size: .875rem; font-weight: 600; cursor: pointer; transition: opacity .15s;
-      min-width: 80px;
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 0.65rem 1.1rem; border-radius: var(--radius-m);
+      font-size: 0.875rem; font-weight: 600; transition: opacity .15s, transform .1s;
     }
-    .knapp:hover { opacity: .85; }
-    .knapp:disabled { opacity: .4; cursor: default; }
-    .knapp-godkjenn { background: var(--lime);   color: #141318; }
-    .knapp-avslaa   { background: var(--flate2); color: var(--dempet); }
-    .knapp-fremhev {
-      flex: 0; background: var(--flate2); color: var(--dempet);
-      border: 1px solid var(--flate2);
-      font-size: 1rem; padding: .5rem .8rem;
-      border-radius: 8px; cursor: pointer; transition: all .15s;
-    }
-    .knapp-fremhev.aktiv {
-      background: rgba(255,215,0,.15);
-      border-color: var(--gull);
-      color: var(--gull);
-    }
-    .knapp-fremhev:hover { border-color: var(--gull); color: var(--gull); }
+    .knapp:hover { opacity: 0.85; }
+    .knapp:active { transform: scale(0.98); }
+    .knapp:disabled { opacity: 0.45; cursor: default; }
 
-    .git-melding {
-      margin-top: .85rem; padding: .65rem .85rem; background: var(--flate2);
-      border-radius: 8px; font-size: .8rem; color: var(--lime);
+    .knapp-primaer    { background: var(--kort-farge); color: var(--aksent-kontrast); }
+    .knapp-sekundaer  { background: var(--flate-2); color: var(--paper); }
+    .knapp-ghost {
+      border: 1.5px solid var(--flate-2); color: var(--graa);
+      padding: 0.6rem 1rem; border-radius: var(--radius-m); font-size: 0.85rem;
+      transition: border-color .15s, color .15s;
     }
-    .git-melding strong { display: block; margin-bottom: .3rem; color: var(--tekst); }
-    .git-kommando {
-      font-family: monospace; word-break: break-all; cursor: pointer;
-      border: none; background: none; color: var(--lime); font-size: .78rem;
-      text-align: left; padding: 0; width: 100%;
+    .knapp-ghost:hover { border-color: var(--graa); color: var(--paper); }
+    .knapp-destruktiv { background: var(--faresone); color: var(--hvit); }
+
+    .knapp-godkjenn { flex: 1; min-width: 120px; background: var(--suksess); color: var(--hvit); }
+    .knapp-avslaa   { flex: 1; min-width: 100px; background: var(--flate-2); color: var(--graa); }
+
+    .knapp-fremhev, .knapp-stjerne {
+      flex: 0 0 auto; background: var(--flate-2); color: var(--graa);
+      border: 1.5px solid var(--flate-2); border-radius: var(--radius-m);
+      font-size: 1rem; padding: 0.55rem 0.8rem; transition: all .15s;
     }
-    .git-kommando:hover { text-decoration: underline; }
-
-    .tom {
-      text-align: center; padding: 3rem 1rem; color: var(--dempet);
-    }
-    .tom strong { display: block; color: var(--tekst); font-size: 1.05rem; margin-bottom: .4rem; }
-
-    /* ─── PUBLISERTE ─────────────────────────────────────────────── */
-    .pub-kort {
-      background: var(--flate);
-      border-radius: 12px;
-      padding: .9rem 1.1rem;
-      display: flex;
-      flex-direction: column;
-      gap: .6rem;
-    }
-    .pub-kort.er-fremhevet { box-shadow: 0 0 0 2px var(--gull); }
-    .pub-kort.er-deaktivert { opacity: .5; }
-    .pub-kort.er-deaktivert:hover { opacity: .8; }
-
-    .pub-hoved { display: flex; align-items: center; gap: .75rem; }
-
-    .pub-info { flex: 1; min-width: 0; }
-    .pub-tittel { font-weight: 600; font-size: .95rem; margin-bottom: .15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pub-meta { color: var(--dempet); font-size: .8rem; }
-
-    .knapp-pub-fremhev {
-      flex-shrink: 0;
-      background: var(--flate2); border: 1px solid var(--flate2);
-      border-radius: 8px; color: var(--dempet);
-      cursor: pointer; font-size: 1rem;
-      padding: .45rem .7rem; transition: all .15s;
-    }
-    .knapp-pub-fremhev.aktiv { background: rgba(255,215,0,.15); border-color: var(--gull); color: var(--gull); }
-    .knapp-pub-fremhev:hover { border-color: var(--gull); color: var(--gull); }
-
-    .pub-knapp-rad { display: flex; gap: 1rem; align-items: center; }
-
-    .knapp-pub-rediger {
-      align-self: flex-start;
-      background: none; border: none; color: var(--dempet);
-      font-size: .78rem; cursor: pointer; padding: 0;
-      text-decoration: underline; text-underline-offset: 2px;
-    }
-    .knapp-pub-rediger:hover { color: var(--lime); }
-
-    .knapp-pub-deaktiver {
-      align-self: flex-start;
-      background: none; border: none; color: var(--dempet);
-      font-size: .78rem; cursor: pointer; padding: 0;
-      text-decoration: underline; text-underline-offset: 2px;
-    }
-    .knapp-pub-deaktiver:hover { color: var(--korall); }
-    .knapp-pub-deaktiver.aktiv { color: var(--korall); }
-    .knapp-pub-deaktiver.aktiv:hover { color: var(--lime); }
-
-    .pub-rediger-panel {
-      border-top: 1px solid var(--flate2);
-      padding-top: .75rem;
-    }
-    .pub-rediger-panel .skjema-rad:last-of-type,
-    .pub-rediger-panel .kategori-velger { margin-bottom: .85rem; }
-    .pub-rediger-lagre-status {
-      font-size: .8rem; margin-top: -.4rem; margin-bottom: .5rem; display: none;
-    }
-    .pub-rediger-lagre-status.ok  { color: var(--lime); display: block; }
-    .pub-rediger-lagre-status.feil{ color: var(--korall); display: block; }
-
-    /* ─── MANUELT SKJEMA ─────────────────────────────────────────── */
-    #skjema-panel {
-      max-width: 780px;
-      margin: 0 auto;
-      background: var(--flate);
-      border-radius: 12px;
-      padding: 1.5rem;
-      display: none;
-    }
-    #skjema-panel h2 { font-size: 1rem; font-weight: 700; margin-bottom: 1.25rem; }
-
-    .skjema-rad { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
-    @media (max-width: 540px) { .skjema-rad { grid-template-columns: 1fr; } }
-
-    .skjema-gruppe { margin-bottom: .1rem; }
-
-    .kategori-velger {
-      display: flex; gap: .5rem; flex-wrap: wrap; margin-bottom: .85rem;
-    }
-    .kategori-knapp {
-      background: var(--flate2); border: 1px solid var(--flate2); border-radius: 8px;
-      color: var(--dempet); cursor: pointer; font-size: .85rem; padding: .4rem .85rem;
-      transition: all .15s;
-    }
-    .kategori-knapp.aktiv { background: var(--flate3); color: var(--tekst); border-color: var(--flate3); }
-
-    .skjema-submit {
-      width: 100%; padding: .7rem; border: none; border-radius: 8px;
-      background: var(--lime); color: #141318; font-size: .95rem;
-      font-weight: 700; cursor: pointer; margin-top: .5rem; transition: opacity .15s;
-    }
-    .skjema-submit:hover { opacity: .87; }
-    .skjema-submit:disabled { opacity: .4; cursor: default; }
-
-    .skjema-feil {
-      margin-top: .75rem; padding: .55rem .85rem; background: rgba(255,107,91,.15);
-      color: var(--korall); border-radius: 8px; font-size: .85rem; display: none;
-    }
-    .skjema-ok {
-      margin-top: .75rem; padding: .55rem .85rem; background: rgba(200,255,77,.12);
-      color: var(--lime); border-radius: 8px; font-size: .85rem; display: none;
+    .knapp-fremhev:hover, .knapp-stjerne:hover { border-color: var(--blaa); color: var(--aksent-tekst); }
+    .knapp-fremhev.aktiv, .knapp-stjerne.aktiv {
+      background: color-mix(in srgb, var(--blaa) 20%, var(--hvit) 80%);
+      border-color: var(--blaa); color: var(--aksent-tekst);
     }
 
-    /* ─── GJENTAS-KONTROLL ───────────────────────────────────────────── */
-    .gjentas-rad {
-      display: flex; gap: .5rem; align-items: center;
-      margin-bottom: .75rem; flex-wrap: wrap;
+    /* ─── Skjema-felter (delt: rediger-felter og nytt-event-skjema) ────────── */
+    .felt-label {
+      display: block; font-size: 0.75rem; color: var(--graa);
+      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem;
     }
+    .felt-gruppe { margin-bottom: 0.85rem; }
+    .felt-rad { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+    @media (max-width: 600px) { .felt-rad { grid-template-columns: 1fr; } }
+    .felt-rad .felt-gruppe { margin-bottom: 0.85rem; }
+
+    .admin-input, .admin-textarea, .admin-select {
+      width: 100%; background: var(--flate-2); border: 1.5px solid transparent;
+      border-radius: var(--radius-s); padding: 0.55rem 0.75rem; outline: none;
+      transition: border-color .15s;
+    }
+    .admin-input:focus, .admin-textarea:focus, .admin-select:focus { border-color: var(--blaa); }
+    .admin-textarea { resize: vertical; min-height: 56px; }
+    .admin-select { cursor: pointer; }
+
+    .rediger-felter { display: flex; flex-direction: column; }
+
+    .kategori-velger { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.85rem; }
+    .chip {
+      padding: 0.35rem 0.85rem; min-height: 38px;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      border: 1.5px solid var(--flate-2); border-radius: 100px;
+      font-size: 0.82rem; color: var(--graa);
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    .chip:hover { border-color: var(--graa); color: var(--paper); }
+    .kategori-chip { --kort-farge: var(--aksent); }
+    .kategori-chip[data-verdi="musikk"] { --kort-farge: var(--musikk); }
+    .kategori-chip[data-verdi="klubb"]  { --kort-farge: var(--klubb); }
+    .kategori-chip[data-verdi="pafunn"] { --kort-farge: var(--pafunn); }
+    .kategori-chip.aktiv {
+      background: var(--kort-farge); border-color: var(--kort-farge);
+      color: var(--aksent-kontrast);
+    }
+    .kategori-filter-ikon { display: block; width: auto; height: 14px; }
+
+    .lagre-status { font-size: 0.8rem; min-height: 1.1em; }
+    .lagre-status.feil { color: var(--faresone); }
+
+    /* ─── Bilde-crop ──────────────────────────────────────────────────────── */
+    .crop-seksjon { margin-bottom: 0.85rem; }
+    .crop-tom {
+      font-size: 0.8rem; color: var(--graa); padding: 0.6rem 0.75rem;
+      background: var(--flate-2); border-radius: var(--radius-s); margin-bottom: 0.5rem;
+    }
+    .crop-img-wrap {
+      max-width: 100%; max-height: 360px; overflow: hidden;
+      border-radius: var(--radius-s); margin-bottom: 0.5rem; background: var(--flate-2);
+    }
+    .crop-img { display: block; max-width: 100%; }
+    .crop-knapperad { margin-bottom: 0.5rem; }
+    .crop-status { font-size: 0.78rem; margin-bottom: 0.5rem; display: none; }
+    .crop-status.ok   { color: var(--suksess); display: block; }
+    .crop-status.feil { color: var(--faresone); display: block; }
+    .crop-forhandsvisning-rad { margin-bottom: 0.85rem; }
+    .crop-forhandsvisning-wrap {
+      position: relative; aspect-ratio: 16 / 7; overflow: hidden;
+      border-radius: var(--radius-s); background: var(--flate-2); max-width: 360px;
+    }
+    .crop-forhandsvisning-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    /* ─── Gjentas-kontroll ────────────────────────────────────────────────── */
+    .gjentas-rad { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
     .gjentas-label {
-      font-size: .75rem; color: var(--dempet);
-      text-transform: uppercase; letter-spacing: .06em; white-space: nowrap;
+      font-size: 0.75rem; color: var(--graa);
+      text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
     }
     .gjentas-select {
-      flex: 1; min-width: 0;
-      background: var(--flate2); border: 1px solid var(--flate3);
-      border-radius: 8px; color: var(--tekst); font-family: var(--font);
-      font-size: .8rem; padding: .35rem .6rem; outline: none;
-      transition: border-color .15s; cursor: pointer;
+      flex: 1; min-width: 0; background: var(--flate-2); border: 1.5px solid transparent;
+      border-radius: var(--radius-s); padding: 0.4rem 0.6rem; outline: none;
+      cursor: pointer; transition: border-color .15s;
     }
-    .gjentas-select:focus { border-color: var(--lime); }
-    .gjentas-status { font-size: .72rem; color: var(--lime); min-width: 2rem; }
+    .gjentas-select:focus { border-color: var(--blaa); }
+    .gjentas-status { font-size: 0.72rem; color: var(--suksess); min-width: 1.4rem; }
+    .pub-gjentas-rad { margin-top: 0.4rem; }
 
-    .pub-gjentas-rad {
-      display: flex; gap: .5rem; align-items: center;
-      margin-top: .5rem; flex-wrap: wrap;
+    /* ─── Publiserte-kort ─────────────────────────────────────────────────── */
+    .pub-kort {
+      background: var(--hvit); border: 1.5px solid var(--flate-2);
+      border-radius: var(--radius-m); padding: 0.9rem 1.1rem;
+      display: flex; flex-direction: column; gap: 0.6rem;
+    }
+    .pub-kort.er-fremhevet { box-shadow: 0 0 0 2px var(--blaa); }
+    .pub-kort.er-deaktivert { opacity: 0.55; }
+    .pub-kort.er-deaktivert:hover { opacity: 0.85; }
+
+    .pub-hoved { display: flex; align-items: center; gap: 0.75rem; }
+    .pub-innhold { flex: 1; min-width: 0; }
+    .pub-topprad { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; }
+    .pub-tittel { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pub-meta { color: var(--graa); font-size: 0.8rem; }
+
+    .pub-knapp-rad { display: flex; gap: 1rem; align-items: center; }
+    .pub-rediger-panel { border-top: 1.5px solid var(--flate-2); padding-top: 0.85rem; }
+    .pub-rediger-panel[hidden] { display: none; }
+
+    /* ─── Nytt event-skjema ───────────────────────────────────────────────── */
+    .skjema { max-width: 640px; margin: 0 auto var(--gap-xl); }
+    .skjema-seksjon {
+      background: var(--hvit); border: 1.5px solid var(--flate-2);
+      border-radius: var(--radius-m); padding: 1.25rem 1.4rem; margin-bottom: var(--gap-m);
+    }
+    .skjema-seksjon h2 {
+      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--graa); margin-bottom: 1rem;
     }
 
-    /* ─── BILDE-CROP (Rediger-panel) ─────────────────────────────────── */
-    .pub-crop-seksjon { margin-bottom: .85rem; }
-    .pub-crop-tom {
-      font-size: .8rem; color: var(--dempet); padding: .6rem .75rem;
-      background: var(--flate2); border-radius: 8px; margin-bottom: .5rem;
+    .skjema-submit {
+      width: 100%; padding: 0.8rem; border-radius: var(--radius-m);
+      background: var(--aksent); color: var(--aksent-kontrast);
+      font-size: 0.95rem; font-weight: 700; transition: opacity .15s;
     }
-    .pub-crop-img-wrap {
-      max-width: 100%; max-height: 360px; overflow: hidden;
-      border-radius: 8px; margin-bottom: .5rem; background: var(--flate2);
+    .skjema-submit:hover { opacity: 0.87; }
+    .skjema-submit:disabled { opacity: 0.4; cursor: default; }
+
+    .skjema-feil {
+      margin-top: 0.75rem; padding: 0.6rem 0.85rem;
+      background: color-mix(in srgb, var(--faresone) 12%, var(--hvit) 88%);
+      color: var(--faresone); border-radius: var(--radius-s); font-size: 0.85rem;
     }
-    .pub-crop-img { display: block; max-width: 100%; }
-    .pub-crop-knapperad { margin-bottom: .5rem; }
-    .pub-crop-bruk-knapp {
-      background: var(--flate3); border: 1px solid var(--flate3); border-radius: 8px;
-      color: var(--tekst); font-size: .8rem; font-weight: 600; cursor: pointer;
-      padding: .45rem .85rem; transition: all .15s;
+    .skjema-feil[hidden] { display: none; }
+
+    /* ─── Toast ───────────────────────────────────────────────────────────── */
+    .toast-stabel {
+      position: fixed; bottom: var(--gap-l); left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; gap: 0.5rem; z-index: 200;
+      width: min(90vw, 420px); align-items: center;
     }
-    .pub-crop-bruk-knapp:hover { border-color: var(--lime); color: var(--lime); }
-    .pub-crop-status { font-size: .78rem; margin-bottom: .5rem; display: none; }
-    .pub-crop-status.ok   { color: var(--lime);   display: block; }
-    .pub-crop-status.feil { color: var(--korall); display: block; }
-    /* Speiler .kort-bilde-wrapper / .kort-bilde i css/stil.css (16:7,
-       object-fit: cover) — kun for forhåndsvisning her, endrer ikke appen. */
-    .pub-crop-forhandsvisning-rad { margin-bottom: .85rem; }
-    .pub-crop-forhandsvisning-wrap {
-      position: relative; aspect-ratio: 16 / 7; overflow: hidden;
-      border-radius: 8px; background: var(--flate2); max-width: 360px;
+    .toast {
+      width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-s);
+      font-size: 0.85rem; text-align: center; color: var(--hvit);
+      background: var(--svart); opacity: 0; transform: translateY(8px);
+      transition: opacity .2s, transform .2s;
+      box-shadow: 0 4px 16px rgba(0,0,0,.18);
     }
-    .pub-crop-forhandsvisning-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .toast.synlig { opacity: 1; transform: translateY(0); }
+    .toast-feil { background: var(--faresone); }
+    .toast-ok   { background: var(--suksess); }
+
+    /* ─── Bekreftelsesdialog ──────────────────────────────────────────────── */
+    .confirm-overlay {
+      position: fixed; inset: 0; z-index: 300;
+      background: rgba(30,12,20,.35);
+      display: flex; align-items: center; justify-content: center;
+      padding: var(--gap-m);
+      opacity: 0; pointer-events: none; transition: opacity .15s;
+    }
+    .confirm-overlay.apen { opacity: 1; pointer-events: auto; }
+    .confirm-boks {
+      background: var(--hvit); border-radius: var(--radius-m);
+      padding: 1.5rem; max-width: 380px; width: 100%;
+      box-shadow: 0 12px 32px rgba(0,0,0,.18);
+    }
+    .confirm-tittel { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .confirm-tekst { color: var(--graa); font-size: 0.9rem; margin-bottom: 1.25rem; }
+    .confirm-knapperad { display: flex; gap: 0.65rem; justify-content: flex-end; }
+
+    /* ─── Responsivt ──────────────────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .topbar { padding: var(--gap-m) var(--gap-m) var(--gap-s); }
+      .faner { padding: 0 var(--gap-s); overflow-x: auto; }
+      .innhold { padding: var(--gap-m) var(--gap-s) 0; }
+      .pub-hoved { flex-wrap: wrap; }
+      .knapp-rad { flex-direction: column; }
+      .knapp-godkjenn, .knapp-avslaa { flex: none; width: 100%; }
+    }
   </style>
 </head>
 <body>
 
-<!-- ─── TOPBAR ──────────────────────────────────────────────────────────── -->
-<div class="topbar">
-  <span class="topbar-logo">påby · review</span>
-  <div class="topbar-meta">
-    <span id="fremhev-teller"></span>
-    <span id="teller">laster…</span>
+<header class="topbar">
+  <div class="topbar-venstre">
+    <span class="logo">Påby Admin</span>
+    <span id="miljo-badge" class="miljo-badge" hidden></span>
   </div>
-</div>
+</header>
 
-<!-- ─── TABS ────────────────────────────────────────────────────────────── -->
-<div class="tabs">
-  <button class="tab aktiv" data-tab="review"     onclick="byttTab('review', this)">Review</button>
-  <button class="tab"       data-tab="innsendte"  onclick="byttTab('innsendte', this)">📥 Innsendte (<span id="innsendte-teller">0</span>)</button>
-  <button class="tab"       data-tab="publiserte" onclick="byttTab('publiserte', this)">★ Publiserte</button>
-  <button class="tab"       data-tab="legg-til"   onclick="byttTab('legg-til', this)">+ Legg til manuelt</button>
-</div>
+<nav class="faner" role="tablist" aria-label="Adminseksjoner">
+  <button type="button" class="fane-knapp aktiv" data-fane="til-vurdering">Til vurdering</button>
+  <button type="button" class="fane-knapp" data-fane="innsendte">
+    Innsendte <span class="fane-teller" id="fane-teller-innsendte">0</span>
+  </button>
+  <button type="button" class="fane-knapp" data-fane="publiserte">Publiserte</button>
+  <button type="button" class="fane-knapp" data-fane="nytt-event">+ Nytt event</button>
+</nav>
 
-<!-- ─── FILTRE ───────────────────────────────────────────────────────────── -->
-<div id="filtre-panel" class="filtre">
-  <button class="filter-chip aktiv" data-filter="alle"   onclick="velgFilter(this)">Alle</button>
-  <button class="filter-chip musikk" data-filter="musikk" onclick="velgFilter(this)">Musikk</button>
-  <button class="filter-chip klubb"  data-filter="klubb"  onclick="velgFilter(this)">Klubb</button>
-  <button class="filter-chip pafunn" data-filter="pafunn" onclick="velgFilter(this)">Påfunn</button>
+<main class="innhold">
 
-  <label class="skjul-passerte">
-    <input type="checkbox" id="skjul-passerte" onchange="oppdaterVisning()" /> Skjul passerte
-  </label>
-</div>
-
-<!-- ─── REVIEW FEED ──────────────────────────────────────────────────────── -->
-<div id="feed"></div>
-
-<!-- ─── INNSENDTE FEED ───────────────────────────────────────────────────── -->
-<div id="innsendte-feed" style="display:none"></div>
-
-<!-- ─── PUBLISERTE FEED ──────────────────────────────────────────────────── -->
-<div id="publiserte-feed" style="display:none"></div>
-
-<!-- ─── MANUELT SKJEMA ──────────────────────────────────────────────────── -->
-<div id="skjema-panel">
-  <h2>Legg til event manuelt</h2>
-
-  <label class="felt-label">Kategori</label>
-  <div class="kategori-velger" id="kategori-velger">
-    <button class="kategori-knapp aktiv" data-kat="musikk" onclick="velgKategori(this)">Musikk</button>
-    <button class="kategori-knapp" data-kat="klubb"  onclick="velgKategori(this)">Klubb</button>
-    <button class="kategori-knapp" data-kat="pafunn" onclick="velgKategori(this)">Påfunn</button>
-  </div>
-
-  <label class="felt-label">Tittel *</label>
-  <input type="text" id="f-tittel" placeholder="Arrangementsnavn" />
-
-  <div class="skjema-rad">
-    <div class="skjema-gruppe">
-      <label class="felt-label">Start (dato og tid) *</label>
-      <input type="text" id="f-start" placeholder="2026-08-15T20:00" />
+  <!-- ─── TIL VURDERING ─────────────────────────────────────────────────── -->
+  <section id="panel-til-vurdering" class="panel">
+    <div class="verktoylinje">
+      <input type="search" id="vurdering-sok" class="sok-input" placeholder="Søk på tittel eller sted…" aria-label="Søk blant events til vurdering" />
+      <div class="kategori-filtre" id="vurdering-filtre" role="group" aria-label="Filtrer på kategori">
+        <button type="button" class="kategori-filter-chip aktiv" data-filter="alle">Alle</button>
+        <button type="button" class="kategori-filter-chip" data-filter="musikk">Musikk</button>
+        <button type="button" class="kategori-filter-chip" data-filter="klubb">Klubb</button>
+        <button type="button" class="kategori-filter-chip" data-filter="pafunn">Påfunn</button>
+      </div>
+      <label class="avkryssing">
+        <input type="checkbox" id="vurdering-skjul-passerte" /> Skjul passerte
+      </label>
     </div>
-    <div class="skjema-gruppe">
-      <label class="felt-label">Slutt (valgfritt)</label>
-      <input type="text" id="f-slutt" placeholder="2026-08-15T23:00" />
+    <p class="feed-teller" id="vurdering-teller"></p>
+    <div id="vurdering-feed" class="feed"></div>
+    <div id="vurdering-tom" class="tom-tilstand" hidden>
+      <strong>Ingen events å vurdere</strong>
+      <p>Nye funn fra collectoren og manuelt lagt til events dukker opp her.</p>
     </div>
-  </div>
+  </section>
 
-  <label class="felt-label">Sted *</label>
-  <input type="text" id="f-sted" placeholder="Venuenavn" />
-
-  <label class="felt-label">Adresse</label>
-  <input type="text" id="f-adresse" placeholder="Gateadresse, postnummer Oslo" />
-
-  <div class="skjema-rad">
-    <div class="skjema-gruppe">
-      <label class="felt-label">Pris (kr, 0 = gratis, tom = ukjent)</label>
-      <input type="text" id="f-pris" placeholder="150" />
+  <!-- ─── INNSENDTE ──────────────────────────────────────────────────────── -->
+  <section id="panel-innsendte" class="panel" hidden>
+    <div class="verktoylinje">
+      <input type="search" id="innsendte-sok" class="sok-input" placeholder="Søk på tittel eller sted…" aria-label="Søk blant innsendte events" />
     </div>
-    <div class="skjema-gruppe">
-      <label class="felt-label">Prisvisning (valgfritt)</label>
-      <input type="text" id="f-pristekst" placeholder="150 kr + gebyr" />
+    <p class="feed-teller" id="innsendte-teller"></p>
+    <div id="innsendte-feed" class="feed"></div>
+    <div id="innsendte-tom" class="tom-tilstand" hidden>
+      <strong>Ingen ventende innsendinger</strong>
+      <p>Events sendt inn av arrangører via /send-inn/ dukker opp her.</p>
     </div>
-  </div>
-
-  <label class="felt-label">Beskrivelse</label>
-  <textarea id="f-besk" placeholder="Kort beskrivelse av eventet…" rows="3"></textarea>
-
-  <label class="felt-label">Lenke (billett / mer info)</label>
-  <input type="text" id="f-lenke" placeholder="https://…" />
-
-  <label class="felt-label">Bilde-URL (valgfritt)</label>
-  <input type="text" id="f-bilde" placeholder="https://…" />
-
-  <label class="felt-label">Gjentas (valgfritt)</label>
-  <div class="gjentas-rad" style="margin-bottom:.85rem">
-    <select id="f-gjentas-type" class="gjentas-select"
-      onchange="document.getElementById('f-gjentas-dag').style.display=this.value?'':'none'">
-      <option value="">Av (engang)</option>
-      <option value="ukentlig">Ukentlig</option>
-      <option value="månedlig-siste">Månedlig (siste …)</option>
-      <option value="månedlig-første">Månedlig (første …)</option>
-    </select>
-    <select id="f-gjentas-dag" class="gjentas-select" style="display:none">
-      <option>mandag</option><option>tirsdag</option><option>onsdag</option>
-      <option>torsdag</option><option>fredag</option><option>lørdag</option>
-      <option selected>søndag</option>
-    </select>
-  </div>
-
-  <button class="skjema-submit" id="skjema-submit" onclick="sendSkjema()">Legg til i candidates</button>
-  <div class="skjema-feil" id="skjema-feil"></div>
-  <div class="skjema-ok"   id="skjema-ok"></div>
-</div>
-
-<script>
-// ─── Oslo-tid ────────────────────────────────────────────────────────────────
-// Reviewer kan sitte i en hvilken som helst tidssone (maskinens lokale tid
-// brukes IKKE her) — all visning av dato/klokkeslett skal være Europe/Oslo,
-// samme regel som selve appen (js/application/oslo-tid.js) bruker.
-
-const OSLO_UKEDAG_NR = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-
-function osloKomponenter(dato) {
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit',
-    weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  });
-  const deler = fmt.formatToParts(dato).reduce((o, d) => {
-    if (d.type !== 'literal') o[d.type] = d.value;
-    return o;
-  }, {});
-  return {
-    år: Number(deler.year), maned: Number(deler.month), dag: Number(deler.day),
-    ukedag: OSLO_UKEDAG_NR[deler.weekday],
-    time: Number(deler.hour), min: Number(deler.minute),
-  };
-}
-
-/* Lager et Date (UTC) for et gitt tidspunkt i Oslo-tid — prøver sommer- og
-   vintertid-offset og velger det som faktisk gir riktig Oslo-klokkeslett. */
-function lagOsloDato(år, maned, dag, time = 0, min = 0, sek = 0) {
-  const p    = (n) => String(n).padStart(2, '0');
-  const base = `${år}-${p(maned)}-${p(dag)}T${p(time)}:${p(min)}:${p(sek)}`;
-  for (const offset of ['+02:00', '+01:00']) {
-    const kandidat = new Date(base + offset);
-    if (osloKomponenter(kandidat).time === time % 24) return kandidat;
-  }
-  return new Date(base + '+01:00');
-}
-
-/* Speiler js/application/oslo-tid.js sin eventTilstand()/dagensSlutt() —
-   samme regel her som i selve appen for når et event regnes som "ferdig"
-   (dagen + nattmargin er over), slik at Publiserte-fanen kun viser det
-   samme som faktisk vises på nettsiden. Kan ikke importeres direkte siden
-   review-serveren er en frittstående statisk app. */
-const NATT_TERSKEL_TIME       = 20;
-const NATTMARGIN_TIMER_SENT   = 3;
-const NATTMARGIN_TIMER_TIDLIG = 0;
-
-function dagensSlutt(startISO) {
-  const k = osloKomponenter(new Date(startISO));
-  const midnattStart = lagOsloDato(k.år, k.maned, k.dag, 0, 0, 0);
-  const nattmargin = k.time >= NATT_TERSKEL_TIME ? NATTMARGIN_TIMER_SENT : NATTMARGIN_TIMER_TIDLIG;
-  return new Date(midnattStart.getTime() + (24 + nattmargin) * 60 * 60 * 1000);
-}
-
-function eventTilstand(startISO, nå = new Date()) {
-  const start = new Date(startISO);
-  if (isNaN(start.getTime())) return 'ferdig';
-  if (nå < start) return 'kommende';
-  if (nå < dagensSlutt(startISO)) return 'utgatt-i-dag';
-  return 'ferdig';
-}
-
-// ─── Dato-konvertering for redigeringsskjema ──────────────────────────────────
-// <input type="datetime-local"> ↔ ISO-streng med korrekt Oslo-offset
-// (sommer-/vintertid slått opp faktisk, ikke antatt — samme metode som
-// collector/normalize.js sin tilNorskTid()).
-
-function osloISOTilDatetimeLocal(iso) {
-  if (!iso) return '';
-  const k = osloKomponenter(new Date(iso));
-  const p = (n) => String(n).padStart(2, '0');
-  return `${k.år}-${p(k.maned)}-${p(k.dag)}T${p(k.time)}:${p(k.min)}`;
-}
-
-function datetimeLocalTilOsloISO(local) {
-  if (!local) return null;
-  const [datoDel, tidDel] = local.split('T');
-  const [år, maned, dag]  = datoDel.split('-').map(Number);
-  const [time, min]       = (tidDel ?? '00:00').split(':').map(Number);
-  const dato = lagOsloDato(år, maned, dag, time, min, 0);
-
-  const k       = osloKomponenter(dato);
-  const p       = (n) => String(n).padStart(2, '0');
-  const lokalISO = `${k.år}-${p(k.maned)}-${p(k.dag)}T${p(k.time)}:${p(k.min)}:00`;
-  const diff    = new Date(lokalISO + 'Z') - dato;
-  const timer   = Math.round(diff / 3_600_000);
-  const fortegn = timer >= 0 ? '+' : '-';
-  const offset  = `${fortegn}${String(Math.abs(timer)).padStart(2, '0')}:00`;
-  return lokalISO + offset;
-}
-
-// ─── Tilstand ────────────────────────────────────────────────────────────────
-
-let alleEvents     = [];
-let aktivFilter    = 'alle';
-let skjulPasserte  = false;
-let antallSynlig   = 0;
-
-// ─── Gjentas-hjelp ───────────────────────────────────────────────────────────
-
-const UKEDAGER = ['mandag','tirsdag','onsdag','torsdag','fredag','lørdag','søndag'];
-
-function parseGjentasKontroll(gjentas) {
-  if (!gjentas) return { type: '', dag: 'søndag' };
-  if (gjentas.startsWith('ukentlig:'))        return { type: 'ukentlig', dag: gjentas.slice(9) };
-  if (gjentas.startsWith('månedlig:siste-'))  return { type: 'månedlig-siste', dag: gjentas.slice(15) };
-  if (gjentas.startsWith('månedlig:første-')) return { type: 'månedlig-første', dag: gjentas.slice(16) };
-  return { type: '', dag: 'søndag' };
-}
-
-function byggGjentasStreng(type, dag) {
-  if (!type) return null;
-  if (type === 'ukentlig')        return `ukentlig:${dag}`;
-  if (type === 'månedlig-første') return `månedlig:første-${dag}`;
-  return `månedlig:siste-${dag}`;
-}
-
-/* Lager gjentas-kontroll og returnerer { el, hentVerdi }. */
-function lagGjentasKontroll(gjentas) {
-  const { type: initType, dag: initDag } = parseGjentasKontroll(gjentas);
-
-  const rad = document.createElement('div');
-  rad.className = 'gjentas-rad';
-
-  const label = document.createElement('span');
-  label.className   = 'gjentas-label';
-  label.textContent = 'Gjentas';
-
-  const typeSelect = document.createElement('select');
-  typeSelect.className = 'gjentas-select';
-  [['', 'Av (engang)'], ['ukentlig', 'Ukentlig'], ['månedlig-siste', 'Månedlig (siste …)'], ['månedlig-første', 'Månedlig (første …)']].forEach(([val, txt]) => {
-    const opt = new Option(txt, val, false, val === initType);
-    typeSelect.appendChild(opt);
-  });
-
-  const dagSelect = document.createElement('select');
-  dagSelect.className    = 'gjentas-select';
-  dagSelect.style.display = initType ? '' : 'none';
-  UKEDAGER.forEach(dag => {
-    dagSelect.appendChild(new Option(dag, dag, false, dag === initDag));
-  });
-
-  typeSelect.addEventListener('change', () => {
-    dagSelect.style.display = typeSelect.value ? '' : 'none';
-  });
-
-  rad.appendChild(label);
-  rad.appendChild(typeSelect);
-  rad.appendChild(dagSelect);
-
-  return { el: rad, hentVerdi: () => byggGjentasStreng(typeSelect.value, dagSelect.value) };
-}
-
-// ─── Rediger-panel (Publiserte-fanen) ─────────────────────────────────────────
-// Fullt redigeringsskjema for et allerede publisert event — alle felt utenom
-// id (identitet, brukt av lagret/følger), gjentas og fremhevet, som har egne
-// alltid-synlige kontroller.
-
-const KATEGORIER = [['musikk', 'Musikk'], ['klubb', 'Klubb'], ['pafunn', 'Påfunn']];
-
-function lagKategoriVelgerEl(aktivKat) {
-  const rad = document.createElement('div');
-  rad.className = 'kategori-velger';
-  let valgt = aktivKat;
-  const knapper = [];
-  KATEGORIER.forEach(([val, txt]) => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = `kategori-knapp${val === aktivKat ? ' aktiv' : ''}`;
-    btn.textContent = txt;
-    btn.onclick = () => {
-      valgt = val;
-      knapper.forEach(k => k.classList.remove('aktiv'));
-      btn.classList.add('aktiv');
-    };
-    knapper.push(btn);
-    rad.appendChild(btn);
-  });
-  return { el: rad, hentVerdi: () => valgt };
-}
-
-function lagFelt(label, verdi, type = 'text') {
-  const wrap = document.createElement('div');
-  wrap.className = 'skjema-gruppe';
-  const lab = document.createElement('label');
-  lab.className = 'felt-label'; lab.textContent = label;
-  const input = document.createElement('input');
-  input.type = type; input.value = verdi ?? '';
-  wrap.appendChild(lab); wrap.appendChild(input);
-  return { wrap, input };
-}
-
-function lagFeltRad(...felt) {
-  const rad = document.createElement('div');
-  rad.className = 'skjema-rad';
-  felt.forEach(f => rad.appendChild(f.wrap));
-  return rad;
-}
-
-function lagTekstomrade(label, verdi, rows = 3) {
-  const lab = document.createElement('label');
-  lab.className = 'felt-label'; lab.textContent = label;
-  const ta = document.createElement('textarea');
-  ta.rows = rows; ta.value = verdi ?? '';
-  return { lab, ta };
-}
-
-// ─── Bilde-crop (kun Rediger-panelet) ─────────────────────────────────────────
-// Cropper.js (CDN) lar deg beskjære bilde-URL-en til 16:7 — samme forhold som
-// .kort-bilde-wrapper/.kort-bilde i css/stil.css bruker i selve appen — før
-// lagring. Beskjæringen skjer client-side (canvas) og resultatet lagres som
-// en data-URL rett i fBilde sitt input-felt (som allerede sendes til
-// /api/oppdater/:id uendret), så ingen ny server-endepunkt for filopplasting
-// trengs. Rører IKKE bilde-URL-feltet med mindre man aktivt trykker
-// «Bruk dette utsnittet» — vanlig lagring av andre felt endrer ikke bildet.
-const CROP_BREDDE = 1200;
-const CROP_HOYDE  = Math.round(CROP_BREDDE * 7 / 16); // 525 — 16:7
-
-function lagBildeCropSeksjon(fBilde) {
-  const seksjon = document.createElement('div');
-  seksjon.className = 'pub-crop-seksjon';
-
-  const label = document.createElement('label');
-  label.className = 'felt-label';
-  label.textContent = 'Beskjær bilde (16:7 — samme forhold som kortet i appen)';
-
-  const tomMelding = document.createElement('div');
-  tomMelding.className = 'pub-crop-tom';
-  tomMelding.textContent = 'Lim inn en bilde-URL over for å beskjære.';
-
-  const imgWrap = document.createElement('div');
-  imgWrap.className = 'pub-crop-img-wrap';
-  imgWrap.style.display = 'none';
-  const cropImg = document.createElement('img');
-  cropImg.className = 'pub-crop-img';
-  cropImg.alt = '';
-  imgWrap.appendChild(cropImg);
-
-  const knapperad = document.createElement('div');
-  knapperad.className = 'pub-crop-knapperad';
-  knapperad.style.display = 'none';
-  const brukKnapp = document.createElement('button');
-  brukKnapp.type = 'button';
-  brukKnapp.className = 'pub-crop-bruk-knapp';
-  brukKnapp.textContent = '✂ Bruk dette utsnittet';
-  knapperad.appendChild(brukKnapp);
-
-  const status = document.createElement('div');
-  status.className = 'pub-crop-status';
-
-  const fvRad = document.createElement('div');
-  fvRad.className = 'pub-crop-forhandsvisning-rad';
-  fvRad.style.display = 'none';
-  const fvLabel = document.createElement('label');
-  fvLabel.className = 'felt-label';
-  fvLabel.textContent = 'Forhåndsvisning (som på kortet i appen)';
-  const fvWrap = document.createElement('div');
-  fvWrap.className = 'pub-crop-forhandsvisning-wrap';
-  const fvImg = document.createElement('img');
-  fvImg.className = 'pub-crop-forhandsvisning-img';
-  fvImg.alt = '';
-  fvWrap.appendChild(fvImg);
-  fvRad.appendChild(fvLabel);
-  fvRad.appendChild(fvWrap);
-
-  seksjon.appendChild(label);
-  seksjon.appendChild(tomMelding);
-  seksjon.appendChild(imgWrap);
-  seksjon.appendChild(knapperad);
-  seksjon.appendChild(status);
-  seksjon.appendChild(fvRad);
-
-  let cropper   = null;
-  let lastetUrl = null;
-
-  function settStatus(klasse, tekst) {
-    status.className = klasse ? `pub-crop-status ${klasse}` : 'pub-crop-status';
-    status.textContent = tekst ?? '';
-  }
-
-  // Kortet over (thumbnailen i selve kort-visningen) laster ofte samme URL
-  // som en vanlig <img> UTEN crossorigin — det kan "forgifte" nettleserens
-  // bilde-cache slik at et senere crossOrigin="anonymous"-forsøk på nøyaktig
-  // samme URL stille gjenbruker den ikke-CORS-taggede cache-oppføringen (og
-  // dermed likevel feiler på toDataURL). Cache-buster tvinger et friskt,
-  // riktig CORS-taggede nettverkskall for selve crop-verktøyet.
-  function cacheBust(url) {
-    if (url.startsWith('data:')) return url;
-    const skille = url.includes('?') ? '&' : '?';
-    return `${url}${skille}_paabycrop=${Date.now()}`;
-  }
-
-  function initCropper(url, kanEksporteres, lastetSrc) {
-    if (lastetUrl !== url) return; // en nyere URL har overtatt i mellomtiden
-    cropImg.crossOrigin = kanEksporteres ? 'anonymous' : '';
-    cropImg.src = lastetSrc;
-    imgWrap.style.display = '';
-    knapperad.style.display = '';
-
-    if (cropper) { cropper.destroy(); cropper = null; }
-    cropper = new Cropper(cropImg, {
-      aspectRatio: 16 / 7,
-      viewMode: 1,
-      autoCropArea: 1,
-      background: false,
-      responsive: true,
-    });
-
-    if (!kanEksporteres) {
-      settStatus('feil', '⚠ Dette bildet tillater trolig ikke lokal beskjæring (CORS). Du kan fortsatt trykke «Bruk dette utsnittet», men lykkes det ikke beholdes original-URL-en uendret ved lagring.');
-    }
-  }
-
-  // Prøver CORS-lasting først (funker f.eks. for imagekit.io), faller
-  // tilbake til vanlig lasting (vises fint, men kan ikke eksporteres til
-  // canvas) hvis bildeserveren ikke tillater det.
-  function lastBilde(url) {
-    if (cropper) { cropper.destroy(); cropper = null; }
-    settStatus(null, '');
-    fvRad.style.display = 'none';
-    lastetUrl = url;
-
-    if (!url) {
-      imgWrap.style.display = 'none';
-      knapperad.style.display = 'none';
-      tomMelding.style.display = '';
-      return;
-    }
-    tomMelding.style.display = 'none';
-
-    const bustet = cacheBust(url);
-    const probe = new Image();
-    probe.crossOrigin = 'anonymous';
-    probe.onload  = () => initCropper(url, true, bustet);
-    probe.onerror = () => initCropper(url, false, url);
-    probe.src = bustet;
-  }
-
-  brukKnapp.onclick = () => {
-    if (!cropper) return;
-    try {
-      const canvas = cropper.getCroppedCanvas({
-        width:  CROP_BREDDE,
-        height: CROP_HOYDE,
-        imageSmoothingQuality: 'high',
-        fillColor: '#141318',
-      });
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      fBilde.input.value = dataUrl;
-      fvImg.src = dataUrl;
-      fvRad.style.display = '';
-      settStatus('ok', '✓ Utsnitt brukt — lagres som beskåret bilde når du trykker «Lagre endringer».');
-    } catch (e) {
-      settStatus('feil', '⚠ Kunne ikke beskjære dette bildet lokalt (bildeserveren blokkerer det via CORS). Original-URL-en beholdes uendret ved lagring.');
-    }
-  };
-
-  let debounceTimer = null;
-  fBilde.input.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      const url = fBilde.input.value.trim();
-      if (url !== lastetUrl) lastBilde(url);
-    }, 500);
-  });
-
-  return {
-    el: seksjon,
-    lastInnVedVisning: () => {
-      const url = fBilde.input.value.trim();
-      if (url && url !== lastetUrl) lastBilde(url);
-    },
-  };
-}
-
-/* Bygger redigeringspanelet for ett publisert event. onLagret(event, gitKommando)
-   kalles etter vellykket lagring, slik at kortet over kan oppdatere tittel/meta. */
-function lagRedigerPanel(event, onLagret) {
-  const panel = document.createElement('div');
-  panel.className = 'pub-rediger-panel';
-  panel.style.display = 'none';
-
-  const katLabel = document.createElement('label');
-  katLabel.className = 'felt-label'; katLabel.textContent = 'Kategori';
-  const kat = lagKategoriVelgerEl(event.kategori);
-
-  const fTittel     = lagFelt('Tittel *', event.tittel);
-  const fStart      = lagFelt('Start (dato og tid) *', osloISOTilDatetimeLocal(event.start), 'datetime-local');
-  const fSlutt      = lagFelt('Slutt', osloISOTilDatetimeLocal(event.slutt), 'datetime-local');
-  const fSted       = lagFelt('Sted', event.sted);
-  const fAdresse    = lagFelt('Adresse', event.adresse);
-  const fLat        = lagFelt('Lat', event.lat ?? '');
-  const fLng        = lagFelt('Lng', event.lng ?? '');
-  const fPris       = lagFelt('Pris (kr, 0 = gratis, tom = ukjent)', event.pris ?? '');
-  const fPrisTekst  = lagFelt('Prisvisning', event.prisTekst);
-  const fLenke      = lagFelt('Lenke (billett / mer info)', event.lenke);
-  const fBilde      = lagFelt('Bilde-URL', event.bilde);
-  const bildeCrop   = lagBildeCropSeksjon(fBilde);
-  const tBesk       = lagTekstomrade('Beskrivelse', event.beskrivelse, 3);
-  const tKur        = lagTekstomrade('Kuratortekst (vises i kortet)', event.kuratortekst, 2);
-
-  panel.appendChild(katLabel);
-  panel.appendChild(kat.el);
-  panel.appendChild(fTittel.wrap);
-  panel.appendChild(lagFeltRad(fStart, fSlutt));
-  panel.appendChild(lagFeltRad(fSted, fAdresse));
-  panel.appendChild(lagFeltRad(fLat, fLng));
-  panel.appendChild(lagFeltRad(fPris, fPrisTekst));
-  panel.appendChild(tBesk.lab);  panel.appendChild(tBesk.ta);
-  panel.appendChild(tKur.lab);   panel.appendChild(tKur.ta);
-  panel.appendChild(fLenke.wrap);
-  panel.appendChild(fBilde.wrap);
-  panel.appendChild(bildeCrop.el);
-
-  // Kalles av redigerKnapp.onclick (se lenger ned) første gang panelet vises,
-  // slik at Cropper.js ikke initialiseres mens elementet har display:none
-  // (da ville bredde/høyde-beregningen blitt feil).
-  panel.__lastInnBildeVedVisning = bildeCrop.lastInnVedVisning;
-
-  const status = document.createElement('div');
-  status.className = 'pub-rediger-lagre-status';
-
-  const lagreKnapp = document.createElement('button');
-  lagreKnapp.type = 'button';
-  lagreKnapp.className = 'skjema-submit';
-  lagreKnapp.textContent = 'Lagre endringer';
-
-  lagreKnapp.onclick = async () => {
-    const tittel = fTittel.input.value.trim();
-    const start  = fStart.input.value.trim();
-    if (!tittel || !start) {
-      status.className = 'pub-rediger-lagre-status feil';
-      status.textContent = 'Tittel og starttidspunkt er påkrevd.';
-      return;
-    }
-
-    lagreKnapp.disabled = true; lagreKnapp.textContent = '…';
-    status.className = 'pub-rediger-lagre-status';
-
-    const res  = await fetch(`/api/oppdater/${encodeURIComponent(event.id)}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tittel,
-        kategori:     kat.hentVerdi(),
-        sted:         fSted.input.value.trim(),
-        adresse:      fAdresse.input.value.trim(),
-        lat:          fLat.input.value.trim(),
-        lng:          fLng.input.value.trim(),
-        start:        datetimeLocalTilOsloISO(start),
-        slutt:        datetimeLocalTilOsloISO(fSlutt.input.value.trim()),
-        pris:         fPris.input.value.trim(),
-        prisTekst:    fPrisTekst.input.value.trim(),
-        beskrivelse:  tBesk.ta.value.trim(),
-        kuratortekst: tKur.ta.value.trim(),
-        lenke:        fLenke.input.value.trim(),
-        bilde:        fBilde.input.value.trim(),
-      }),
-    });
-    const data = await res.json();
-
-    lagreKnapp.disabled = false; lagreKnapp.textContent = 'Lagre endringer';
-
-    if (data.ok) {
-      Object.assign(event, data.event);
-      status.className = 'pub-rediger-lagre-status ok';
-      status.textContent = '✓ Lagret lokalt — husk å committe og pushe.';
-      onLagret?.(event, data.gitKommando);
-    } else {
-      status.className = 'pub-rediger-lagre-status feil';
-      status.textContent = data.feil ?? 'Ukjent feil';
-    }
-  };
-
-  panel.appendChild(status);
-  panel.appendChild(lagreKnapp);
-
-  return panel;
-}
-
-// ─── Tabs ────────────────────────────────────────────────────────────────────
-
-function byttTab(tab, knapp) {
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('aktiv'));
-  knapp.classList.add('aktiv');
-
-  document.getElementById('feed').style.display            = tab === 'review'     ? '' : 'none';
-  document.getElementById('filtre-panel').style.display    = tab === 'review'     ? '' : 'none';
-  document.getElementById('innsendte-feed').style.display  = tab === 'innsendte'  ? '' : 'none';
-  document.getElementById('publiserte-feed').style.display = tab === 'publiserte' ? '' : 'none';
-  document.getElementById('skjema-panel').style.display    = tab === 'legg-til'   ? 'block' : 'none';
-
-  if (tab === 'publiserte') lastInnPubliserte();
-}
-
-// ─── Filtre ──────────────────────────────────────────────────────────────────
-
-function velgFilter(knapp) {
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('aktiv'));
-  knapp.classList.add('aktiv');
-  aktivFilter = knapp.dataset.filter;
-  oppdaterVisning();
-}
-
-function erPassert(event) {
-  if (!event.start) return false;
-  return new Date(event.start) < new Date();
-}
-
-function skalVises(event) {
-  if (event._status !== 'pending') return false;
-  if (event._kilde === 'innsending') return false; // vises kun i Innsendte-fanen
-  if (skjulPasserte && erPassert(event)) return false;
-  if (aktivFilter !== 'alle' && event.kategori !== aktivFilter) return false;
-  return true;
-}
-
-function oppdaterVisning() {
-  skjulPasserte = document.getElementById('skjul-passerte').checked;
-  antallSynlig  = 0;
-
-  document.querySelectorAll('#feed .kort[data-id]').forEach(kort => {
-    const event = alleEvents.find(e => e.id === kort.dataset.id);
-    if (!event) return;
-    const vis = skalVises(event);
-    kort.style.display = vis ? '' : 'none';
-    if (vis) antallSynlig++;
-  });
-
-  oppdaterTeller();
-}
-
-// ─── Teller ──────────────────────────────────────────────────────────────────
-
-function oppdaterTeller(delta = 0) {
-  antallSynlig += delta;
-  if (antallSynlig < 0) antallSynlig = 0;
-  const totalt  = alleEvents.filter(e => e._status === 'pending' && e._kilde !== 'innsending').length;
-  const el      = document.getElementById('teller');
-  el.textContent = antallSynlig === totalt
-    ? `${totalt} pending`
-    : `${antallSynlig} av ${totalt} pending`;
-
-  const feed = document.getElementById('feed');
-  const harSynlige = feed.querySelectorAll('.kort[data-id]:not([style*="none"])').length;
-  const tomDiv = feed.querySelector('.tom');
-  if (harSynlige === 0 && totalt > 0) {
-    if (!tomDiv) {
-      feed.insertAdjacentHTML('beforeend',
-        '<div class="tom"><strong>Ingen events matcher filteret</strong>Endre filteret eller skru av «Skjul passerte».</div>');
-    }
-  } else {
-    if (tomDiv) tomDiv.remove();
-  }
-}
-
-function oppdaterFremhevTeller(publiserte) {
-  const nå          = new Date();
-  const k           = osloKomponenter(nå);
-  const dagerTilMan = (k.ukedag + 6) % 7; // ukedag: 0=søn
-  const iDagMidnatt = lagOsloDato(k.år, k.maned, k.dag, 0, 0, 0);
-  const mandag      = new Date(iDagMidnatt.getTime() - dagerTilMan * 86400000);
-  const søndagSlutt = new Date(mandag.getTime() + 7 * 86400000 - 1);
-
-  const antall = publiserte.filter(e =>
-    e.fremhevet && new Date(e.start) >= mandag && new Date(e.start) <= søndagSlutt
-  ).length;
-
-  const el = document.getElementById('fremhev-teller');
-  el.textContent = antall > 0 ? `★ ${antall} fremhevet denne uka` : '';
-}
-
-// ─── Formater ────────────────────────────────────────────────────────────────
-
-function formaterDato(iso) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('nb-NO', {
-    timeZone: 'Europe/Oslo',
-    weekday: 'short', day: 'numeric', month: 'short',
-    hour: '2-digit', minute: '2-digit',
-  });
-}
-
-function formaterPris(pris, prisTekst) {
-  if (prisTekst) return prisTekst;
-  if (pris === 0) return 'Gratis';
-  if (pris != null) return `${pris} kr`;
-  return 'Pris ukjent';
-}
-
-// ─── Bygg pending-kort ───────────────────────────────────────────────────────
-
-function lagKort(event) {
-  const kort = document.createElement('article');
-  kort.className = 'kort';
-  kort.dataset.id = event.id;
-  if (event._fremhevet) kort.classList.add('er-fremhevet');
-
-  if (event.bilde) {
-    const img = document.createElement('img');
-    img.src = event.bilde; img.className = 'kort-bilde'; img.alt = '';
-    img.addEventListener('error', () => img.remove(), { once: true });
-    kort.appendChild(img);
-  }
-
-  const kropp = document.createElement('div');
-  kropp.className = 'kort-kropp';
-
-  // Meta
-  const meta = document.createElement('div');
-  meta.className = 'kort-meta';
-  const badge = document.createElement('span');
-  badge.className = `badge ${event.kategori}`; badge.textContent = event.kategori;
-  meta.appendChild(badge);
-
-  if (event._fremhevet) {
-    const fb = document.createElement('span');
-    fb.className = 'badge fremhevet-badge'; fb.textContent = '★ Fremhevet';
-    meta.appendChild(fb);
-  }
-  if (event._broadcastId === undefined) {
-    const m = document.createElement('span');
-    m.className = 'badge manuell'; m.textContent = 'manuell';
-    meta.appendChild(m);
-  }
-  if (erPassert(event)) {
-    const p = document.createElement('span');
-    p.style.cssText = 'color:var(--korall);font-size:.75rem'; p.textContent = 'passert';
-    meta.appendChild(p);
-  }
-  const dato = document.createElement('span');
-  dato.style.cssText = 'color:var(--dempet);font-size:.8rem';
-  dato.textContent = formaterDato(event.start);
-  meta.appendChild(dato);
-  kropp.appendChild(meta);
-
-  // Tittel
-  const tittel = document.createElement('h2');
-  tittel.className = 'kort-tittel'; tittel.textContent = event.tittel;
-  kropp.appendChild(tittel);
-
-  // Info-rad
-  const info = document.createElement('div');
-  info.className = 'kort-info';
-  const stedInfo = document.createElement('span');
-stedInfo.textContent = event.sted ?? '—';
-info.appendChild(stedInfo);
-
-const prisInfo = document.createElement('span');
-prisInfo.textContent = formaterPris(event.pris, event.prisTekst);
-info.appendChild(prisInfo);
-
-if (event.lenke) {
-  try {
-    const url = new URL(event.lenke);
-
-    if (url.protocol === 'https:' || url.protocol === 'http:') {
-      const lenke = document.createElement('a');
-      lenke.href = url.href;
-      lenke.target = '_blank';
-      lenke.rel = 'noopener noreferrer';
-      lenke.textContent = 'billett / info';
-      info.appendChild(lenke);
-    }
-  } catch {
-    // Ugyldig URL: ikke vis lenken.
-  }
-}
-  kropp.appendChild(info);
-
-  // Beskrivelse
-  if (event.beskrivelse) {
-    const besk = document.createElement('p');
-    besk.className = 'kort-beskrivelse'; besk.textContent = event.beskrivelse;
-    kropp.appendChild(besk);
-    if (event.beskrivelse.length > 120) {
-      const lm = document.createElement('button');
-      lm.className = 'les-mer'; lm.textContent = 'les mer';
-      lm.onclick = () => {
-        besk.classList.toggle('vis-mer');
-        lm.textContent = besk.classList.contains('vis-mer') ? 'vis mindre' : 'les mer';
-      };
-      kropp.appendChild(lm);
-    }
-  }
-
-  // Kuratortekst
-  const ktLabel = document.createElement('label');
-  ktLabel.className = 'felt-label'; ktLabel.textContent = 'Kuratortekst (vises i kortet)';
-  const ta = document.createElement('textarea');
-  ta.placeholder = 'Skriv en kort redaksjonell begrunnelse…'; ta.rows = 2;
-  kropp.appendChild(ktLabel); kropp.appendChild(ta);
-
-  // Gjentas
-  const gjentasKontroll = lagGjentasKontroll(event.gjentas ?? null);
-  kropp.appendChild(gjentasKontroll.el);
-
-  // Knapper
-  const rad = document.createElement('div');
-  rad.className = 'knapp-rad';
-
-  const gKnapp = document.createElement('button');
-  gKnapp.className = 'knapp knapp-godkjenn'; gKnapp.textContent = '✓ Godkjenn';
-
-  const aKnapp = document.createElement('button');
-  aKnapp.className = 'knapp knapp-avslaa'; aKnapp.textContent = '✕ Avslå';
-
-  const fKnapp = document.createElement('button');
-  fKnapp.className = `knapp-fremhev${event._fremhevet ? ' aktiv' : ''}`;
-  fKnapp.title = event._fremhevet ? 'Fjern fremheving' : 'Fremhev';
-  fKnapp.textContent = '★';
-
-  fKnapp.onclick = () => {
-    event._fremhevet = !event._fremhevet;
-    fKnapp.classList.toggle('aktiv', event._fremhevet);
-    fKnapp.title = event._fremhevet ? 'Fjern fremheving' : 'Fremhev';
-    kort.classList.toggle('er-fremhevet', event._fremhevet);
-    // Oppdater fremhevet-badge i meta
-    const fb = meta.querySelector('.fremhevet-badge');
-    if (event._fremhevet && !fb) {
-      const nb = document.createElement('span');
-      nb.className = 'badge fremhevet-badge'; nb.textContent = '★ Fremhevet';
-      meta.insertBefore(nb, meta.children[1]);
-    } else if (!event._fremhevet && fb) {
-      fb.remove();
-    }
-  };
-
-  rad.appendChild(gKnapp); rad.appendChild(aKnapp); rad.appendChild(fKnapp);
-  kropp.appendChild(rad);
-  kort.appendChild(kropp);
-
-  // Godkjenn
-  gKnapp.onclick = async () => {
-    gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = true;
-    gKnapp.textContent = '…';
-    const res  = await fetch(`/api/godkjenn/${encodeURIComponent(event.id)}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kuratortekst: ta.value, fremhevet: event._fremhevet === true, gjentas: gjentasKontroll.hentVerdi() }),
-    });
-    const data = await res.json();
-    if (data.ok) {
-      rad.remove();
-      const div = document.createElement('div');
-      div.className = 'git-melding';
-      div.innerHTML = `<strong>✓ Godkjent${event._fremhevet ? ' · ★ Fremhevet' : ''} — klar til publisering</strong>Kjør fra paaby/-roten:`;
-      const btn = document.createElement('button');
-      btn.className = 'git-kommando'; btn.textContent = data.gitKommando;
-      btn.onclick = async () => {
-        await navigator.clipboard.writeText(data.gitKommando);
-        btn.textContent = '✓ kopiert!';
-        setTimeout(() => btn.textContent = data.gitKommando, 2000);
-      };
-      div.appendChild(btn); kropp.appendChild(div);
-      event._status = 'godkjent';
-      oppdaterVisning();
-    } else {
-      gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = false;
-      gKnapp.textContent = '✓ Godkjenn';
-      alert(data.feil);
-    }
-  };
-
-  // Avslå
-  aKnapp.onclick = async () => {
-    gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = true;
-    aKnapp.textContent = '…';
-    const res  = await fetch(`/api/avslaa/${encodeURIComponent(event.id)}`, { method: 'POST' });
-    const data = await res.json();
-    if (data.ok) {
-      kort.style.transition = 'opacity .25s'; kort.style.opacity = '0';
-      setTimeout(() => { kort.remove(); event._status = 'avslatt'; oppdaterVisning(); }, 250);
-    } else {
-      gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = false;
-      aKnapp.textContent = '✕ Avslå';
-    }
-  };
-
-  return kort;
-}
-
-// ─── Innsendte (source === 'innsending') ──────────────────────────────────────
-
-function lagKontaktLenke(kontakt) {
-  if (!kontakt) return null;
-  const verdi = kontakt.trim();
-  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(verdi)) {
-    const a = document.createElement('a');
-    a.href = `mailto:${verdi}`;
-    a.textContent = verdi;
-    return a;
-  }
-  const handle = verdi.replace(/^@/, '');
-  const a = document.createElement('a');
-  a.href = `https://instagram.com/${encodeURIComponent(handle)}`;
-  a.target = '_blank'; a.rel = 'noopener noreferrer';
-  a.textContent = verdi.startsWith('@') ? verdi : `@${handle}`;
-  return a;
-}
-
-function lagInnsenderBoks(event) {
-  const boks = document.createElement('div');
-  boks.className = 'innsender-boks';
-
-  const navnRad = document.createElement('div');
-  navnRad.className = 'innsender-rad';
-  const navnLabel = document.createElement('strong');
-  navnLabel.textContent = 'Innsendt av: ';
-  navnRad.appendChild(navnLabel);
-  navnRad.appendChild(document.createTextNode(event._innsenderNavn ?? '—'));
-  if (event._innsenderOrg) navnRad.appendChild(document.createTextNode(` (${event._innsenderOrg})`));
-  boks.appendChild(navnRad);
-
-  const kontaktRad = document.createElement('div');
-  kontaktRad.className = 'innsender-rad';
-  const kontaktLabel = document.createElement('strong');
-  kontaktLabel.textContent = 'Kontakt: ';
-  kontaktRad.appendChild(kontaktLabel);
-  const lenke = lagKontaktLenke(event._innsenderKontakt);
-  kontaktRad.appendChild(lenke ?? document.createTextNode(event._innsenderKontakt ?? '—'));
-  boks.appendChild(kontaktRad);
-
-  if (event._innsenderNotat) {
-    const notatRad = document.createElement('div');
-    notatRad.className = 'innsender-rad';
-    const notatLabel = document.createElement('strong');
-    notatLabel.textContent = 'Kommentar:';
-    notatRad.appendChild(notatLabel);
-    notatRad.appendChild(document.createElement('br'));
-    const notatTekst = document.createElement('span');
-    notatTekst.className = 'innsender-notat';
-    notatTekst.textContent = event._innsenderNotat;
-    notatRad.appendChild(notatTekst);
-    boks.appendChild(notatRad);
-  }
-
-  return boks;
-}
-
-/* Fullt redigerbart kort for én innsending: samme felt-byggeklosser som
-   Publiserte-fanens redigeringspanel (lagKategoriVelgerEl/lagFelt/
-   lagFeltRad/lagTekstomrade/lagGjentasKontroll/lagBildeCropSeksjon), pluss
-   innsenderboks, duplikat-varsel og Lagre/Godkjenn/Avslå/Fremhev — alt synlig
-   direkte, uten en «Rediger»-toggle (i motsetning til Publiserte, der det
-   kun er én ting å redigere i utgangspunktet). */
-function lagInnsendtKort(event) {
-  const kort = document.createElement('article');
-  kort.className = 'kort';
-  kort.dataset.id = event.id;
-
-  const kropp = document.createElement('div');
-  kropp.className = 'kort-kropp';
-
-  const meta = document.createElement('div');
-  meta.className = 'kort-meta';
-  const badge = document.createElement('span');
-  badge.className = `badge ${event.kategori}`; badge.textContent = event.kategori;
-  meta.appendChild(badge);
-  if (event._muligDuplikat) {
-    const db = document.createElement('span');
-    db.className = 'badge duplikat-badge'; db.textContent = '⚠ Mulig duplikat';
-    meta.appendChild(db);
-  }
-  const dato = document.createElement('span');
-  dato.style.cssText = 'color:var(--dempet);font-size:.8rem';
-  dato.textContent = formaterDato(event.start);
-  meta.appendChild(dato);
-  kropp.appendChild(meta);
-
-  const tittelEl = document.createElement('h2');
-  tittelEl.className = 'kort-tittel'; tittelEl.textContent = event.tittel;
-  kropp.appendChild(tittelEl);
-
-  kropp.appendChild(lagInnsenderBoks(event));
-
-  if (event._muligDuplikat && event._duplikatHint) {
-    const varsel = document.createElement('div');
-    varsel.className = 'duplikat-varsel';
-    varsel.textContent = `⚠ ${event._duplikatHint}`;
-    kropp.appendChild(varsel);
-  }
-
-  const katLabel = document.createElement('label');
-  katLabel.className = 'felt-label'; katLabel.textContent = 'Kategori';
-  const kat = lagKategoriVelgerEl(event.kategori);
-
-  const fTittel    = lagFelt('Tittel *', event.tittel);
-  const fStart     = lagFelt('Start (dato og tid) *', osloISOTilDatetimeLocal(event.start), 'datetime-local');
-  const fSlutt     = lagFelt('Slutt', osloISOTilDatetimeLocal(event.slutt), 'datetime-local');
-  const fSted      = lagFelt('Sted', event.sted);
-  const fAdresse   = lagFelt('Adresse', event.adresse);
-  const fLat       = lagFelt('Lat', event.lat ?? '');
-  const fLng       = lagFelt('Lng', event.lng ?? '');
-  const fPris      = lagFelt('Pris (kr, 0 = gratis, tom = ukjent)', event.pris ?? '');
-  const fPrisTekst = lagFelt('Prisvisning', event.prisTekst);
-  const fLenke     = lagFelt('Lenke (billett / mer info)', event.lenke);
-  const fBilde     = lagFelt('Bilde-URL', event.bilde);
-  const bildeCrop  = lagBildeCropSeksjon(fBilde);
-  const tBesk      = lagTekstomrade('Beskrivelse', event.beskrivelse, 3);
-  const tKur       = lagTekstomrade('Kuratortekst (vises i kortet)', event.kuratortekst, 2);
-
-  kropp.appendChild(katLabel);
-  kropp.appendChild(kat.el);
-  kropp.appendChild(fTittel.wrap);
-  kropp.appendChild(lagFeltRad(fStart, fSlutt));
-  kropp.appendChild(lagFeltRad(fSted, fAdresse));
-  kropp.appendChild(lagFeltRad(fLat, fLng));
-  kropp.appendChild(lagFeltRad(fPris, fPrisTekst));
-  kropp.appendChild(tBesk.lab);  kropp.appendChild(tBesk.ta);
-  kropp.appendChild(tKur.lab);   kropp.appendChild(tKur.ta);
-  kropp.appendChild(fLenke.wrap);
-  kropp.appendChild(fBilde.wrap);
-  kropp.appendChild(bildeCrop.el);
-
-  const gjentasKontroll = lagGjentasKontroll(event.gjentas ?? null);
-  kropp.appendChild(gjentasKontroll.el);
-
-  const status = document.createElement('div');
-  status.className = 'pub-rediger-lagre-status';
-
-  const rad = document.createElement('div');
-  rad.className = 'knapp-rad';
-
-  const lagreKnapp = document.createElement('button');
-  lagreKnapp.className = 'knapp';
-  lagreKnapp.style.cssText = 'background:var(--flate3);color:var(--tekst)';
-  lagreKnapp.textContent = '💾 Lagre endringer';
-
-  const gKnapp = document.createElement('button');
-  gKnapp.className = 'knapp knapp-godkjenn'; gKnapp.textContent = '✓ Godkjenn';
-
-  const aKnapp = document.createElement('button');
-  aKnapp.className = 'knapp knapp-avslaa'; aKnapp.textContent = '✕ Avslå';
-
-  const fKnapp = document.createElement('button');
-  fKnapp.className = 'knapp-fremhev';
-  fKnapp.title = 'Fremhev';
-  fKnapp.textContent = '★';
-  let fremhevet = false;
-  fKnapp.onclick = () => {
-    fremhevet = !fremhevet;
-    fKnapp.classList.toggle('aktiv', fremhevet);
-    fKnapp.title = fremhevet ? 'Fjern fremheving' : 'Fremhev';
-  };
-
-  function settKnapperDisabled(v) {
-    lagreKnapp.disabled = gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = v;
-  }
-
-  rad.appendChild(lagreKnapp); rad.appendChild(gKnapp); rad.appendChild(aKnapp); rad.appendChild(fKnapp);
-  kropp.appendChild(status);
-  kropp.appendChild(rad);
-  kort.appendChild(kropp);
-
-  lagreKnapp.onclick = async () => {
-    const tittel = fTittel.input.value.trim();
-    const start  = fStart.input.value.trim();
-    if (!tittel || !start) {
-      status.className = 'pub-rediger-lagre-status feil';
-      status.textContent = 'Tittel og starttidspunkt er påkrevd.';
-      return;
-    }
-    lagreKnapp.disabled = true;
-    status.className = 'pub-rediger-lagre-status';
-    const res = await fetch(`/api/kandidat/${encodeURIComponent(event.id)}/oppdater`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        tittel,
-        kategori:     kat.hentVerdi(),
-        sted:         fSted.input.value.trim(),
-        adresse:      fAdresse.input.value.trim(),
-        lat:          fLat.input.value.trim(),
-        lng:          fLng.input.value.trim(),
-        start:        datetimeLocalTilOsloISO(start),
-        slutt:        datetimeLocalTilOsloISO(fSlutt.input.value.trim()),
-        pris:         fPris.input.value.trim(),
-        prisTekst:    fPrisTekst.input.value.trim(),
-        beskrivelse:  tBesk.ta.value.trim(),
-        kuratortekst: tKur.ta.value.trim(),
-        lenke:        fLenke.input.value.trim(),
-        bilde:        fBilde.input.value.trim(),
-      }),
-    });
-    const data = await res.json();
-    lagreKnapp.disabled = false;
-    if (data.ok) {
-      status.className = 'pub-rediger-lagre-status ok';
-      status.textContent = '✓ Lagret.';
-      event.tittel = tittel;
-      tittelEl.textContent = tittel;
-    } else {
-      status.className = 'pub-rediger-lagre-status feil';
-      status.textContent = data.feil ?? 'Ukjent feil';
-    }
-  };
-
-  gKnapp.onclick = async () => {
-    settKnapperDisabled(true);
-    gKnapp.textContent = '…';
-    const res = await fetch(`/api/godkjenn/${encodeURIComponent(event.id)}`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kuratortekst: tKur.ta.value, fremhevet, gjentas: gjentasKontroll.hentVerdi() }),
-    });
-    const data = await res.json();
-    if (data.ok) {
-      kort.style.transition = 'opacity .25s'; kort.style.opacity = '0';
-      setTimeout(() => { kort.remove(); event._status = 'godkjent'; oppdaterInnsendteTeller(); }, 250);
-    } else {
-      settKnapperDisabled(false);
-      gKnapp.textContent = '✓ Godkjenn';
-      alert(data.feil);
-    }
-  };
-
-  aKnapp.onclick = async () => {
-    settKnapperDisabled(true);
-    aKnapp.textContent = '…';
-    const res = await fetch(`/api/avslaa/${encodeURIComponent(event.id)}`, { method: 'POST' });
-    const data = await res.json();
-    if (data.ok) {
-      kort.style.transition = 'opacity .25s'; kort.style.opacity = '0';
-      setTimeout(() => { kort.remove(); event._status = 'avslatt'; oppdaterInnsendteTeller(); }, 250);
-    } else {
-      settKnapperDisabled(false);
-      aKnapp.textContent = '✕ Avslå';
-    }
-  };
-
-  return { el: kort, lastInnBilde: bildeCrop.lastInnVedVisning };
-}
-
-function oppdaterInnsendteTeller() {
-  const antall = alleEvents.filter(e => e._kilde === 'innsending' && e._status === 'pending').length;
-  document.getElementById('innsendte-teller').textContent = antall;
-}
-
-function renderInnsendteFeed() {
-  const feed = document.getElementById('innsendte-feed');
-  feed.innerHTML = '';
-  const innsendte = alleEvents.filter(e => e._kilde === 'innsending' && e._status === 'pending');
-
-  if (innsendte.length === 0) {
-    feed.innerHTML = '<div class="tom"><strong>Ingen ventende innsendinger</strong></div>';
-  } else {
-    innsendte.forEach(e => {
-      const { el, lastInnBilde } = lagInnsendtKort(e);
-      feed.appendChild(el);
-      lastInnBilde();
-    });
-  }
-
-  oppdaterInnsendteTeller();
-}
-
-// ─── Last inn pending ────────────────────────────────────────────────────────
-
-async function lastInn() {
-  const res  = await fetch('/api/candidates');
-  alleEvents = await res.json();
-  alleEvents.forEach(e => { e._fremhevet = false; });
-  alleEvents.sort((a, b) => new Date(a.start) - new Date(b.start));
-
-  const feed = document.getElementById('feed');
-  feed.innerHTML = '';
-  alleEvents.forEach(e => feed.appendChild(lagKort(e)));
-  oppdaterVisning();
-
-  renderInnsendteFeed();
-
-  // Oppdater fremhev-teller fra publiserte
-  fetch('/api/publiserte').then(r => r.json()).then(oppdaterFremhevTeller);
-}
-
-// ─── Publiserte tab ──────────────────────────────────────────────────────────
-
-async function lastInnPubliserte() {
-  const feed = document.getElementById('publiserte-feed');
-  feed.innerHTML = '<div class="tom"><strong>Laster…</strong></div>';
-
-  const publiserte = await fetch('/api/publiserte').then(r => r.json());
-  publiserte.sort((a, b) => new Date(a.start) - new Date(b.start));
-
-  oppdaterFremhevTeller(publiserte);
-
-  // Kun det som kommer — samme regel som selve appen (eventTilstand !== 'ferdig'):
-  // et event forsvinner herfra automatisk når dagen (+ nattmargin) er over.
-  const kommende  = publiserte.filter(e => eventTilstand(e.start) !== 'ferdig');
-  const antallFerdig = publiserte.length - kommende.length;
-
-  feed.innerHTML = '';
-  if (kommende.length === 0) {
-    feed.innerHTML = '<div class="tom"><strong>Ingen kommende publiserte events</strong></div>';
-    feed.__events__ = publiserte;
-    return;
-  }
-
-  if (antallFerdig > 0) {
-    const info = document.createElement('div');
-    info.style.cssText = 'text-align:center;color:var(--dempet);font-size:.78rem;margin-bottom:-.4rem';
-    info.textContent = `${antallFerdig} avsluttet${antallFerdig === 1 ? '' : 'e'} event${antallFerdig === 1 ? '' : 'er'} er skjult`;
-    feed.appendChild(info);
-  }
-
-  for (const event of kommende) {
-    const kort = document.createElement('div');
-    kort.className = `pub-kort${event.fremhevet ? ' er-fremhevet' : ''}${event.deaktivert ? ' er-deaktivert' : ''}`;
-    kort.dataset.id = event.id;
-
-    const hoved = document.createElement('div');
-    hoved.className = 'pub-hoved';
-
-    const infoDel = document.createElement('div');
-    infoDel.className = 'pub-info';
-
-    const tittel = document.createElement('div');
-    tittel.className = 'pub-tittel';
-    tittel.textContent = `${event.fremhevet ? '★ ' : ''}${event.tittel}`;
-    infoDel.appendChild(tittel);
-
-    const m = document.createElement('div');
-    m.className = 'pub-meta';
-    m.textContent = `${event.sted} · ${formaterDato(event.start)}${event.deaktivert ? ' · 🚫 deaktivert' : ''}`;
-    infoDel.appendChild(m);
-
-    const fKnapp = document.createElement('button');
-    fKnapp.className = `knapp-pub-fremhev${event.fremhevet ? ' aktiv' : ''}`;
-    fKnapp.textContent = '★';
-    fKnapp.title = event.fremhevet ? 'Fjern fremheving' : 'Fremhev';
-
-    fKnapp.onclick = async () => {
-      fKnapp.disabled = true;
-      const res  = await fetch(`/api/fremhev/${encodeURIComponent(event.id)}`, { method: 'POST' });
-      const data = await res.json();
-      if (data.ok) {
-        event.fremhevet = data.fremhevet;
-        fKnapp.classList.toggle('aktiv', data.fremhevet);
-        fKnapp.title = data.fremhevet ? 'Fjern fremheving' : 'Fremhev';
-        kort.classList.toggle('er-fremhevet', data.fremhevet);
-        tittel.textContent = `${data.fremhevet ? '★ ' : ''}${event.tittel}`;
-        oppdaterFremhevTeller(document.getElementById('publiserte-feed')
-          .__events__ || publiserte);
-      }
-      fKnapp.disabled = false;
-    };
-
-    // Gjentas-rad under tittel/meta
-    const gjKontroll = lagGjentasKontroll(event.gjentas ?? null);
-    const statusSpan = document.createElement('span');
-    statusSpan.className = 'gjentas-status';
-    gjKontroll.el.className = 'pub-gjentas-rad';
-    gjKontroll.el.appendChild(statusSpan);
-
-    const lagreGjentas = async () => {
-      statusSpan.textContent = '…';
-      const res  = await fetch(`/api/gjentas/${encodeURIComponent(event.id)}`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gjentas: gjKontroll.hentVerdi() }),
-      });
-      const data = await res.json();
-      statusSpan.textContent = data.ok ? '✓' : '!';
-      if (data.ok) event.gjentas = data.gjentas;
-      setTimeout(() => { statusSpan.textContent = ''; }, 1800);
-    };
-
-    gjKontroll.el.querySelectorAll('select').forEach(s => s.addEventListener('change', lagreGjentas));
-
-    const kortInnhold = document.createElement('div');
-    kortInnhold.style.cssText = 'flex:1;min-width:0';
-    kortInnhold.appendChild(infoDel);
-    kortInnhold.appendChild(gjKontroll.el);
-
-    hoved.appendChild(kortInnhold);
-    hoved.appendChild(fKnapp);
-    kort.appendChild(hoved);
-
-    // Rediger-toggle + fullt redigeringspanel (tittel, kategori, sted,
-    // adresse, koordinater, tid, pris, beskrivelse, lenke, bilde — alt).
-    const redigerKnapp = document.createElement('button');
-    redigerKnapp.type = 'button';
-    redigerKnapp.className = 'knapp-pub-rediger';
-    redigerKnapp.textContent = '✎ Rediger';
-
-    // Deaktiver/aktiver — skjuler eventet fra selve appen uten å slette det
-    // (js/application/validering.js filtrerer bort event.deaktivert===true).
-    // Samme knapp er angre-knappen: trykk igjen for å reaktivere.
-    const dKnapp = document.createElement('button');
-    dKnapp.type = 'button';
-    dKnapp.className = `knapp-pub-deaktiver${event.deaktivert ? ' aktiv' : ''}`;
-    dKnapp.textContent = event.deaktivert ? '↺ Aktiver igjen' : '🚫 Deaktiver';
-
-    const redigerPanel = lagRedigerPanel(event, (oppdatertEvent, gitKommando) => {
-      tittel.textContent = `${oppdatertEvent.fremhevet ? '★ ' : ''}${oppdatertEvent.tittel}`;
-      m.textContent = `${oppdatertEvent.sted} · ${formaterDato(oppdatertEvent.start)}${oppdatertEvent.deaktivert ? ' · 🚫 deaktivert' : ''}`;
-      visGitMelding(gitKommando);
-    });
-
-    // Viser/oppdaterer "klar til publisering, kjør denne git-kommandoen"-boksen
-    // nederst i redigerPanel — delt av både Lagre-, Deaktiver- og Fremhev-flyten.
-    function visGitMelding(gitKommando) {
-      let melding = redigerPanel.querySelector('.git-melding');
-      if (!melding) {
-        melding = document.createElement('div');
-        melding.className = 'git-melding';
-        melding.innerHTML = '<strong>Klar til publisering</strong>Kjør fra paaby/-roten:';
-        const btn = document.createElement('button');
-        btn.className = 'git-kommando';
-        btn.onclick = async () => {
-          await navigator.clipboard.writeText(btn.textContent);
-          const opprinnelig = btn.textContent;
-          btn.textContent = '✓ kopiert!';
-          setTimeout(() => btn.textContent = opprinnelig, 2000);
-        };
-        melding.appendChild(btn);
-        redigerPanel.appendChild(melding);
-      }
-      melding.querySelector('.git-kommando').textContent = gitKommando;
-    }
-
-    dKnapp.onclick = async () => {
-      dKnapp.disabled = true;
-      const res  = await fetch(`/api/deaktiver/${encodeURIComponent(event.id)}`, { method: 'POST' });
-      const data = await res.json();
-      if (data.ok) {
-        event.deaktivert = data.deaktivert;
-        dKnapp.classList.toggle('aktiv', data.deaktivert);
-        dKnapp.textContent = data.deaktivert ? '↺ Aktiver igjen' : '🚫 Deaktiver';
-        kort.classList.toggle('er-deaktivert', data.deaktivert);
-        m.textContent = `${event.sted} · ${formaterDato(event.start)}${data.deaktivert ? ' · 🚫 deaktivert' : ''}`;
-        visGitMelding(data.gitKommando);
-      }
-      dKnapp.disabled = false;
-    };
-
-    redigerKnapp.onclick = () => {
-      const synlig = redigerPanel.style.display !== 'none';
-      redigerPanel.style.display = synlig ? 'none' : 'block';
-      redigerKnapp.textContent = synlig ? '✎ Rediger' : '✕ Lukk redigering';
-      if (!synlig) redigerPanel.__lastInnBildeVedVisning?.();
-    };
-
-    const knappRad = document.createElement('div');
-    knappRad.className = 'pub-knapp-rad';
-    knappRad.appendChild(redigerKnapp);
-    knappRad.appendChild(dKnapp);
-
-    kort.appendChild(knappRad);
-    kort.appendChild(redigerPanel);
-    feed.appendChild(kort);
-  }
-
-  feed.__events__ = publiserte;
-}
-
-// ─── Manuelt skjema ──────────────────────────────────────────────────────────
-
-function velgKategori(knapp) {
-  document.querySelectorAll('.kategori-knapp').forEach(k => k.classList.remove('aktiv'));
-  knapp.classList.add('aktiv');
-}
-
-async function sendSkjema() {
-  const feil = document.getElementById('skjema-feil');
-  const ok   = document.getElementById('skjema-ok');
-  feil.style.display = ok.style.display = 'none';
-
-  const kategori = document.querySelector('.kategori-knapp.aktiv')?.dataset.kat ?? 'musikk';
-  const tittel   = document.getElementById('f-tittel').value.trim();
-  const start    = document.getElementById('f-start').value.trim();
-
-  if (!tittel || !start) {
-    feil.textContent = 'Tittel og starttidspunkt er påkrevd.';
-    feil.style.display = 'block'; return;
-  }
-
-  const submit = document.getElementById('skjema-submit');
-  submit.disabled = true; submit.textContent = '…';
-
-  const gjType = document.getElementById('f-gjentas-type').value;
-  const gjDag  = document.getElementById('f-gjentas-dag').value;
-
-  const res  = await fetch('/api/manuell', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      tittel, kategori, start,
-      slutt:       document.getElementById('f-slutt').value.trim()     || null,
-      sted:        document.getElementById('f-sted').value.trim()      || null,
-      adresse:     document.getElementById('f-adresse').value.trim()   || null,
-      pris:        document.getElementById('f-pris').value.trim()      || null,
-      prisTekst:   document.getElementById('f-pristekst').value.trim() || null,
-      beskrivelse: document.getElementById('f-besk').value.trim()      || null,
-      lenke:       document.getElementById('f-lenke').value.trim()     || null,
-      bilde:       document.getElementById('f-bilde').value.trim()     || null,
-      gjentas:     byggGjentasStreng(gjType, gjDag),
-    }),
-  });
-  const data = await res.json();
-  submit.disabled = false; submit.textContent = 'Legg til i candidates';
-
-  if (data.ok) {
-    ok.textContent = `✓ Lagt til (id: ${data.id}). Bytt til Review-fanen for å godkjenne.`;
-    ok.style.display = 'block';
-    ['f-tittel','f-start','f-slutt','f-sted','f-adresse','f-pris','f-pristekst','f-besk','f-lenke','f-bilde']
-      .forEach(id => document.getElementById(id).value = '');
-    document.getElementById('f-gjentas-type').value = '';
-    document.getElementById('f-gjentas-dag').style.display = 'none';
-    await lastInn();
-  } else {
-    feil.textContent = data.feil ?? 'Ukjent feil'; feil.style.display = 'block';
-  }
-}
-
-lastInn();
-</script>
+  </section>
+
+  <!-- ─── PUBLISERTE ─────────────────────────────────────────────────────── -->
+  <section id="panel-publiserte" class="panel" hidden>
+    <div class="verktoylinje">
+      <input type="search" id="publiserte-sok" class="sok-input" placeholder="Søk på tittel eller sted…" aria-label="Søk blant publiserte events" />
+      <label class="avkryssing">
+        <input type="checkbox" id="publiserte-kun-fremhevet" /> Kun fremhevet
+      </label>
+      <label class="avkryssing">
+        <input type="checkbox" id="publiserte-vis-deaktiverte" /> Vis deaktiverte
+      </label>
+    </div>
+    <p class="feed-teller" id="publiserte-teller"></p>
+    <div id="publiserte-feed" class="feed"></div>
+    <div id="publiserte-tom" class="tom-tilstand" hidden>
+      <strong>Ingen publiserte events</strong>
+      <p>Godkjenn noe i «Til vurdering» eller «Innsendte» for å se det her.</p>
+    </div>
+  </section>
+
+  <!-- ─── NYTT EVENT ──────────────────────────────────────────────────────── -->
+  <section id="panel-nytt-event" class="panel" hidden>
+    <form id="nytt-event-form" class="skjema" novalidate>
+
+      <div class="skjema-seksjon">
+        <h2>Grunninfo</h2>
+        <label class="felt-label" id="ny-kategori-label">Kategori</label>
+        <div class="kategori-velger" id="ny-kategori-velger" role="group" aria-labelledby="ny-kategori-label">
+          <button type="button" class="chip kategori-chip aktiv" data-kat="musikk" data-verdi="musikk">Musikk</button>
+          <button type="button" class="chip kategori-chip" data-kat="klubb" data-verdi="klubb">Klubb</button>
+          <button type="button" class="chip kategori-chip" data-kat="pafunn" data-verdi="pafunn">Påfunn</button>
+        </div>
+
+        <div class="felt-gruppe">
+          <label class="felt-label" for="ny-tittel">Tittel *</label>
+          <input type="text" id="ny-tittel" class="admin-input" placeholder="Arrangementsnavn" required />
+        </div>
+
+        <div class="felt-gruppe">
+          <label class="felt-label" for="ny-beskrivelse">Beskrivelse</label>
+          <textarea id="ny-beskrivelse" class="admin-textarea" rows="3" placeholder="Kort beskrivelse av eventet…"></textarea>
+        </div>
+      </div>
+
+      <div class="skjema-seksjon">
+        <h2>Sted</h2>
+        <div class="felt-gruppe">
+          <label class="felt-label" for="ny-sted">Sted / venue</label>
+          <input type="text" id="ny-sted" class="admin-input" placeholder="Venuenavn" />
+        </div>
+        <div class="felt-gruppe">
+          <label class="felt-label" for="ny-adresse">Adresse</label>
+          <input type="text" id="ny-adresse" class="admin-input" placeholder="Gateadresse, postnummer Oslo" />
+        </div>
+      </div>
+
+      <div class="skjema-seksjon">
+        <h2>Tid</h2>
+        <div class="felt-rad">
+          <div class="felt-gruppe">
+            <label class="felt-label" for="ny-start">Start *</label>
+            <input type="datetime-local" id="ny-start" class="admin-input" required />
+          </div>
+          <div class="felt-gruppe">
+            <label class="felt-label" for="ny-slutt">Slutt</label>
+            <input type="datetime-local" id="ny-slutt" class="admin-input" />
+          </div>
+        </div>
+        <div class="felt-gruppe">
+          <span class="felt-label">Gjentas</span>
+          <div id="ny-gjentas-host"></div>
+        </div>
+      </div>
+
+      <div class="skjema-seksjon">
+        <h2>Pris</h2>
+        <div class="felt-rad">
+          <div class="felt-gruppe">
+            <label class="felt-label" for="ny-pris">Pris (kr, 0 = gratis, tom = ukjent)</label>
+            <input type="text" inputmode="decimal" id="ny-pris" class="admin-input" placeholder="150" />
+          </div>
+          <div class="felt-gruppe">
+            <label class="felt-label" for="ny-pristekst">Prisvisning (valgfritt)</label>
+            <input type="text" id="ny-pristekst" class="admin-input" placeholder="150 kr + gebyr" />
+          </div>
+        </div>
+      </div>
+
+      <div class="skjema-seksjon">
+        <h2>Lenker</h2>
+        <div class="felt-gruppe">
+          <label class="felt-label" for="ny-lenke">Lenke (billett / mer info)</label>
+          <input type="url" id="ny-lenke" class="admin-input" placeholder="https://…" />
+        </div>
+      </div>
+
+      <div class="skjema-seksjon">
+        <h2>Media</h2>
+        <div class="felt-gruppe">
+          <label class="felt-label" for="ny-bilde">Bilde-URL (valgfritt)</label>
+          <input type="url" id="ny-bilde" class="admin-input" placeholder="https://…" />
+        </div>
+      </div>
+
+      <button type="submit" id="ny-submit" class="skjema-submit">Legg til — send til vurdering</button>
+      <p class="skjema-feil" id="ny-feil" hidden></p>
+    </form>
+  </section>
+
+</main>
+
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
