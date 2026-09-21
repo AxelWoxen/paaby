@@ -15,9 +15,9 @@
   <div class="topbar">
     <header class="topptekst topbar-innhold">
 
-      <div class="logo-lockup" aria-label="påby">
+      <a class="logo-lockup" href="/" aria-label="påby — til forsiden">
         <img class="logo-hovedlogo" src="/bilder/paaby-logo.svg" alt="" />
-      </div>
+      </a>
 
       <p class="tagline">Det du ellers hadde gått glipp av</p>
 

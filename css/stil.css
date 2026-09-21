@@ -287,7 +287,7 @@ textarea {
   display: inline-flex;
   align-items: center;
   border: 1.5px solid var(--flate-2);
-  border-radius: 100px;
+  border-radius: 20px;
   font-size: 0.8rem;
   color: var(--graa);
   white-space: nowrap;
