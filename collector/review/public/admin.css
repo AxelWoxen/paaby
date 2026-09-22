@@ -135,7 +135,7 @@ a { color: var(--aksent-tekst); }
 .innlogget-som { font-size: var(--tekst-label); color: var(--graa); }
 .innlogget-som:empty { display: none; }
 .logo-lockup { display: inline-flex; align-items: center; gap: 0.5rem; }
-.logo-bilde { display: block; height: 28px; width: auto; }
+.logo-bilde { display: block; height: 48px; width: auto; max-width: 160px; }
 .logo-admin-tekst { font-size: var(--tekst-sidetittel); font-weight: 700; }
 
 /* Miljø: produksjon skal være tydelig, ikke alarmerende — solid svart, ikke
@@ -548,6 +548,7 @@ a { color: var(--aksent-tekst); }
 /* ─── Responsivt ──────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .topbar { padding-top: var(--gap-m); padding-bottom: var(--gap-s); }
+  .logo-bilde { height: 40px; max-width: 135px; }
   .faner { overflow-x: auto; }
   .kort-hode { flex-direction: column; }
   .kort-bilde-wrapper { width: 100%; aspect-ratio: 16 / 7; }
