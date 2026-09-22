@@ -300,9 +300,9 @@ textarea {
   --kort-farge: var(--aksent);
 }
 
-.kategori-chip[data-verdi="musikk"] { --kort-farge: var(--musikk); }
-.kategori-chip[data-verdi="klubb"]  { --kort-farge: var(--klubb); }
-.kategori-chip[data-verdi="pafunn"] { --kort-farge: var(--pafunn); }
+.kategori-chip[data-verdi="musikk"] { --kort-farge: var(--musikk); --kort-tekst: var(--musikk-tekst); }
+.kategori-chip[data-verdi="klubb"]  { --kort-farge: var(--klubb);  --kort-tekst: var(--klubb-tekst); }
+.kategori-chip[data-verdi="pafunn"] { --kort-farge: var(--pafunn); --kort-tekst: var(--pafunn-tekst); }
 
 .kategori-filter-ikon {
   display: block;
@@ -324,7 +324,7 @@ textarea {
 .kategori-chip.aktiv {
   background: var(--kort-farge);
   border-color: var(--kort-farge);
-  color: var(--aksent-kontrast);
+  color: var(--kort-tekst, var(--aksent-kontrast));
 }
 
 .nullstill-knapp {
@@ -602,6 +602,7 @@ textarea {
 .kort,
 .utvalg-kort {
   --kort-farge: var(--aksent);
+  --kort-tekst: var(--aksent-kontrast);
   position: relative;
   background: var(--kort-farge);
   border: 8px solid var(--kort-farge);
@@ -615,16 +616,19 @@ textarea {
 .kort[data-kategori="musikk"],
 .utvalg-kort[data-kategori="musikk"] {
   --kort-farge: var(--musikk);
+  --kort-tekst: var(--musikk-tekst);
 }
 
 .kort[data-kategori="klubb"],
 .utvalg-kort[data-kategori="klubb"] {
   --kort-farge: var(--klubb);
+  --kort-tekst: var(--klubb-tekst);
 }
 
 .kort[data-kategori="pafunn"],
 .utvalg-kort[data-kategori="pafunn"] {
   --kort-farge: var(--pafunn);
+  --kort-tekst: var(--pafunn-tekst);
 }
 
 .kort:hover,
@@ -881,6 +885,7 @@ textarea {
   box-sizing: border-box;
 
   background: var(--kort-farge);
+  color: var(--kort-tekst);
   padding: var(--gap-s) var(--gap-m);
 
   border-top-right-radius: 12px;
@@ -920,7 +925,7 @@ textarea {
   gap: var(--gap-s);
   min-width: 0;
   font-size: 0.85rem;
-  color: var(--paper);
+  color: var(--kort-tekst);
 }
 
 .sted {
@@ -944,12 +949,12 @@ textarea {
   gap: 0;
   flex-wrap: wrap;
   font-size: 0.85rem;
-  color: var(--paper);
+  color: var(--kort-tekst);
 }
 
 .tid,
 .pris-gratis {
-  color: var(--paper);
+  color: var(--kort-tekst);
 }
 
 .pris-gratis {
@@ -999,6 +1004,7 @@ textarea {
 
 .modal-container {
   --kort-farge: var(--aksent);
+  --kort-tekst: var(--aksent-kontrast);
   background: var(--hvit);
   border-radius: var(--radius-l) var(--radius-l) 0 0;
   border: 4px solid var(--kort-farge);
@@ -1021,14 +1027,17 @@ textarea {
 
 .modal[data-kategori="musikk"] .modal-container {
   --kort-farge: var(--musikk);
+  --kort-tekst: var(--musikk-tekst);
 }
 
 .modal[data-kategori="klubb"] .modal-container {
   --kort-farge: var(--klubb);
+  --kort-tekst: var(--klubb-tekst);
 }
 
 .modal[data-kategori="pafunn"] .modal-container {
   --kort-farge: var(--pafunn);
+  --kort-tekst: var(--pafunn-tekst);
 }
 
 .modal-lukk {
@@ -1203,7 +1212,7 @@ textarea {
 
 .knapp-primaer {
   background: var(--kort-farge);
-  color: var(--aksent-kontrast);
+  color: var(--kort-tekst, var(--aksent-kontrast));
   flex: 1;
 }
 
@@ -1618,10 +1627,10 @@ body.modal-aapen {
    send-knappen under), slik at BÅDE kortkanten og den fargede knappen får
    riktig farge — .modal[data-kategori] i den ekte modalen trenger ikke dette
    siden knappen der ligger inni selve modal-container. */
-#innsending-skjema { --kort-farge: var(--aksent); }
-#innsending-skjema[data-kategori="musikk"] { --kort-farge: var(--musikk); }
-#innsending-skjema[data-kategori="klubb"]  { --kort-farge: var(--klubb); }
-#innsending-skjema[data-kategori="pafunn"] { --kort-farge: var(--pafunn); }
+#innsending-skjema { --kort-farge: var(--aksent); --kort-tekst: var(--aksent-kontrast); }
+#innsending-skjema[data-kategori="musikk"] { --kort-farge: var(--musikk); --kort-tekst: var(--musikk-tekst); }
+#innsending-skjema[data-kategori="klubb"]  { --kort-farge: var(--klubb);  --kort-tekst: var(--klubb-tekst); }
+#innsending-skjema[data-kategori="pafunn"] { --kort-farge: var(--pafunn); --kort-tekst: var(--pafunn-tekst); }
 
 /* .modal-container setter --kort-farge: var(--aksent) på seg selv (for den
    ekte modalen, som ikke har noen fargesatt forelder) — det ville stjålet

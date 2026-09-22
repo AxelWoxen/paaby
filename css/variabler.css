@@ -60,6 +60,15 @@
    --klubb: #701236;
    --pafunn: #A0BEFA;
 
+  /* Tekst OPPÅ en flate fylt med kategorifargen (kort-innhold, aktiv
+     kategori-chip/kategori-knapp). Beregnet per farge, ikke antatt —
+     --klubb er for mørk (WCAG-kontrast ~1,6:1 med --svart) til at mørk
+     tekst kan leses; --musikk/--pafunn er lyse nok til at mørk tekst
+     fortsatt er riktig (5,6:1 / 10,1:1). Alle tre ≥ 4,5:1. */
+  --musikk-tekst: var(--svart);
+  --klubb-tekst:  var(--hvit);
+  --pafunn-tekst: var(--svart);
+
   /* Tekst/ikon oppå en flate FYLT med aksenten (aktiv chip, primærknapp) —
      aksenten er lys, så mørk tekst leser klart best oppå den. */
   --aksent-kontrast: var(--svart);
