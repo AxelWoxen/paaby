@@ -283,7 +283,6 @@ function byggFormData() {
 function visBekreftelse() {
   skjema.hidden = true;
   bekreftelseEl.hidden = false;
-  window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function tilbakestillSkjema() {

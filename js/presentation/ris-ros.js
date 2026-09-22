@@ -15,6 +15,7 @@ const skjema        = document.getElementById('feedback-skjema');
 const meldingFelt    = document.getElementById('melding');
 const sendKnapp      = document.getElementById('send-knapp');
 const bekreftelseEl  = document.getElementById('bekreftelse');
+const introEl = document.getElementById('feedback-intro');
 
 /* ========================
    TEGNTELLER
@@ -74,8 +75,8 @@ skjema.addEventListener('submit', async (e) => {
 
     if (res.ok && data.ok) {
       skjema.hidden = true;
+      introEl.hidden = true;
       bekreftelseEl.hidden = false;
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (typeof data.feil === 'string') {
       settFeil('melding', data.feil);
     } else {
