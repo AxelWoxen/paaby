@@ -339,7 +339,7 @@ a { color: var(--aksent-tekst); }
 .knapp:disabled { opacity: 0.45; cursor: default; }
 
 .knapp-primaer   { background: var(--blaa); color: var(--svart); }
-.knapp-sekundaer { background: var(--hvit); color: var(--svart); border: 1.5px solid var(--svart); }
+.knapp-sekundaer { background: var(--hvit); color: var(--svart);}
 .knapp-destruktiv { background: var(--hvit); color: var(--svart); border: 1.5px solid var(--svart); }
 
 /* Handlingsrad-varianter: godkjenn/avslå har fast plass (primær/destruktiv)
