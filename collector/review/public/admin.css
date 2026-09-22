@@ -167,7 +167,22 @@ a { color: var(--aksent-tekst); }
 .fane-knapp.aktiv { color: var(--paper); border-color: var(--aksent); }
 
 .fane-teller {
-  font-size: 0.68rem; font-weight: 700; min-width: 1.4em; text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+
+  min-width: 1.4em;
+  min-height: 1.4em;
+
+  background: var(--flate-2);
+  color: var(--graa);
+
+  border-radius: var(--radius-s);
+  padding: 0.15rem 0.4rem;
 }
 
 /* ─── Innhold / paneler ──────────────────────────────────────────────── */
