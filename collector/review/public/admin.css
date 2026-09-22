@@ -168,8 +168,6 @@ a { color: var(--aksent-tekst); }
 
 .fane-teller {
   font-size: 0.68rem; font-weight: 700; min-width: 1.4em; text-align: center;
-  background: var(--flate-2); color: var(--graa);
-  border-radius: var(--radius-s); padding: 0.05rem 0.4rem;
 }
 
 /* ─── Innhold / paneler ──────────────────────────────────────────────── */
