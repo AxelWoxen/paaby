@@ -6,8 +6,21 @@
 
 const ÅPNE_STIER = new Set(['/login', '/logout']);
 
+// login.html må se ut som resten av panelet FØR innlogging — men skal
+// fortsatt ikke åpne noe som helst annet. Derfor eksakte stier (ingen
+// prefiks/wildcard som f.eks. skulle sluppet gjennom hele /fonts/-mappen
+// eller andre CSS-filer), og kun GET.
+const ÅPNE_GET_STIER = new Set([
+  '/admin.css',
+  '/login.js',
+  '/fonts/SpartanMB-Regular.otf',
+  '/fonts/SpartanMB-SemiBold.otf',
+  '/fonts/SpartanMB-Bold.otf',
+]);
+
 export function krevInnlogging(req, res, next) {
   if (ÅPNE_STIER.has(req.path)) return next();
+  if (req.method === 'GET' && ÅPNE_GET_STIER.has(req.path)) return next();
   if (req.session?.brukerId) return next();
 
   if (req.path.startsWith('/api/')) {
