@@ -10,450 +10,12 @@
        før lagring. IKKE lastet i selve appen (index.html i rot). -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.css" />
   <link rel="icon" type="image/png" href="https://paaby.no/bilder/faviconAdmin.png?v=2" />
+  <link rel="stylesheet" href="admin.css" />
   <script src="https://cdn.jsdelivr.net/npm/cropperjs@1.6.2/dist/cropper.min.js"></script>
-
-  <style>
-    /* ─── Design-tokens ──────────────────────────────────────────────────
-       Speiler css/variabler.css (hovedsidens ekte palett/font) 1:1.
-       Adminpanelet er en frittstående statisk app (egen express-server),
-       så tokens duplisert her i stedet for importert — men ALDRI gjettet:
-       samme hex-verdier og font som resten av Påby. */
-
-    @font-face {
-      font-family: 'Spartan';
-      src: url('/fonts/SpartanMB-Regular.otf') format('opentype');
-      font-weight: 400; font-style: normal; font-display: swap;
-    }
-    @font-face {
-      font-family: 'Spartan';
-      src: url('/fonts/SpartanMB-SemiBold.otf') format('opentype');
-      font-weight: 600; font-style: normal; font-display: swap;
-    }
-    @font-face {
-      font-family: 'Spartan';
-      src: url('/fonts/SpartanMB-Bold.otf') format('opentype');
-      font-weight: 700; font-style: normal; font-display: swap;
-    }
-
-    :root {
-      --hvit:  #FFFCF7;
-      --svart: #1E0C14;
-      --blaa:  #8CB1F4;
-
-      --paper: var(--svart);
-      --graa:  color-mix(in srgb, var(--svart) 55%, var(--hvit) 45%);
-
-      --flate-1: var(--hvit);
-      --flate-2: color-mix(in srgb, var(--svart) 8%, var(--hvit) 92%);
-      --flate-3: color-mix(in srgb, var(--svart) 14%, var(--hvit) 86%);
-
-      --aksent:          var(--blaa);
-      --aksent-kontrast: var(--svart);
-      --aksent-tekst:    color-mix(in srgb, var(--blaa) 55%, var(--svart) 45%);
-
-      --musikk: #FF4A36;
-      --klubb:  #701236;
-      --pafunn: #A0BEFA;
-
-      /* Sparsomt brukt — kun suksess-feedback og destruktive handlinger. */
-      --suksess:   #2F8F5B;
-      --faresone:  #C4443B;
-
-      --font: 'Spartan', system-ui, sans-serif;
-
-      --gap-s: 0.5rem;
-      --gap-m: 1rem;
-      --gap-l: 1.5rem;
-      --gap-xl: 2rem;
-
-      --radius-s: 8px;
-      --radius-m: 12px;
-
-      /* .knapp-primaer/.chip.aktiv fyller med --kort-farge — uten en
-         kategorikontekst (som på hovedsiden) faller den tilbake på aksenten. */
-      --kort-farge: var(--aksent);
-    }
-
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: var(--flate-1);
-      color: var(--paper);
-      font-family: var(--font);
-      font-size: 15px;
-      line-height: 1.5;
-      padding-bottom: 4rem;
-    }
-
-    button, input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
-    button { cursor: pointer; background: none; border: none; }
-
-    .sr-only {
-      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-    }
-
-    a { color: var(--aksent-tekst); }
-
-    :focus-visible { outline: 2px solid var(--blaa); outline-offset: 2px; }
-
-    /* ─── Toppbar / navigasjon ───────────────────────────────────────────── */
-    .topbar {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: var(--gap-m);
-      max-width: 980px; margin: 0 auto; padding: var(--gap-l) var(--gap-m) var(--gap-m);
-    }
-    .topbar-venstre { display: flex; align-items: center; gap: var(--gap-m); }
-    .topbar-hoyre { display: flex; align-items: center; gap: var(--gap-m); }
-    .innlogget-som { font-size: 0.78rem; color: var(--graa); }
-    .innlogget-som:empty { display: none; }
-    .logo { font-size: 1.15rem; font-weight: 700; }
-
-    .miljo-badge {
-      font-size: 0.72rem; font-weight: 600; letter-spacing: 0.03em;
-      padding: 0.25rem 0.7rem; border-radius: 100px;
-    }
-    .miljo-badge.miljo-lokal      { background: var(--flate-2); color: var(--graa); }
-    .miljo-badge.miljo-produksjon { background: rgba(196,68,59,0.12); color: var(--faresone); }
-
-    .faner {
-      max-width: 980px; margin: 0 auto; padding: 0 var(--gap-m);
-      display: flex; gap: var(--gap-s); flex-wrap: wrap;
-      border-bottom: 1.5px solid var(--flate-2);
-    }
-    .fane-knapp {
-      padding: 0.7rem 1rem; margin-bottom: -1.5px;
-      border-bottom: 2px solid transparent;
-      color: var(--graa); font-weight: 600; font-size: 0.9rem;
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      transition: color .15s, border-color .15s;
-    }
-    .fane-knapp:hover { color: var(--paper); }
-    .fane-knapp.aktiv { color: var(--paper); border-color: var(--aksent); }
-
-    .fane-teller {
-      font-size: 0.7rem; font-weight: 700; min-width: 1.4em; text-align: center;
-      background: var(--flate-2); color: var(--graa);
-      border-radius: 100px; padding: 0.05rem 0.4rem;
-    }
-    .fane-teller:empty, .fane-teller[data-null] { display: none; }
-
-    /* ─── Innhold / paneler ──────────────────────────────────────────────── */
-    .innhold { max-width: 980px; margin: 0 auto; padding: var(--gap-l) var(--gap-m) 0; }
-    .panel[hidden] { display: none; }
-
-    .verktoylinje {
-      display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-s) var(--gap-m);
-      margin-bottom: var(--gap-m);
-    }
-    .sok-input {
-      flex: 1 1 220px; min-width: 0;
-      background: var(--flate-2); border: 1.5px solid transparent;
-      border-radius: var(--radius-s); padding: 0.6rem 0.9rem;
-      transition: border-color .15s;
-    }
-    .sok-input:focus { border-color: var(--blaa); outline: none; }
-
-    .kategori-filtre { display: flex; gap: var(--gap-s); flex-wrap: wrap; }
-
-    .kategori-filter-chip {
-      padding: 0.35rem 0.85rem; min-height: 36px;
-      border: 1.5px solid var(--flate-2); border-radius: 100px;
-      color: var(--graa); font-size: 0.82rem;
-      transition: border-color .15s, color .15s, background .15s;
-    }
-    .kategori-filter-chip:hover { border-color: var(--graa); color: var(--paper); }
-    .kategori-filter-chip.aktiv { background: var(--aksent); border-color: var(--aksent); color: var(--aksent-kontrast); }
-    .kategori-filter-chip.aktiv[data-filter="musikk"] { background: var(--musikk); border-color: var(--musikk); color: var(--hvit); }
-    .kategori-filter-chip.aktiv[data-filter="klubb"]  { background: var(--klubb);  border-color: var(--klubb);  color: var(--hvit); }
-    .kategori-filter-chip.aktiv[data-filter="pafunn"] { background: var(--pafunn); border-color: var(--pafunn); color: var(--svart); }
-
-    .avkryssing {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      font-size: 0.82rem; color: var(--graa); cursor: pointer;
-    }
-    .avkryssing input { cursor: pointer; accent-color: var(--blaa); }
-
-    .feed-teller { color: var(--graa); font-size: 0.82rem; margin-bottom: var(--gap-m); }
-
-    .feed { display: flex; flex-direction: column; gap: var(--gap-m); }
-
-    .tom-tilstand, .tom-melding {
-      text-align: center; padding: 3rem 1rem; color: var(--graa);
-    }
-    .tom-tilstand strong { display: block; color: var(--paper); font-size: 1.05rem; margin-bottom: 0.4rem; }
-    .tom-tilstand p { font-size: 0.88rem; }
-
-    /* ─── Badges ──────────────────────────────────────────────────────────── */
-    .badge {
-      display: inline-flex; align-items: center;
-      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
-      text-transform: uppercase; padding: 0.22em 0.6em; border-radius: 5px;
-      background: var(--flate-2); color: var(--graa);
-    }
-    .badge-musikk { background: color-mix(in srgb, var(--musikk) 15%, var(--hvit) 85%); color: var(--musikk); }
-    .badge-klubb  { background: color-mix(in srgb, var(--klubb) 15%, var(--hvit) 85%); color: var(--klubb); }
-    .badge-pafunn { background: color-mix(in srgb, var(--pafunn) 45%, var(--svart) 20%); color: var(--svart); }
-    .badge-fremhevet { background: color-mix(in srgb, var(--blaa) 20%, var(--hvit) 80%); color: var(--aksent-tekst); }
-    .badge-notoy     { background: var(--flate-2); color: var(--graa); }
-    .badge-duplikat  { background: color-mix(in srgb, var(--faresone) 15%, var(--hvit) 85%); color: var(--faresone); }
-    .badge-passert   { background: var(--flate-2); color: var(--graa); font-style: italic; }
-
-    /* ─── Kandidat-kort (Til vurdering / Innsendte) ───────────────────────── */
-    .kandidat-kort {
-      background: var(--hvit); border: 1.5px solid var(--flate-2);
-      border-radius: var(--radius-m); padding: 1.1rem 1.25rem;
-    }
-    .kort-meta { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
-    .kort-dato { color: var(--graa); font-size: 0.82rem; margin-left: auto; }
-    .kort-tittel { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem; }
-    .kort-info {
-      color: var(--graa); font-size: 0.85rem;
-      display: flex; flex-wrap: wrap; gap: 0.2rem 0.75rem; margin-bottom: 0.5rem;
-    }
-    .kort-innsender-kort { font-size: 0.82rem; color: var(--aksent-tekst); margin-bottom: 0.4rem; }
-    .kort-beskrivelse-kort {
-      font-size: 0.85rem; color: var(--graa); margin-bottom: 0.6rem;
-      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
-    }
-
-    .kandidat-panel { border-top: 1.5px solid var(--flate-2); margin: 0.75rem 0; padding-top: 0.9rem; }
-
-    .innsender-boks {
-      background: var(--flate-2); border-left: 3px solid var(--blaa);
-      border-radius: 6px; padding: 0.7rem 0.85rem; margin-bottom: 0.85rem; font-size: 0.85rem;
-    }
-    .innsender-rad { margin-bottom: 0.3rem; }
-    .innsender-rad:last-child { margin-bottom: 0; }
-    .innsender-notat { white-space: pre-wrap; }
-
-    .duplikat-varsel {
-      background: color-mix(in srgb, var(--faresone) 12%, var(--hvit) 88%); color: var(--faresone);
-      border-radius: 6px; padding: 0.55rem 0.75rem; margin-bottom: 0.85rem; font-size: 0.82rem;
-    }
-
-    .lenke-knapp {
-      color: var(--graa); font-size: 0.82rem; text-decoration: underline; text-underline-offset: 2px;
-      padding: 0.3rem 0;
-    }
-    .lenke-knapp:hover { color: var(--paper); }
-    .lenke-knapp-faresone:hover { color: var(--faresone); }
-    .lenke-knapp-faresone.aktiv { color: var(--faresone); }
-
-    .beslutning-rad { display: flex; flex-direction: column; gap: 0.6rem; margin: 0.75rem 0; }
-    .kuratortekst-label { margin-bottom: -0.3rem; }
-
-    .knapp-rad { display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: stretch; }
-
-    /* ─── Knapper (delt) ──────────────────────────────────────────────────── */
-    .knapp {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 0.65rem 1.1rem; border-radius: var(--radius-m);
-      font-size: 0.875rem; font-weight: 600; transition: opacity .15s, transform .1s;
-    }
-    .knapp:hover { opacity: 0.85; }
-    .knapp:active { transform: scale(0.98); }
-    .knapp:disabled { opacity: 0.45; cursor: default; }
-
-    .knapp-primaer    { background: var(--kort-farge); color: var(--aksent-kontrast); }
-    .knapp-sekundaer  { background: var(--flate-2); color: var(--paper); }
-    .knapp-ghost {
-      border: 1.5px solid var(--flate-2); color: var(--graa);
-      padding: 0.6rem 1rem; border-radius: var(--radius-m); font-size: 0.85rem;
-      transition: border-color .15s, color .15s;
-    }
-    .knapp-ghost:hover { border-color: var(--graa); color: var(--paper); }
-    .knapp-destruktiv { background: var(--faresone); color: var(--hvit); }
-
-    .knapp-godkjenn { flex: 1; min-width: 120px; background: var(--suksess); color: var(--hvit); }
-    .knapp-avslaa   { flex: 1; min-width: 100px; background: var(--flate-2); color: var(--graa); }
-
-    .knapp-fremhev, .knapp-stjerne {
-      flex: 0 0 auto; background: var(--flate-2); color: var(--graa);
-      border: 1.5px solid var(--flate-2); border-radius: var(--radius-m);
-      font-size: 1rem; padding: 0.55rem 0.8rem; transition: all .15s;
-    }
-    .knapp-fremhev:hover, .knapp-stjerne:hover { border-color: var(--blaa); color: var(--aksent-tekst); }
-    .knapp-fremhev.aktiv, .knapp-stjerne.aktiv {
-      background: color-mix(in srgb, var(--blaa) 20%, var(--hvit) 80%);
-      border-color: var(--blaa); color: var(--aksent-tekst);
-    }
-
-    /* ─── Skjema-felter (delt: rediger-felter og nytt-event-skjema) ────────── */
-    .felt-label {
-      display: block; font-size: 0.75rem; color: var(--graa);
-      text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem;
-    }
-    .felt-gruppe { margin-bottom: 0.85rem; }
-    .felt-rad { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
-    @media (max-width: 600px) { .felt-rad { grid-template-columns: 1fr; } }
-    .felt-rad .felt-gruppe { margin-bottom: 0.85rem; }
-
-    .admin-input, .admin-textarea, .admin-select {
-      width: 100%; background: var(--flate-2); border: 1.5px solid transparent;
-      border-radius: var(--radius-s); padding: 0.55rem 0.75rem; outline: none;
-      transition: border-color .15s;
-    }
-    .admin-input:focus, .admin-textarea:focus, .admin-select:focus { border-color: var(--blaa); }
-    .admin-textarea { resize: vertical; min-height: 56px; }
-    .admin-select { cursor: pointer; }
-
-    .rediger-felter { display: flex; flex-direction: column; }
-
-    .kategori-velger { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.85rem; }
-    .chip {
-      padding: 0.35rem 0.85rem; min-height: 38px;
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      border: 1.5px solid var(--flate-2); border-radius: 100px;
-      font-size: 0.82rem; color: var(--graa);
-      transition: border-color .15s, color .15s, background .15s;
-    }
-    .chip:hover { border-color: var(--graa); color: var(--paper); }
-    .kategori-chip { --kort-farge: var(--aksent); }
-    .kategori-chip[data-verdi="musikk"] { --kort-farge: var(--musikk); }
-    .kategori-chip[data-verdi="klubb"]  { --kort-farge: var(--klubb); }
-    .kategori-chip[data-verdi="pafunn"] { --kort-farge: var(--pafunn); }
-    .kategori-chip.aktiv {
-      background: var(--kort-farge); border-color: var(--kort-farge);
-      color: var(--aksent-kontrast);
-    }
-    .kategori-filter-ikon { display: block; width: auto; height: 14px; }
-
-    .lagre-status { font-size: 0.8rem; min-height: 1.1em; }
-    .lagre-status.feil { color: var(--faresone); }
-
-    /* ─── Bilde-crop ──────────────────────────────────────────────────────── */
-    .crop-seksjon { margin-bottom: 0.85rem; }
-    .crop-tom {
-      font-size: 0.8rem; color: var(--graa); padding: 0.6rem 0.75rem;
-      background: var(--flate-2); border-radius: var(--radius-s); margin-bottom: 0.5rem;
-    }
-    .crop-img-wrap {
-      max-width: 100%; max-height: 360px; overflow: hidden;
-      border-radius: var(--radius-s); margin-bottom: 0.5rem; background: var(--flate-2);
-    }
-    .crop-img { display: block; max-width: 100%; }
-    .crop-knapperad { margin-bottom: 0.5rem; }
-    .crop-status { font-size: 0.78rem; margin-bottom: 0.5rem; display: none; }
-    .crop-status.ok   { color: var(--suksess); display: block; }
-    .crop-status.feil { color: var(--faresone); display: block; }
-    .crop-forhandsvisning-rad { margin-bottom: 0.85rem; }
-    .crop-forhandsvisning-wrap {
-      position: relative; aspect-ratio: 16 / 7; overflow: hidden;
-      border-radius: var(--radius-s); background: var(--flate-2); max-width: 360px;
-    }
-    .crop-forhandsvisning-img { width: 100%; height: 100%; object-fit: cover; display: block; }
-
-    /* ─── Gjentas-kontroll ────────────────────────────────────────────────── */
-    .gjentas-rad { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-    .gjentas-label {
-      font-size: 0.75rem; color: var(--graa);
-      text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
-    }
-    .gjentas-select {
-      flex: 1; min-width: 0; background: var(--flate-2); border: 1.5px solid transparent;
-      border-radius: var(--radius-s); padding: 0.4rem 0.6rem; outline: none;
-      cursor: pointer; transition: border-color .15s;
-    }
-    .gjentas-select:focus { border-color: var(--blaa); }
-    .gjentas-status { font-size: 0.72rem; color: var(--suksess); min-width: 1.4rem; }
-    .pub-gjentas-rad { margin-top: 0.4rem; }
-
-    /* ─── Publiserte-kort ─────────────────────────────────────────────────── */
-    .pub-kort {
-      background: var(--hvit); border: 1.5px solid var(--flate-2);
-      border-radius: var(--radius-m); padding: 0.9rem 1.1rem;
-      display: flex; flex-direction: column; gap: 0.6rem;
-    }
-    .pub-kort.er-fremhevet { box-shadow: 0 0 0 2px var(--blaa); }
-    .pub-kort.er-deaktivert { opacity: 0.55; }
-    .pub-kort.er-deaktivert:hover { opacity: 0.85; }
-
-    .pub-hoved { display: flex; align-items: center; gap: 0.75rem; }
-    .pub-innhold { flex: 1; min-width: 0; }
-    .pub-topprad { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem; }
-    .pub-tittel { font-weight: 600; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .pub-meta { color: var(--graa); font-size: 0.8rem; }
-
-    .pub-knapp-rad { display: flex; gap: 1rem; align-items: center; }
-    .pub-rediger-panel { border-top: 1.5px solid var(--flate-2); padding-top: 0.85rem; }
-    .pub-rediger-panel[hidden] { display: none; }
-
-    /* ─── Nytt event-skjema ───────────────────────────────────────────────── */
-    .skjema { max-width: 640px; margin: 0 auto var(--gap-xl); }
-    .skjema-seksjon {
-      background: var(--hvit); border: 1.5px solid var(--flate-2);
-      border-radius: var(--radius-m); padding: 1.25rem 1.4rem; margin-bottom: var(--gap-m);
-    }
-    .skjema-seksjon h2 {
-      font-size: 0.78rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--graa); margin-bottom: 1rem;
-    }
-
-    .skjema-submit {
-      width: 100%; padding: 0.8rem; border-radius: var(--radius-m);
-      background: var(--aksent); color: var(--aksent-kontrast);
-      font-size: 0.95rem; font-weight: 700; transition: opacity .15s;
-    }
-    .skjema-submit:hover { opacity: 0.87; }
-    .skjema-submit:disabled { opacity: 0.4; cursor: default; }
-
-    .skjema-feil {
-      margin-top: 0.75rem; padding: 0.6rem 0.85rem;
-      background: color-mix(in srgb, var(--faresone) 12%, var(--hvit) 88%);
-      color: var(--faresone); border-radius: var(--radius-s); font-size: 0.85rem;
-    }
-    .skjema-feil[hidden] { display: none; }
-
-    /* ─── Toast ───────────────────────────────────────────────────────────── */
-    .toast-stabel {
-      position: fixed; bottom: var(--gap-l); left: 50%; transform: translateX(-50%);
-      display: flex; flex-direction: column; gap: 0.5rem; z-index: 200;
-      width: min(90vw, 420px); align-items: center;
-    }
-    .toast {
-      width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-s);
-      font-size: 0.85rem; text-align: center; color: var(--hvit);
-      background: var(--svart); opacity: 0; transform: translateY(8px);
-      transition: opacity .2s, transform .2s;
-      box-shadow: 0 4px 16px rgba(0,0,0,.18);
-    }
-    .toast.synlig { opacity: 1; transform: translateY(0); }
-    .toast-feil { background: var(--faresone); }
-    .toast-ok   { background: var(--suksess); }
-
-    /* ─── Bekreftelsesdialog ──────────────────────────────────────────────── */
-    .confirm-overlay {
-      position: fixed; inset: 0; z-index: 300;
-      background: rgba(30,12,20,.35);
-      display: flex; align-items: center; justify-content: center;
-      padding: var(--gap-m);
-      opacity: 0; pointer-events: none; transition: opacity .15s;
-    }
-    .confirm-overlay.apen { opacity: 1; pointer-events: auto; }
-    .confirm-boks {
-      background: var(--hvit); border-radius: var(--radius-m);
-      padding: 1.5rem; max-width: 380px; width: 100%;
-      box-shadow: 0 12px 32px rgba(0,0,0,.18);
-    }
-    .confirm-tittel { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.5rem; }
-    .confirm-tekst { color: var(--graa); font-size: 0.9rem; margin-bottom: 1.25rem; }
-    .confirm-knapperad { display: flex; gap: 0.65rem; justify-content: flex-end; }
-
-    /* ─── Responsivt ──────────────────────────────────────────────────────── */
-    @media (max-width: 640px) {
-      .topbar { padding: var(--gap-m) var(--gap-m) var(--gap-s); }
-      .faner { padding: 0 var(--gap-s); overflow-x: auto; }
-      .innhold { padding: var(--gap-m) var(--gap-s) 0; }
-      .pub-hoved { flex-wrap: wrap; }
-      .knapp-rad { flex-direction: column; }
-      .knapp-godkjenn, .knapp-avslaa { flex: none; width: 100%; }
-    }
-  </style>
 </head>
 <body>
 
-<header class="topbar">
+<header class="topbar grid">
   <div class="topbar-venstre">
     <span class="logo">Påby Admin</span>
     <span id="miljo-badge" class="miljo-badge" hidden></span>
@@ -461,13 +23,15 @@
   <div class="topbar-hoyre">
     <span id="innlogget-som" class="innlogget-som"></span>
     <form method="POST" action="/logout">
-      <button type="submit" class="lenke-knapp">Logg ut</button>
+      <button type="submit" class="knapp knapp-sekundaer">Logg ut</button>
     </form>
   </div>
 </header>
 
-<nav class="faner" role="tablist" aria-label="Adminseksjoner">
-  <button type="button" class="fane-knapp aktiv" data-fane="til-vurdering">Til vurdering</button>
+<nav class="faner grid" role="tablist" aria-label="Adminseksjoner">
+  <button type="button" class="fane-knapp aktiv" data-fane="til-vurdering">
+    Til vurdering <span class="fane-teller" id="fane-teller-til-vurdering">0</span>
+  </button>
   <button type="button" class="fane-knapp" data-fane="innsendte">
     Innsendte <span class="fane-teller" id="fane-teller-innsendte">0</span>
   </button>
@@ -475,7 +39,7 @@
   <button type="button" class="fane-knapp" data-fane="nytt-event">+ Nytt event</button>
 </nav>
 
-<main class="innhold">
+<main class="innhold grid">
 
   <!-- ─── TIL VURDERING ─────────────────────────────────────────────────── -->
   <section id="panel-til-vurdering" class="panel">
@@ -488,13 +52,16 @@
         <button type="button" class="kategori-filter-chip" data-filter="pafunn">Påfunn</button>
       </div>
       <label class="avkryssing">
-        <input type="checkbox" id="vurdering-skjul-passerte" /> Skjul passerte
+        <input type="checkbox" id="vurdering-skjul-passerte" checked /> Skjul passerte
       </label>
     </div>
-    <p class="feed-teller" id="vurdering-teller"></p>
+    <p class="feed-teller">
+      <span id="vurdering-teller"></span>
+      <button type="button" id="vurdering-avslaa-passerte" class="knapp knapp-sekundaer" hidden>Avslå alle passerte</button>
+    </p>
     <div id="vurdering-feed" class="feed"></div>
     <div id="vurdering-tom" class="tom-tilstand" hidden>
-      <strong>Ingen events å vurdere</strong>
+      <strong>Ingenting til vurdering. Godt jobba.</strong>
       <p>Nye funn fra collectoren og manuelt lagt til events dukker opp her.</p>
     </div>
   </section>
@@ -523,8 +90,11 @@
         <input type="checkbox" id="publiserte-vis-deaktiverte" /> Vis deaktiverte
       </label>
     </div>
-    <p class="feed-teller" id="publiserte-teller"></p>
-    <div id="publiserte-feed" class="feed"></div>
+    <p class="feed-teller">
+      <span id="publiserte-teller"></span>
+      <span id="publiserte-fremhevet-uka"></span>
+    </p>
+    <div id="publiserte-feed"></div>
     <div id="publiserte-tom" class="tom-tilstand" hidden>
       <strong>Ingen publiserte events</strong>
       <p>Godkjenn noe i «Til vurdering» eller «Innsendte» for å se det her.</p>
@@ -580,7 +150,6 @@
           </div>
         </div>
         <div class="felt-gruppe">
-          <span class="felt-label">Gjentas</span>
           <div id="ny-gjentas-host"></div>
         </div>
       </div>

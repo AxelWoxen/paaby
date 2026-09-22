@@ -1,0 +1,555 @@
+/* admin.css — Påby Admin, delt av index.html og login.html.
+   Speiler css/variabler.css (hovedsidens ekte palett/font) 1:1 — se
+   MEMORY.md-notatet «paaby-design-tokens». Adminpanelet er en frittstående
+   statisk app (egen express-server), så tokens er duplisert her i stedet
+   for importert, men ALDRI gjettet: samme hex-verdier og font som resten
+   av Påby.
+
+   Fargeregel (bevisst strengere enn hovedsiden): KUN de seks fargene under
+   som flate-/tekstfarger. Ingen color-mix-tints av kategorifarger, ingen
+   egne status-farger (grønn/rød) — status kodes med nøytral svart kant/
+   flate + tekst, ikke farge. Se rapportens «Fase 3»-notat for begrunnelse. */
+
+@font-face {
+  font-family: 'Spartan';
+  src: url('/fonts/SpartanMB-Regular.otf') format('opentype');
+  font-weight: 400; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Spartan';
+  src: url('/fonts/SpartanMB-SemiBold.otf') format('opentype');
+  font-weight: 600; font-style: normal; font-display: swap;
+}
+@font-face {
+  font-family: 'Spartan';
+  src: url('/fonts/SpartanMB-Bold.otf') format('opentype');
+  font-weight: 700; font-style: normal; font-display: swap;
+}
+
+:root {
+  --hvit:  #FFFCF7;
+  --svart: #1E0C14;
+  --blaa:  #8CB1F4;
+
+  --musikk: #FF4A36;
+  --klubb:  #701236;
+  --pafunn: #A0BEFA;
+
+  --paper: var(--svart);
+  --graa:  color-mix(in srgb, var(--svart) 55%, var(--hvit) 45%);
+
+  --flate-1: var(--hvit);
+  --flate-2: color-mix(in srgb, var(--svart) 8%, var(--hvit) 92%);
+  --flate-3: color-mix(in srgb, var(--svart) 14%, var(--hvit) 86%);
+
+  --aksent:          var(--blaa);
+  --aksent-kontrast: var(--svart);
+  --aksent-tekst:    color-mix(in srgb, var(--blaa) 55%, var(--svart) 45%);
+
+  /* Kategoriflater: fast, beregnet kontrasttekst (WCAG, ≥ 4,5:1 — se
+     rapporten for tallene). IKKE anta — musikk/påfunn er lyse nok for
+     svart tekst, klubb er for mørk og trenger hvit. */
+  --musikk-tekst: var(--svart);
+  --klubb-tekst:  var(--hvit);
+  --pafunn-tekst: var(--svart);
+
+  --font: 'Spartan', system-ui, sans-serif;
+
+  --gap-s:  0.5rem;
+  --gap-m:  1rem;
+  --gap-l:  1.5rem;
+  --gap-xl: 2rem;
+
+  /* Fast skala — ingen andre radius-verdier noe sted. */
+  --radius-0: 0px;   /* ytre beholdere: kort, paneler, topbar, skjema-seksjoner */
+  --radius-s: 8px;   /* knapper, inputfelt, chips */
+  --radius-m: 12px;  /* bilder, innfelte flater inni kort */
+
+  /* Ytre ramme rundt kort — testet 8px (hovedsidens egen vekt) mot 6px
+     med 20+ kort i lista (se rapporten). Valgt: 6px — samme kvadratiske
+     identitet, men roligere over en lang, tett liste enn hovedsidens egen
+     vekt, som er tunet for én stor bilde-flate, ikke en scrollende liste. */
+  --kort-ramme: 6px;
+
+  /* Konsolidert type-skala — sidetittel / korttittel / brødtekst-meta /
+     label. Ingen andre font-size-verdier utenfor denne fila. */
+  --tekst-sidetittel: 1.15rem;
+  --tekst-korttittel: 1.05rem;
+  --tekst-brod:       0.875rem;
+  --tekst-label:      0.72rem;
+
+  /* .knapp-primaer/.chip.aktiv fyller med --kort-farge — uten en
+     kategorikontekst faller den tilbake på aksenten. */
+  --kort-farge: var(--aksent);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-variant-numeric: tabular-nums; }
+
+body {
+  background: var(--flate-1);
+  color: var(--paper);
+  font-family: var(--font);
+  font-size: var(--tekst-brod);
+  line-height: 1.5;
+  padding-bottom: var(--gap-xl);
+}
+
+button, input, textarea, select { font-family: inherit; font-size: inherit; color: inherit; }
+button { cursor: pointer; background: none; border: none; }
+img { max-width: 100%; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+a { color: var(--aksent-tekst); }
+
+:focus-visible { outline: 2px solid var(--blaa); outline-offset: 2px; }
+
+
+/* ─── Felles innholdsgrid ────────────────────────────────────────────────
+   Topbar, faner, innhold og login-boksen følger nøyaktig samme
+   maks-bredde og horisontale innrykk, slik at venstrekantene står på
+   linje. Faner har IKKE egen horisontal padding — fane-knappens EGEN
+   0.75rem venstre-padding er det som gir innrykket, og matcher dermed
+   .innhold sitt --gap-m nøyaktig i stedet for å legge til et ekstra lag. */
+.grid {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-left: var(--gap-m);
+  padding-right: var(--gap-m);
+}
+
+
+/* ─── Toppbar ─────────────────────────────────────────────────────────── */
+.topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: var(--gap-m);
+  padding-top: var(--gap-l); padding-bottom: var(--gap-m);
+}
+.topbar-venstre { display: flex; align-items: center; gap: var(--gap-m); }
+.topbar-hoyre { display: flex; align-items: center; gap: var(--gap-m); }
+.innlogget-som { font-size: var(--tekst-label); color: var(--graa); }
+.innlogget-som:empty { display: none; }
+.logo { font-size: var(--tekst-sidetittel); font-weight: 700; }
+
+/* Miljø: produksjon skal være tydelig, ikke alarmerende — solid svart, ikke
+   rødt (rødt er kategorifargen for musikk, og kan ikke også bety «fare»). */
+.miljo-badge {
+  font-size: var(--tekst-label); font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.7rem; border-radius: var(--radius-s);
+}
+.miljo-badge.miljo-lokal      { background: none; border: 1.5px solid var(--svart); color: var(--svart); }
+.miljo-badge.miljo-produksjon { background: var(--svart); color: var(--hvit); }
+
+
+/* ─── Faner ───────────────────────────────────────────────────────────── */
+.faner {
+  display: flex; gap: var(--gap-l); flex-wrap: wrap;
+  border-bottom: 1.5px solid var(--flate-2);
+}
+.fane-knapp {
+  padding: 0.7rem 0 0.7rem 0;
+  margin-bottom: -1.5px;
+  border-bottom: 2px solid transparent;
+  color: var(--graa); font-weight: 600; font-size: var(--tekst-brod);
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  transition: color .15s, border-color .15s;
+}
+.faner .fane-knapp:first-child { padding-left: 0; }
+.fane-knapp:hover { color: var(--paper); }
+.fane-knapp.aktiv { color: var(--paper); border-color: var(--aksent); }
+
+.fane-teller {
+  font-size: 0.68rem; font-weight: 700; min-width: 1.4em; text-align: center;
+  background: var(--flate-2); color: var(--graa);
+  border-radius: var(--radius-s); padding: 0.05rem 0.4rem;
+}
+
+/* ─── Innhold / paneler ──────────────────────────────────────────────── */
+.innhold { padding-top: var(--gap-l); }
+.panel[hidden] { display: none; }
+
+.verktoylinje {
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--gap-s) var(--gap-m);
+  margin-bottom: var(--gap-m);
+}
+.sok-input {
+  flex: 1 1 220px; min-width: 0;
+  background: var(--hvit); border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-s); padding: 0.6rem 0.9rem;
+  transition: border-color .15s;
+}
+.sok-input:focus-visible { border-color: var(--blaa); outline: none; }
+
+.kategori-filtre { display: flex; gap: var(--gap-s); flex-wrap: wrap; }
+
+.kategori-filter-chip {
+  padding: 0.35rem 0.85rem; min-height: 36px;
+  border: 1.5px solid var(--flate-2); border-radius: var(--radius-s);
+  color: var(--graa); font-size: 0.82rem;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.kategori-filter-chip:hover { border-color: var(--graa); color: var(--paper); }
+.kategori-filter-chip.aktiv { background: var(--aksent); border-color: var(--aksent); color: var(--aksent-kontrast); }
+.kategori-filter-chip.aktiv[data-filter="musikk"] { background: var(--musikk); border-color: var(--musikk); color: var(--musikk-tekst); }
+.kategori-filter-chip.aktiv[data-filter="klubb"]  { background: var(--klubb);  border-color: var(--klubb);  color: var(--klubb-tekst); }
+.kategori-filter-chip.aktiv[data-filter="pafunn"] { background: var(--pafunn); border-color: var(--pafunn); color: var(--pafunn-tekst); }
+
+.avkryssing {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  font-size: 0.82rem; color: var(--graa); cursor: pointer;
+}
+.avkryssing input { cursor: pointer; accent-color: var(--blaa); }
+
+.feed-teller {
+  color: var(--graa); font-size: 0.82rem; margin-bottom: var(--gap-m);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--gap-m); flex-wrap: wrap;
+}
+
+.feed { display: flex; flex-direction: column; gap: var(--gap-l); }
+
+.tom-tilstand, .tom-melding {
+  text-align: center; padding: 3.5rem 1rem; color: var(--graa);
+}
+.tom-tilstand strong { display: block; color: var(--paper); font-size: var(--tekst-korttittel); margin-bottom: 0.4rem; }
+.tom-tilstand p { font-size: var(--tekst-brod); }
+
+
+/* ─── Badger ──────────────────────────────────────────────────────────── */
+/* Kategori: ren kategorifarge som flate, beregnet kontrasttekst.
+   Bruker data-kategori på selve kortet (se KORT under) for fargen —
+   badgen selv arver via --kort-farge, akkurat som hovedsidens .kort. */
+.badge {
+  display: inline-flex; align-items: center;
+  font-size: 0.66rem; font-weight: 700; letter-spacing: 0.05em;
+  text-transform: uppercase; padding: 0.24em 0.6em; border-radius: var(--radius-s);
+}
+.badge-kategori {
+  background: var(--kort-farge);
+  color: var(--musikk-tekst); /* overstyres per kategori under */
+}
+.badge-kategori[data-kategori="musikk"] { color: var(--musikk-tekst); }
+.badge-kategori[data-kategori="klubb"]  { color: var(--klubb-tekst); }
+.badge-kategori[data-kategori="pafunn"] { color: var(--pafunn-tekst); }
+
+/* Status: alltid nøytral — aldri en ny farge for «status». */
+.badge-status {
+  background: none; border: 1.5px solid var(--svart); color: var(--svart);
+}
+.badge-status.badge-fylt { background: var(--svart); color: var(--hvit); border-color: var(--svart); }
+
+
+/* ─── Kort — delt konstruksjon (kandidat + publisert) ───────────────────
+   Speiler hovedsidens .kort: kvadratisk ytre ramme i kategorifargen
+   (data-kategori, samme mønster som .kort[data-kategori="musikk"] i
+   css/stil.css), hvit innholdsflate. Hovedsidens .kort legger selve
+   INNHOLDET oppå bildet i en fargeflate — admin trenger derimot en lesbar,
+   tett liste, så innholdet er hvitt inni rammen i stedet (nærmere
+   .modal-container/.modal-body sin oppbygning enn den kompakte .kort). */
+.admin-kort {
+  --kort-farge: var(--aksent);
+  background: var(--hvit);
+  border: var(--kort-ramme) solid var(--kort-farge);
+  border-radius: var(--radius-0);
+}
+.admin-kort[data-kategori="musikk"] { --kort-farge: var(--musikk); }
+.admin-kort[data-kategori="klubb"]  { --kort-farge: var(--klubb); }
+.admin-kort[data-kategori="pafunn"] { --kort-farge: var(--pafunn); }
+
+.kandidat-kort, .pub-kort { padding: var(--gap-m); }
+
+/* Fremhevet: kraftigere ramme, ikke en ny farge — samme --kort-farge,
+   bare tykkere. Vises kun via stjerneknappens .aktiv-tilstand, ett sted. */
+.pub-kort.er-fremhevet { border-width: calc(var(--kort-ramme) * 1.5); }
+.pub-kort.er-deaktivert { opacity: 0.55; }
+.pub-kort.er-deaktivert:hover { opacity: 0.85; }
+
+/* Felles kort-hode: kategori/status til venstre, dag/tid til høyre —
+   samme rekkefølge i Til vurdering, Innsendte og Publiserte. */
+.kort-topprad {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--gap-s); margin-bottom: var(--gap-s); flex-wrap: wrap;
+}
+.kort-badger { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.kort-dato { color: var(--graa); font-size: 0.82rem; white-space: nowrap; }
+
+.kort-brodtekst { flex: 1; min-width: 0; }
+
+.kort-tittel { font-size: var(--tekst-korttittel); font-weight: 700; margin-bottom: 0.2rem; }
+.kort-info {
+  color: var(--graa); font-size: var(--tekst-brod);
+  display: flex; flex-wrap: wrap; gap: 0.2rem 0.75rem; margin-bottom: 0.5rem;
+}
+.kort-innsender-kort { font-size: 0.82rem; color: var(--aksent-tekst); margin-bottom: 0.4rem; }
+.kort-beskrivelse-kort {
+  font-size: var(--tekst-brod); color: var(--graa); margin-bottom: 0.6rem;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+/* Miniatyrbilde — samme forhold/radius som hovedsidens .kort-bilde-wrapper,
+   men innfelt i en hvit kortflate i stedet for å FYLLE kortet. */
+.kort-hode { display: flex; gap: var(--gap-m); margin-bottom: var(--gap-s); }
+.kort-bilde-wrapper {
+  flex: 0 0 auto; width: 120px; aspect-ratio: 16 / 7; overflow: hidden;
+  border-radius: var(--radius-m); background: var(--flate-2);
+}
+.kort-bilde { display: block; width: 100%; height: 100%; object-fit: cover; }
+.kort-bilde-placeholder { width: 100%; height: 100%; background: var(--kort-farge); opacity: 0.35; }
+
+.kandidat-panel {
+  border-top: 1.5px solid var(--flate-2); margin-top: var(--gap-m); padding-top: var(--gap-m);
+  display: flex; flex-direction: column; gap: var(--gap-m);
+}
+.kandidat-panel[hidden] { display: none; }
+
+.innsender-boks {
+  background: var(--flate-2); border-left: 3px solid var(--blaa);
+  border-radius: var(--radius-s); padding: 0.7rem 0.85rem; font-size: var(--tekst-brod);
+}
+.innsender-rad { margin-bottom: 0.3rem; }
+.innsender-rad:last-child { margin-bottom: 0; }
+.innsender-notat { white-space: pre-wrap; }
+
+.duplikat-varsel {
+  border: 1.5px solid var(--svart); color: var(--svart);
+  border-radius: var(--radius-s); padding: 0.55rem 0.75rem; font-size: 0.82rem;
+}
+
+.beslutning-rad { display: flex; flex-direction: column; gap: var(--gap-s); }
+.kuratortekst-label { margin-bottom: -0.3rem; }
+
+.knapp-rad { display: flex; gap: var(--gap-s); flex-wrap: wrap; align-items: stretch; }
+
+
+/* ─── Knapper ─────────────────────────────────────────────────────────── */
+.knapp {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 0.65rem 1.1rem; border-radius: var(--radius-s);
+  font-size: var(--tekst-brod); font-weight: 600; transition: opacity .15s, transform .1s;
+}
+.knapp:hover { opacity: 0.85; }
+.knapp:active { transform: scale(0.98); }
+.knapp:disabled { opacity: 0.45; cursor: default; }
+
+.knapp-primaer   { background: var(--blaa); color: var(--svart); }
+.knapp-sekundaer { background: var(--hvit); color: var(--svart); border: 1.5px solid var(--svart); }
+.knapp-destruktiv { background: var(--hvit); color: var(--svart); border: 1.5px solid var(--svart); }
+
+/* Handlingsrad-varianter: godkjenn/avslå har fast plass (primær/destruktiv)
+   og fyller resten av bredden; sekundær («Vis detaljer»/«Rediger») og
+   stjernen forblir kompakte. */
+.knapp-godkjenn  { flex: 1; min-width: 120px; }
+.knapp-avslaa    { flex: 1; min-width: 100px; }
+.knapp-sekundaer.knapp-detaljer { flex: 0 0 auto; }
+
+.knapp-fremhev, .knapp-stjerne {
+  flex: 0 0 auto; background: var(--hvit); color: var(--graa);
+  border: 1.5px solid var(--flate-2); border-radius: var(--radius-s);
+  font-size: 1rem; padding: 0.55rem 0.8rem; transition: all .15s;
+}
+.knapp-fremhev:hover, .knapp-stjerne:hover { border-color: var(--blaa); color: var(--aksent-tekst); }
+.knapp-fremhev.aktiv, .knapp-stjerne.aktiv {
+  background: var(--blaa); border-color: var(--blaa); color: var(--svart);
+}
+
+/* Kun for eksterne lenker (billett/info) — ikke interne handlinger. */
+.ekstern-lenke {
+  color: var(--aksent-tekst); font-size: var(--tekst-brod);
+  text-decoration: underline; text-underline-offset: 2px;
+}
+.ekstern-lenke:hover { color: var(--svart); }
+
+
+/* ─── Skjema-felter (delt: rediger-felter og nytt-event-skjema) ────────── */
+.felt-label {
+  display: block; font-size: var(--tekst-label); color: var(--graa);
+  text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem;
+}
+.felt-gruppe { margin-bottom: 0.85rem; }
+.felt-rad { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; }
+@media (max-width: 600px) { .felt-rad { grid-template-columns: 1fr; } }
+.felt-rad .felt-gruppe { margin-bottom: 0.85rem; }
+
+.admin-input, .admin-textarea, .admin-select {
+  width: 100%; background: var(--hvit); border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-s); padding: 0.55rem 0.75rem; outline: none;
+  transition: border-color .15s;
+}
+.admin-input:focus-visible, .admin-textarea:focus-visible, .admin-select:focus-visible { border-color: var(--blaa); outline: none; }
+.admin-textarea { resize: vertical; min-height: 56px; }
+.admin-select { cursor: pointer; }
+
+.rediger-felter { display: flex; flex-direction: column; }
+
+.kategori-velger { display: flex; gap: var(--gap-s); flex-wrap: wrap; margin-bottom: 0.85rem; }
+.chip {
+  padding: 0.35rem 0.85rem; min-height: 38px;
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  border: 1.5px solid var(--flate-2); border-radius: var(--radius-s);
+  font-size: 0.82rem; color: var(--graa);
+  transition: border-color .15s, color .15s, background .15s;
+}
+.chip:hover { border-color: var(--graa); color: var(--paper); }
+.kategori-chip { --kort-farge: var(--aksent); }
+.kategori-chip[data-verdi="musikk"] { --kort-farge: var(--musikk); }
+.kategori-chip[data-verdi="klubb"]  { --kort-farge: var(--klubb); }
+.kategori-chip[data-verdi="pafunn"] { --kort-farge: var(--pafunn); }
+.kategori-chip.aktiv {
+  background: var(--kort-farge); border-color: var(--kort-farge);
+  color: var(--musikk-tekst);
+}
+.kategori-chip[data-verdi="klubb"].aktiv  { color: var(--klubb-tekst); }
+.kategori-chip[data-verdi="pafunn"].aktiv { color: var(--pafunn-tekst); }
+
+.lagre-status { font-size: 0.8rem; min-height: 1.1em; color: var(--graa); }
+.lagre-status.feil { color: var(--svart); font-weight: 600; }
+
+
+/* ─── Bilde-crop ──────────────────────────────────────────────────────── */
+.crop-seksjon { margin-bottom: 0.85rem; }
+.crop-tom {
+  font-size: 0.8rem; color: var(--graa); padding: 0.6rem 0.75rem;
+  background: var(--flate-2); border-radius: var(--radius-s); margin-bottom: 0.5rem;
+}
+.crop-img-wrap {
+  max-width: 100%; max-height: 360px; overflow: hidden;
+  border-radius: var(--radius-m); margin-bottom: 0.5rem; background: var(--flate-2);
+}
+.crop-img { display: block; max-width: 100%; }
+.crop-knapperad { margin-bottom: 0.5rem; }
+.crop-status { font-size: 0.78rem; margin-bottom: 0.5rem; display: none; color: var(--svart); }
+.crop-status.ok, .crop-status.feil { display: block; }
+.crop-forhandsvisning-rad { margin-bottom: 0.85rem; }
+.crop-forhandsvisning-wrap {
+  position: relative; aspect-ratio: 16 / 7; overflow: hidden;
+  border-radius: var(--radius-m); background: var(--flate-2); max-width: 360px;
+}
+.crop-forhandsvisning-img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+
+/* ─── Gjentas-kontroll (redigeringspaneler) ─────────────────────────────── */
+.gjentas-rad { display: flex; gap: var(--gap-s); align-items: center; flex-wrap: wrap; }
+.gjentas-label {
+  font-size: var(--tekst-label); color: var(--graa);
+  text-transform: uppercase; letter-spacing: 0.05em; white-space: nowrap;
+}
+.gjentas-select {
+  flex: 1; min-width: 0; background: var(--hvit); border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-s); padding: 0.4rem 0.6rem; outline: none;
+  cursor: pointer; transition: border-color .15s;
+}
+.gjentas-select:focus-visible { border-color: var(--blaa); }
+.gjentas-status { font-size: 0.72rem; color: var(--graa); min-width: 1.4rem; }
+
+/* Kompakt statusbadge i Publiserte-listen — gjentas-verdien vises, endres
+   kun inne i Rediger. Samme nøytrale stil som andre statusbadger. */
+.gjentas-badge {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.76rem; color: var(--graa);
+}
+
+
+/* ─── Publiserte-liste: dagsgruppering ──────────────────────────────────── */
+.dag-gruppe:not(:first-child) { margin-top: var(--gap-l); }
+.dag-overskrift {
+  font-size: var(--tekst-label); font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--graa);
+  padding-bottom: 0.4rem; margin-bottom: var(--gap-m);
+  border-bottom: 1.5px solid var(--flate-2);
+}
+.dag-gruppe .feed { gap: var(--gap-m); }
+
+.pub-handlingrad { display: flex; gap: var(--gap-s); align-items: center; margin-top: var(--gap-m); }
+.pub-rediger-panel { border-top: 1.5px solid var(--flate-2); margin-top: var(--gap-m); padding-top: var(--gap-m); }
+.pub-rediger-panel[hidden] { display: none; }
+
+
+/* ─── Nytt event-skjema ───────────────────────────────────────────────── */
+.skjema { max-width: 640px; margin: 0 auto var(--gap-xl); }
+.skjema-seksjon {
+  background: var(--hvit); border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-0); padding: var(--gap-l); margin-bottom: var(--gap-m);
+}
+.skjema-seksjon h2 {
+  font-size: var(--tekst-label); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--graa); margin-bottom: var(--gap-m);
+}
+
+.skjema-submit {
+  width: 100%; padding: 0.8rem; border-radius: var(--radius-s);
+  background: var(--blaa); color: var(--svart);
+  font-size: 0.95rem; font-weight: 700; transition: opacity .15s;
+}
+.skjema-submit:hover { opacity: 0.87; }
+.skjema-submit:disabled { opacity: 0.4; cursor: default; }
+
+.skjema-feil {
+  margin-top: 0.75rem; padding: 0.6rem 0.85rem;
+  border: 1.5px solid var(--svart); color: var(--svart);
+  border-radius: var(--radius-s); font-size: 0.85rem;
+}
+.skjema-feil[hidden] { display: none; }
+
+
+/* ─── Toast — nøytral, differensiert på tekst, ikke farge ───────────────── */
+.toast-stabel {
+  position: fixed; bottom: var(--gap-l); left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; gap: 0.5rem; z-index: 200;
+  width: min(90vw, 420px); align-items: center;
+}
+.toast {
+  width: 100%; padding: 0.75rem 1rem; border-radius: var(--radius-s);
+  font-size: 0.85rem; text-align: center; color: var(--hvit);
+  background: var(--svart); opacity: 0; transform: translateY(8px);
+  transition: opacity .2s, transform .2s;
+  box-shadow: 0 4px 16px rgba(0,0,0,.18);
+}
+.toast.synlig { opacity: 1; transform: translateY(0); }
+
+
+/* ─── Bekreftelsesdialog ──────────────────────────────────────────────── */
+.confirm-overlay {
+  position: fixed; inset: 0; z-index: 300;
+  background: rgba(30,12,20,.35);
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--gap-m);
+  opacity: 0; pointer-events: none; transition: opacity .15s;
+}
+.confirm-overlay.apen { opacity: 1; pointer-events: auto; }
+.confirm-boks {
+  background: var(--hvit); border-radius: var(--radius-0);
+  padding: var(--gap-l); max-width: 380px; width: 100%;
+  box-shadow: 0 12px 32px rgba(0,0,0,.18);
+}
+.confirm-tittel { font-size: var(--tekst-korttittel); font-weight: 700; margin-bottom: 0.5rem; }
+.confirm-tekst { color: var(--graa); font-size: var(--tekst-brod); margin-bottom: var(--gap-l); }
+.confirm-knapperad { display: flex; gap: var(--gap-s); justify-content: flex-end; }
+
+
+/* ─── Innlogging ──────────────────────────────────────────────────────── */
+.login-side { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: var(--gap-l); }
+.login-boks { width: 100%; max-width: 340px; }
+.login-logo { font-size: var(--tekst-sidetittel); font-weight: 700; margin-bottom: 0.3rem; text-align: center; }
+.login-undertekst { color: var(--graa); font-size: var(--tekst-brod); text-align: center; margin-bottom: var(--gap-xl); }
+.login-feil {
+  border: 1.5px solid var(--svart); color: var(--svart);
+  border-radius: var(--radius-s); padding: 0.6rem 0.85rem;
+  font-size: 0.85rem; margin-bottom: var(--gap-l); text-align: center;
+}
+
+
+/* ─── Responsivt ──────────────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .topbar { padding-top: var(--gap-m); padding-bottom: var(--gap-s); }
+  .faner { overflow-x: auto; }
+  .kort-hode { flex-direction: column; }
+  .kort-bilde-wrapper { width: 100%; aspect-ratio: 16 / 7; }
+  .knapp-rad { flex-direction: column; }
+  .knapp-godkjenn, .knapp-avslaa, .knapp-detaljer { flex: none; width: 100%; }
+  .knapp-fremhev, .knapp-stjerne { align-self: center; }
+}
