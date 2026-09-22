@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Ris eller ros? – påby</title>
+  <meta name="description" content="Noe Påby burde gjøre bedre? Eller noe du synes funker skikkelig bra? Send en anonym tilbakemelding." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://paaby.no/ris-ros/" />
+  <meta name="theme-color" content="#141318" />
+
+  <link rel="icon" type="image/png" href="/bilder/favicon.png" />
+
+  <link rel="stylesheet" href="/css/reset.css" />
+  <link rel="stylesheet" href="/css/variabler.css" />
+  <link rel="stylesheet" href="/css/stil.css" />
+  <link rel="stylesheet" href="/css/uke.css" />
+</head>
+<body>
+
+  <!-- TOPBAR — felles komponent, se js/components/topbar.js -->
+  <script src="/js/components/topbar.js"></script>
+
+  <main class="uke-innhold">
+    <a class="uke-tilbake" href="/">← Forsiden</a>
+
+    <h1 class="uke-tittel">Ris eller ros?</h1>
+    <p class="uke-intro">Noe Påby burde gjøre bedre? Eller noe du synes funker skikkelig bra?</p>
+
+    <!-- .knapp-primaer/.send-inn-bekreftelse bruker --kort-farge (satt per
+         kategori andre steder, f.eks. send-inn) — her er det ingen
+         kategori, så vi setter den til vanlig aksent direkte. -->
+    <form id="feedback-skjema" novalidate style="--kort-farge: var(--aksent);">
+
+      <!-- Honeypot — usynlig for ekte brukere, fanger enkle bots. -->
+      <div class="send-inn-honeypot" aria-hidden="true">
+        <label for="nettside">Ikke fyll ut dette feltet</label>
+        <input type="text" id="nettside" name="nettside" tabindex="-1" autocomplete="off" />
+      </div>
+
+      <div class="send-inn-felt-gruppe">
+        <textarea id="melding" name="melding" class="send-inn-textarea" rows="6" maxlength="2000" placeholder="Skriv til oss her…" aria-label="Melding" required></textarea>
+        <p class="send-inn-teller"><span id="melding-teller">0</span>/2000 tegn</p>
+        <p class="send-inn-feil" data-feil-for="melding"></p>
+      </div>
+
+      <p class="send-inn-feil send-inn-feil--generelt" data-feil-for="generelt"></p>
+
+      <button type="submit" id="send-knapp" class="knapp knapp-primaer send-inn-send-knapp">
+        Send anonymt
+      </button>
+    </form>
+
+    <div class="send-inn-bekreftelse" id="bekreftelse" hidden>
+      <p class="send-inn-bekreftelse-tekst">Takk! Det er sånn Påby blir bedre.</p>
+    </div>
+
+  </main>
+
+  <script type="module" src="/js/presentation/ris-ros.js"></script>
+
+</body>
+</html>
