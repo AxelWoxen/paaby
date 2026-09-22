@@ -108,8 +108,8 @@ export function lagBildeCropSeksjon(fBilde) {
   knapperad.style.display = 'none';
   const brukKnapp = document.createElement('button');
   brukKnapp.type = 'button';
-  brukKnapp.className = 'knapp-ghost crop-bruk-knapp';
-  brukKnapp.textContent = '✂ Bruk dette utsnittet';
+  brukKnapp.className = 'knapp knapp-sekundaer crop-bruk-knapp';
+  brukKnapp.textContent = 'Bruk dette utsnittet';
   knapperad.appendChild(brukKnapp);
 
   const status = document.createElement('div');
@@ -174,7 +174,7 @@ export function lagBildeCropSeksjon(fBilde) {
     });
 
     if (!kanEksporteres) {
-      settStatus('feil', '⚠ Dette bildet tillater trolig ikke lokal beskjæring (CORS). Du kan fortsatt trykke «Bruk dette utsnittet», men lykkes det ikke beholdes original-URL-en uendret ved lagring.');
+      settStatus('feil', 'Dette bildet tillater trolig ikke lokal beskjæring (CORS). Du kan fortsatt trykke «Bruk dette utsnittet», men lykkes det ikke beholdes original-URL-en uendret ved lagring.');
     }
   }
 
@@ -213,9 +213,9 @@ export function lagBildeCropSeksjon(fBilde) {
       fBilde.input.value = dataUrl;
       fvImg.src = dataUrl;
       fvRad.style.display = '';
-      settStatus('ok', '✓ Utsnitt brukt — lagres som beskåret bilde når du trykker «Lagre endringer».');
+      settStatus('ok', 'Utsnitt brukt — lagres som beskåret bilde når du trykker «Lagre endringer».');
     } catch (e) {
-      settStatus('feil', '⚠ Kunne ikke beskjære dette bildet lokalt (bildeserveren blokkerer det via CORS). Original-URL-en beholdes uendret ved lagring.');
+      settStatus('feil', 'Kunne ikke beskjære dette bildet lokalt (bildeserveren blokkerer det via CORS). Original-URL-en beholdes uendret ved lagring.');
     }
   };
 
@@ -294,5 +294,5 @@ export function lagRedigeringsFelter(event) {
     };
   }
 
-  return { el, hentVerdier, bildeCrop, felter: { fTittel, fStart } };
+  return { el, hentVerdier, bildeCrop, felter: { fTittel, fStart, tKur } };
 }

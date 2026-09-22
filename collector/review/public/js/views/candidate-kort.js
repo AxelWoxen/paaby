@@ -2,14 +2,20 @@
    Begge faner viser rader fra samme event_candidates-tabell (kun filtrert på
    source), og bruker de samme to endepunktene (godkjenn / avslå / kandidat-
    oppdater) — se collector/review/server.js. Kortet er derfor bygget én
-   gang og gjenbrukt, med et lite valg for om innsenderboksen skal vises. */
+   gang og gjenbrukt, med et lite valg for om innsenderboksen skal vises.
+
+   Felles kortoppbygging (samme rekkefølge i alle faner, se admin.css):
+   badger + dato øverst, miniatyrbilde + tittel/meta, handlingsrad nederst
+   (primær/sekundær/destruktiv, stjerne på fast plass). Kuratortekst,
+   gjentas og full redigering ligger bak "Vis detaljer" — kompakt liste
+   inntil man faktisk åpner et kort. */
 
 import { api } from '../api.js';
 import { visSuksess, visFeil } from '../toast.js';
 import { bekreft } from '../confirm.js';
 import { formaterDato, formaterPris, erPassert, datetimeLocalTilOsloISO } from '../oslo-tid.js';
 import { lagGjentasKontroll } from '../gjentas-ui.js';
-import { lagRedigeringsFelter, lagTekstomrade } from '../ui-helpers.js';
+import { lagRedigeringsFelter } from '../ui-helpers.js';
 
 function lagKontaktLenke(kontakt) {
   if (!kontakt) return null;
@@ -68,6 +74,32 @@ function lagInnsenderBoks(event) {
   return boks;
 }
 
+function lagMiniatyrbilde(event) {
+  const wrap = document.createElement('div');
+  wrap.className = 'kort-bilde-wrapper';
+  if (event.bilde) {
+    const img = document.createElement('img');
+    img.className = 'kort-bilde';
+    img.src = event.bilde;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.addEventListener('error', () => {
+      img.remove();
+      wrap.appendChild(lagPlaceholder());
+    }, { once: true });
+    wrap.appendChild(img);
+  } else {
+    wrap.appendChild(lagPlaceholder());
+  }
+  return wrap;
+
+  function lagPlaceholder() {
+    const p = document.createElement('div');
+    p.className = 'kort-bilde-placeholder';
+    return p;
+  }
+}
+
 /**
  * @param {Object} event  candidate fra /api/candidates
  * @param {{ visInnsender: boolean, fjernFraListe: () => void }} valg
@@ -75,28 +107,30 @@ function lagInnsenderBoks(event) {
  */
 export function lagKandidatKort(event, { visInnsender = false } = {}) {
   const kort = document.createElement('article');
-  kort.className = 'kandidat-kort';
+  kort.className = 'admin-kort kandidat-kort';
   kort.dataset.id = event.id;
+  kort.dataset.kategori = event.kategori;
 
-  // ─── Kompakt hode (alltid synlig) ─────────────────────────────────────
-  const hode = document.createElement('div');
-  hode.className = 'kandidat-hode';
+  // ─── Topprad: badger til venstre, dato til høyre ──────────────────────
+  const topprad = document.createElement('div');
+  topprad.className = 'kort-topprad';
 
-  const meta = document.createElement('div');
-  meta.className = 'kort-meta';
+  const badger = document.createElement('div');
+  badger.className = 'kort-badger';
 
   const badge = document.createElement('span');
-  badge.className = `badge badge-${event.kategori}`;
-  badge.textContent = event.kategori;
-  meta.appendChild(badge);
+  badge.className = 'badge badge-kategori';
+  badge.dataset.kategori = event.kategori;
+  badge.textContent = event.kategori === 'pafunn' ? 'påfunn' : event.kategori;
+  badger.appendChild(badge);
 
   let fremhevetBadge = null;
   function oppdaterFremhevetBadge() {
     if (event._fremhevet && !fremhevetBadge) {
       fremhevetBadge = document.createElement('span');
-      fremhevetBadge.className = 'badge badge-fremhevet';
-      fremhevetBadge.textContent = '★ Fremhevet';
-      meta.insertBefore(fremhevetBadge, meta.children[1] ?? null);
+      fremhevetBadge.className = 'badge badge-status badge-fylt';
+      fremhevetBadge.textContent = 'Fremhevet';
+      badger.insertBefore(fremhevetBadge, badger.children[1] ?? null);
     } else if (!event._fremhevet && fremhevetBadge) {
       fremhevetBadge.remove();
       fremhevetBadge = null;
@@ -105,33 +139,43 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
 
   if (event._kilde === 'manuell') {
     const m = document.createElement('span');
-    m.className = 'badge badge-notoy';
+    m.className = 'badge badge-status';
     m.textContent = 'Manuelt lagt inn';
-    meta.appendChild(m);
+    badger.appendChild(m);
   }
   if (visInnsender && event._muligDuplikat) {
     const d = document.createElement('span');
-    d.className = 'badge badge-duplikat';
-    d.textContent = '⚠ Mulig duplikat';
-    meta.appendChild(d);
+    d.className = 'badge badge-status';
+    d.textContent = 'Mulig duplikat';
+    badger.appendChild(d);
   }
   if (erPassert(event)) {
     const p = document.createElement('span');
-    p.className = 'badge badge-passert';
-    p.textContent = 'passert';
-    meta.appendChild(p);
+    p.className = 'badge badge-status';
+    p.textContent = 'Passert';
+    badger.appendChild(p);
   }
+  topprad.appendChild(badger);
 
   const dato = document.createElement('span');
   dato.className = 'kort-dato';
   dato.textContent = formaterDato(event.start);
-  meta.appendChild(dato);
-  hode.appendChild(meta);
+  topprad.appendChild(dato);
+
+  kort.appendChild(topprad);
+
+  // ─── Hode: miniatyrbilde + tittel/meta ─────────────────────────────────
+  const hode = document.createElement('div');
+  hode.className = 'kort-hode';
+  hode.appendChild(lagMiniatyrbilde(event));
+
+  const brodtekst = document.createElement('div');
+  brodtekst.className = 'kort-brodtekst';
 
   const tittelEl = document.createElement('h3');
   tittelEl.className = 'kort-tittel';
   tittelEl.textContent = event.tittel;
-  hode.appendChild(tittelEl);
+  brodtekst.appendChild(tittelEl);
 
   const infoRad = document.createElement('div');
   infoRad.className = 'kort-info';
@@ -146,6 +190,7 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
       const url = new URL(event.lenke);
       if (url.protocol === 'https:' || url.protocol === 'http:') {
         const lenkeEl = document.createElement('a');
+        lenkeEl.className = 'ekstern-lenke';
         lenkeEl.href = url.href;
         lenkeEl.target = '_blank';
         lenkeEl.rel = 'noopener noreferrer';
@@ -154,25 +199,28 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
       }
     } catch { /* ugyldig lenke — vis ikke */ }
   }
-  hode.appendChild(infoRad);
+  brodtekst.appendChild(infoRad);
 
   if (visInnsender) {
     const kortNavn = document.createElement('p');
     kortNavn.className = 'kort-innsender-kort';
     kortNavn.textContent = `Sendt inn av ${event._innsenderNavn ?? 'ukjent'}${event._innsenderOrg ? ` (${event._innsenderOrg})` : ''}`;
-    hode.appendChild(kortNavn);
+    brodtekst.appendChild(kortNavn);
   }
 
   if (event.beskrivelse) {
     const besk = document.createElement('p');
     besk.className = 'kort-beskrivelse-kort';
     besk.textContent = event.beskrivelse;
-    hode.appendChild(besk);
+    brodtekst.appendChild(besk);
   }
 
+  hode.appendChild(brodtekst);
   kort.appendChild(hode);
 
-  // ─── Utvidet panel (skjult til «Rediger» trykkes) ─────────────────────
+  // ─── Detaljpanel (skjult til «Vis detaljer» trykkes): innsenderboks,
+  // full redigering, kuratortekst og gjentas — alt som ikke trengs for å
+  // scanne listen raskt. ──────────────────────────────────────────────────
   const panel = document.createElement('div');
   panel.className = 'kandidat-panel';
   panel.hidden = true;
@@ -182,7 +230,7 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
     if (event._muligDuplikat && event._duplikatHint) {
       const varsel = document.createElement('div');
       varsel.className = 'duplikat-varsel';
-      varsel.textContent = `⚠ ${event._duplikatHint}`;
+      varsel.textContent = event._duplikatHint;
       panel.appendChild(varsel);
     }
   }
@@ -196,7 +244,7 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
   const lagreKnapp = document.createElement('button');
   lagreKnapp.type = 'button';
   lagreKnapp.className = 'knapp knapp-sekundaer';
-  lagreKnapp.textContent = '💾 Lagre endringer';
+  lagreKnapp.textContent = 'Lagre endringer';
 
   lagreKnapp.onclick = async () => {
     const verdier = redigering.hentVerdier();
@@ -213,14 +261,15 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
       slutt: datetimeLocalTilOsloISO(verdier.slutt),
     });
     lagreKnapp.disabled = false;
-    lagreKnapp.textContent = '💾 Lagre endringer';
+    lagreKnapp.textContent = 'Lagre endringer';
     if (data.ok) {
       event.tittel = verdier.tittel;
       event.kategori = verdier.kategori;
       event.sted = verdier.sted;
       tittelEl.textContent = verdier.tittel;
-      badge.className = `badge badge-${verdier.kategori}`;
-      badge.textContent = verdier.kategori;
+      badge.dataset.kategori = verdier.kategori;
+      badge.textContent = verdier.kategori === 'pafunn' ? 'påfunn' : verdier.kategori;
+      kort.dataset.kategori = verdier.kategori;
       stedInfo.textContent = verdier.sted || '—';
       visSuksess('Endringer lagret.');
     } else {
@@ -232,45 +281,42 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
   panel.appendChild(lagreStatus);
   panel.appendChild(lagreKnapp);
 
-  const kuratorLabel = document.createElement('label');
-  kuratorLabel.className = 'felt-label kuratortekst-label';
-  kuratorLabel.textContent = 'Kuratortekst (valgfritt — vises i kortet på nettsiden)';
-  const kuratorTa = document.createElement('textarea');
-  kuratorTa.className = 'admin-textarea';
-  kuratorTa.rows = 2;
-  kuratorTa.placeholder = 'Skriv en kort redaksjonell begrunnelse…';
+  // Kuratortekst-feltet finnes allerede inne i redigering.el (lagRedigeringsFelter
+  // sin egen tKur) — IKKE dupliser det. Godkjenn leser samme felt, ikke et
+  // eget skjult felt utenfor redigeringspanelet.
+  const kuratorTa = redigering.felter.tKur.ta;
 
   const gjentasKontroll = lagGjentasKontroll(event.gjentas ?? null);
 
+  const beslutningRad = document.createElement('div');
+  beslutningRad.className = 'beslutning-rad';
+  beslutningRad.appendChild(gjentasKontroll.el);
+  panel.appendChild(beslutningRad);
+
   kort.appendChild(panel);
 
-  const redigerKnapp = document.createElement('button');
-  redigerKnapp.type = 'button';
-  redigerKnapp.className = 'lenke-knapp';
-  redigerKnapp.textContent = '✎ Vis detaljer / rediger';
-  redigerKnapp.onclick = () => {
+  const detaljerKnapp = document.createElement('button');
+  detaljerKnapp.type = 'button';
+  detaljerKnapp.className = 'knapp knapp-sekundaer knapp-detaljer';
+  detaljerKnapp.textContent = 'Vis detaljer';
+  detaljerKnapp.onclick = () => {
     panel.hidden = !panel.hidden;
-    redigerKnapp.textContent = panel.hidden ? '✎ Vis detaljer / rediger' : '✕ Skjul detaljer';
+    detaljerKnapp.textContent = panel.hidden ? 'Vis detaljer' : 'Skjul detaljer';
     if (!panel.hidden) redigering.bildeCrop.lastInnVedVisning();
   };
 
-  // ─── Kuratortekst + gjentas + handlingsrad (alltid synlig) ────────────
-  const beslutningRad = document.createElement('div');
-  beslutningRad.className = 'beslutning-rad';
-  beslutningRad.appendChild(kuratorLabel);
-  beslutningRad.appendChild(kuratorTa);
-  beslutningRad.appendChild(gjentasKontroll.el);
-
+  // ─── Handlingsrad (alltid synlig): primær / sekundær / destruktiv, med
+  // stjernen på fast plass helt til høyre. ────────────────────────────────
   const handlingRad = document.createElement('div');
   handlingRad.className = 'knapp-rad';
 
   const gKnapp = document.createElement('button');
-  gKnapp.className = 'knapp knapp-godkjenn';
-  gKnapp.textContent = '✓ Godkjenn';
+  gKnapp.className = 'knapp knapp-primaer knapp-godkjenn';
+  gKnapp.textContent = 'Godkjenn';
 
   const aKnapp = document.createElement('button');
-  aKnapp.className = 'knapp knapp-avslaa';
-  aKnapp.textContent = '✕ Avslå';
+  aKnapp.className = 'knapp knapp-destruktiv knapp-avslaa';
+  aKnapp.textContent = 'Avslå';
 
   const fKnapp = document.createElement('button');
   fKnapp.className = 'knapp-fremhev';
@@ -287,7 +333,7 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
   };
 
   function settKnapperDisabled(v) {
-    gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = redigerKnapp.disabled = v;
+    gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = detaljerKnapp.disabled = v;
   }
 
   gKnapp.onclick = async () => {
@@ -306,7 +352,7 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
       setTimeout(() => kort.remove(), 200);
     } else {
       settKnapperDisabled(false);
-      gKnapp.textContent = '✓ Godkjenn';
+      gKnapp.textContent = 'Godkjenn';
       visFeil(data.feil ?? 'Kunne ikke godkjenne eventet.');
     }
   };
@@ -330,17 +376,16 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
       setTimeout(() => kort.remove(), 200);
     } else {
       settKnapperDisabled(false);
-      aKnapp.textContent = '✕ Avslå';
+      aKnapp.textContent = 'Avslå';
       visFeil(data.feil ?? 'Kunne ikke avslå eventet.');
     }
   };
 
   handlingRad.appendChild(gKnapp);
-  handlingRad.appendChild(redigerKnapp);
+  handlingRad.appendChild(detaljerKnapp);
   handlingRad.appendChild(aKnapp);
   handlingRad.appendChild(fKnapp);
 
-  kort.appendChild(beslutningRad);
   kort.appendChild(handlingRad);
 
   return { el: kort, lastInnBilde: redigering.bildeCrop.lastInnVedVisning };

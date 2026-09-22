@@ -100,3 +100,27 @@ export function formaterPris(pris, prisTekst) {
   if (pris != null) return `${pris} kr`;
   return 'Pris ukjent';
 }
+
+/* Kun tid, uten dato — brukt i den kompakte kort-headeren der dagen i
+   stedet vises som en egen dagsoverskrift (Publiserte-listen). */
+export function formaterKlokkeslett(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleTimeString('nb-NO', {
+    timeZone: 'Europe/Oslo', hour: '2-digit', minute: '2-digit',
+  });
+}
+
+/* Nøkkel + lesbar overskrift for dag-gruppering (Publiserte-listen).
+   Nøkkelen er en ren YYYY-MM-DD Oslo-kalenderdag — stabil sorteringsnøkkel
+   uavhengig av klokkeslett. */
+export function osloDagNokkel(iso) {
+  const k = osloKomponenter(new Date(iso));
+  const p = (n) => String(n).padStart(2, '0');
+  return `${k.år}-${p(k.maned)}-${p(k.dag)}`;
+}
+
+export function formaterDagOverskrift(iso) {
+  return new Date(iso).toLocaleDateString('nb-NO', {
+    timeZone: 'Europe/Oslo', weekday: 'long', day: 'numeric', month: 'long',
+  }).replace(/^./, (c) => c.toUpperCase());
+}

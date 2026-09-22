@@ -39,7 +39,7 @@ async function visMiljo() {
     badge.hidden = true;
     return;
   }
-  badge.textContent = produksjon ? '● Produksjon' : '● Lokal';
+  badge.textContent = produksjon ? '● PRODUKSJON' : '● LOKAL';
   badge.className = `miljo-badge ${produksjon ? 'miljo-produksjon' : 'miljo-lokal'}`;
   badge.hidden = false;
 }
@@ -59,8 +59,10 @@ async function lastInnCandidates() {
 }
 
 function oppdaterFaneTeller() {
-  const el = document.getElementById('fane-teller-innsendte');
-  if (el) el.textContent = String(innsendte.innsendteAntall());
+  const innsendteEl = document.getElementById('fane-teller-innsendte');
+  if (innsendteEl) innsendteEl.textContent = String(innsendte.innsendteAntall());
+  const vurderingEl = document.getElementById('fane-teller-til-vurdering');
+  if (vurderingEl) vurderingEl.textContent = String(tilVurdering.tilVurderingAntall());
 }
 
 document.addEventListener('paaby:candidates-endret', lastInnCandidates);

@@ -21,6 +21,16 @@ export function byggGjentasStreng(type, dag) {
   return `månedlig:siste-${dag}`;
 }
 
+/* Kort, lesbar statustekst for et gjentas-felt — brukes i Publiserte-listen
+   i stedet for å vise select-kontrollene direkte (se ui-helpers.js). */
+export function formaterGjentasStatus(gjentas) {
+  const { type, dag } = parseGjentasKontroll(gjentas);
+  if (!type) return null;
+  if (type === 'ukentlig')        return `Gjentas hver ${dag}`;
+  if (type === 'månedlig-første') return `Første ${dag} i mnd.`;
+  return `Siste ${dag} i mnd.`;
+}
+
 /* Lager gjentas-kontroll og returnerer { el, hentVerdi }. */
 export function lagGjentasKontroll(gjentas) {
   const { type: initType, dag: initDag } = parseGjentasKontroll(gjentas);

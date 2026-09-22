@@ -2,13 +2,22 @@
    GET /api/publiserte (collector/store/published.js) — samme spørring og
    samme felt som før. Gjentakende events vises med NESTE forekomst
    (medNesteForekomst i server.js), grunn-eventets id beholdes til
-   fremhev/deaktiver/rediger/gjentas-endepunktene. */
+   fremhev/deaktiver/rediger/gjentas-endepunktene.
+
+   Listen grupperes per Oslo-kalenderdag (samme idé som ukefeeden på
+   hovedsiden), og hvert kort følger samme felles kortoppbygging som
+   Til vurdering/Innsendte: badger + dato øverst, miniatyrbilde + tittel/
+   meta, handlingsrad nederst. Gjentas vises som statusbadge her — selve
+   endringen skjer inne i Rediger, ikke i listen. */
 
 import { api } from '../api.js';
 import { visSuksess, visFeil } from '../toast.js';
 import { bekreft } from '../confirm.js';
-import { formaterDato, eventTilstand, datetimeLocalTilOsloISO, osloKomponenter, lagOsloDato } from '../oslo-tid.js';
-import { lagGjentasKontroll } from '../gjentas-ui.js';
+import {
+  formaterPris, formaterKlokkeslett, osloDagNokkel, formaterDagOverskrift,
+  eventTilstand, datetimeLocalTilOsloISO, osloKomponenter, lagOsloDato,
+} from '../oslo-tid.js';
+import { lagGjentasKontroll, formaterGjentasStatus } from '../gjentas-ui.js';
 import { lagRedigeringsFelter } from '../ui-helpers.js';
 
 let alle = [];
@@ -21,6 +30,7 @@ const el = {
   feed: document.getElementById('publiserte-feed'),
   tom: document.getElementById('publiserte-tom'),
   teller: document.getElementById('publiserte-teller'),
+  fremhevetUka: document.getElementById('publiserte-fremhevet-uka'),
   sok: document.getElementById('publiserte-sok'),
   kunFremhevet: document.getElementById('publiserte-kun-fremhevet'),
   visDeaktiverte: document.getElementById('publiserte-vis-deaktiverte'),
@@ -42,38 +52,154 @@ function render() {
   el.feed.innerHTML = '';
   el.tom.hidden = liste.length > 0;
   el.teller.textContent = `${liste.length} av ${alle.length} kommende publiserte`;
-  liste.forEach((event) => el.feed.appendChild(lagPubKort(event)));
+  oppdaterFremhevetUka();
+
+  let gjeldendeDag = null;
+  let dagFeed = null;
+
+  for (const event of liste) {
+    const dagNokkel = osloDagNokkel(event.start);
+    if (dagNokkel !== gjeldendeDag) {
+      gjeldendeDag = dagNokkel;
+      const gruppe = document.createElement('div');
+      gruppe.className = 'dag-gruppe';
+      const overskrift = document.createElement('h3');
+      overskrift.className = 'dag-overskrift';
+      overskrift.textContent = formaterDagOverskrift(event.start);
+      dagFeed = document.createElement('div');
+      dagFeed.className = 'feed';
+      gruppe.appendChild(overskrift);
+      gruppe.appendChild(dagFeed);
+      el.feed.appendChild(gruppe);
+    }
+    dagFeed.appendChild(lagPubKort(event));
+  }
+}
+
+function lagMiniatyrbilde(event) {
+  const wrap = document.createElement('div');
+  wrap.className = 'kort-bilde-wrapper';
+  if (event.bilde) {
+    const img = document.createElement('img');
+    img.className = 'kort-bilde';
+    img.src = event.bilde;
+    img.alt = '';
+    img.loading = 'lazy';
+    img.addEventListener('error', () => {
+      img.remove();
+      wrap.appendChild(lagPlaceholder());
+    }, { once: true });
+    wrap.appendChild(img);
+  } else {
+    wrap.appendChild(lagPlaceholder());
+  }
+  return wrap;
+
+  function lagPlaceholder() {
+    const p = document.createElement('div');
+    p.className = 'kort-bilde-placeholder';
+    return p;
+  }
 }
 
 function lagPubKort(event) {
-  const kort = document.createElement('div');
-  kort.className = `pub-kort${event.fremhevet ? ' er-fremhevet' : ''}${event.deaktivert ? ' er-deaktivert' : ''}`;
+  const kort = document.createElement('article');
+  kort.className = `admin-kort pub-kort${event.fremhevet ? ' er-fremhevet' : ''}${event.deaktivert ? ' er-deaktivert' : ''}`;
   kort.dataset.id = event.id;
+  kort.dataset.kategori = event.kategori;
 
-  const hoved = document.createElement('div');
-  hoved.className = 'pub-hoved';
+  // ─── Topprad: badger til venstre, klokkeslett til høyre ────────────────
+  const topprad = document.createElement('div');
+  topprad.className = 'kort-topprad';
 
-  const infoDel = document.createElement('div');
-  infoDel.className = 'pub-info';
+  const badger = document.createElement('div');
+  badger.className = 'kort-badger';
 
   const badge = document.createElement('span');
-  badge.className = `badge badge-${event.kategori}`;
-  badge.textContent = event.kategori;
+  badge.className = 'badge badge-kategori';
+  badge.dataset.kategori = event.kategori;
+  badge.textContent = event.kategori === 'pafunn' ? 'påfunn' : event.kategori;
+  badger.appendChild(badge);
 
-  const tittel = document.createElement('div');
-  tittel.className = 'pub-tittel';
-  tittel.textContent = `${event.fremhevet ? '★ ' : ''}${event.tittel}`;
+  if (event.deaktivert) {
+    const d = document.createElement('span');
+    d.className = 'badge badge-status';
+    d.textContent = 'Deaktivert';
+    badger.appendChild(d);
+  }
 
-  const topprad = document.createElement('div');
-  topprad.className = 'pub-topprad';
-  topprad.appendChild(badge);
-  topprad.appendChild(tittel);
-  infoDel.appendChild(topprad);
+  const gjentasTekst = formaterGjentasStatus(event.gjentas);
+  let gjentasBadgeEl = null;
+  if (gjentasTekst) {
+    gjentasBadgeEl = document.createElement('span');
+    gjentasBadgeEl.className = 'gjentas-badge';
+    gjentasBadgeEl.textContent = gjentasTekst;
+    badger.appendChild(gjentasBadgeEl);
+  }
+  topprad.appendChild(badger);
 
-  const m = document.createElement('div');
-  m.className = 'pub-meta';
-  m.textContent = `${event.sted ?? '—'} · ${formaterDato(event.start)}${event.deaktivert ? ' · deaktivert' : ''}`;
-  infoDel.appendChild(m);
+  const klokkeslett = document.createElement('span');
+  klokkeslett.className = 'kort-dato';
+  klokkeslett.textContent = formaterKlokkeslett(event.start);
+  topprad.appendChild(klokkeslett);
+
+  kort.appendChild(topprad);
+
+  // ─── Hode: miniatyrbilde + tittel/meta ─────────────────────────────────
+  const hode = document.createElement('div');
+  hode.className = 'kort-hode';
+  hode.appendChild(lagMiniatyrbilde(event));
+
+  const brodtekst = document.createElement('div');
+  brodtekst.className = 'kort-brodtekst';
+
+  const tittel = document.createElement('h3');
+  tittel.className = 'kort-tittel';
+  tittel.textContent = event.tittel;
+  brodtekst.appendChild(tittel);
+
+  const meta = document.createElement('div');
+  meta.className = 'kort-info';
+  const stedInfo = document.createElement('span');
+  stedInfo.textContent = event.sted ?? '—';
+  meta.appendChild(stedInfo);
+  const prisInfo = document.createElement('span');
+  prisInfo.textContent = formaterPris(event.pris, event.prisTekst);
+  meta.appendChild(prisInfo);
+  if (event.lenke) {
+    try {
+      const url = new URL(event.lenke);
+      if (url.protocol === 'https:' || url.protocol === 'http:') {
+        const lenkeEl = document.createElement('a');
+        lenkeEl.className = 'ekstern-lenke';
+        lenkeEl.href = url.href;
+        lenkeEl.target = '_blank';
+        lenkeEl.rel = 'noopener noreferrer';
+        lenkeEl.textContent = 'billett / info';
+        meta.appendChild(lenkeEl);
+      }
+    } catch { /* ugyldig lenke — vis ikke */ }
+  }
+  brodtekst.appendChild(meta);
+
+  hode.appendChild(brodtekst);
+  kort.appendChild(hode);
+
+  // ─── Handlingsrad: sekundær (Rediger) / destruktiv (Deaktiver), stjerne
+  // på fast plass til høyre — fremhevet vises ÉN gang (denne knappen +
+  // kraftigere kortramme), ikke også som prefiks i tittelen. ─────────────
+  const handlingRad = document.createElement('div');
+  handlingRad.className = 'knapp-rad';
+
+  const redigerKnapp = document.createElement('button');
+  redigerKnapp.type = 'button';
+  redigerKnapp.className = 'knapp knapp-sekundaer knapp-detaljer';
+  redigerKnapp.textContent = 'Rediger';
+
+  const dKnapp = document.createElement('button');
+  dKnapp.type = 'button';
+  dKnapp.className = 'knapp knapp-destruktiv';
+  dKnapp.textContent = event.deaktivert ? 'Aktiver igjen' : 'Deaktiver';
 
   const fKnapp = document.createElement('button');
   fKnapp.type = 'button';
@@ -92,20 +218,32 @@ function lagPubKort(event) {
       fKnapp.setAttribute('aria-pressed', String(data.fremhevet));
       fKnapp.title = data.fremhevet ? 'Fjern fremheving' : 'Fremhev';
       kort.classList.toggle('er-fremhevet', data.fremhevet);
-      tittel.textContent = `${data.fremhevet ? '★ ' : ''}${event.tittel}`;
       visSuksess(data.fremhevet ? `«${event.tittel}» er fremhevet.` : `Fremheving fjernet fra «${event.tittel}».`);
-      oppdaterTeller();
+      oppdaterFremhevetUka();
+      if (kunFremhevet && !data.fremhevet) render();
     } else {
       visFeil(data.feil ?? 'Kunne ikke endre fremheving.');
     }
   };
 
-  // Gjentas-rad
+  handlingRad.appendChild(redigerKnapp);
+  handlingRad.appendChild(dKnapp);
+  handlingRad.appendChild(fKnapp);
+  kort.appendChild(handlingRad);
+
+  // ─── Redigeringspanel (skjult til «Rediger» trykkes) ───────────────────
+  const redigerPanel = document.createElement('div');
+  redigerPanel.className = 'pub-rediger-panel';
+  redigerPanel.hidden = true;
+
+  const redigering = lagRedigeringsFelter(event);
+  redigerPanel.appendChild(redigering.el);
+
   const gjKontroll = lagGjentasKontroll(event.gjentas ?? null);
-  gjKontroll.el.className = 'pub-gjentas-rad';
   const gjStatus = document.createElement('span');
   gjStatus.className = 'gjentas-status';
   gjKontroll.el.appendChild(gjStatus);
+  redigerPanel.appendChild(gjKontroll.el);
 
   gjKontroll.el.querySelectorAll('select').forEach((select) => {
     select.addEventListener('change', async () => {
@@ -113,41 +251,27 @@ function lagPubKort(event) {
       const data = await api.oppdaterGjentas(event.id, gjKontroll.hentVerdi());
       if (data.ok) {
         event.gjentas = data.gjentas;
-        gjStatus.textContent = '✓';
+        gjStatus.textContent = 'Lagret';
         visSuksess('Gjentakelse oppdatert.');
+        const nyTekst = formaterGjentasStatus(event.gjentas);
+        if (nyTekst) {
+          if (!gjentasBadgeEl) {
+            gjentasBadgeEl = document.createElement('span');
+            gjentasBadgeEl.className = 'gjentas-badge';
+            badger.appendChild(gjentasBadgeEl);
+          }
+          gjentasBadgeEl.textContent = nyTekst;
+        } else if (gjentasBadgeEl) {
+          gjentasBadgeEl.remove();
+          gjentasBadgeEl = null;
+        }
       } else {
-        gjStatus.textContent = '!';
+        gjStatus.textContent = 'Feilet';
         visFeil(data.feil ?? 'Kunne ikke oppdatere gjentakelse.');
       }
       setTimeout(() => { gjStatus.textContent = ''; }, 1800);
     });
   });
-
-  const kortInnhold = document.createElement('div');
-  kortInnhold.className = 'pub-innhold';
-  kortInnhold.appendChild(infoDel);
-  kortInnhold.appendChild(gjKontroll.el);
-
-  hoved.appendChild(kortInnhold);
-  hoved.appendChild(fKnapp);
-  kort.appendChild(hoved);
-
-  // Rediger + deaktiver
-  const redigerKnapp = document.createElement('button');
-  redigerKnapp.type = 'button';
-  redigerKnapp.className = 'lenke-knapp';
-  redigerKnapp.textContent = '✎ Rediger';
-
-  const dKnapp = document.createElement('button');
-  dKnapp.type = 'button';
-  dKnapp.className = `lenke-knapp lenke-knapp-faresone${event.deaktivert ? ' aktiv' : ''}`;
-  dKnapp.textContent = event.deaktivert ? '↺ Aktiver igjen' : '🚫 Deaktiver';
-
-  const redigering = lagRedigeringsFelter(event);
-  const redigerPanel = document.createElement('div');
-  redigerPanel.className = 'pub-rediger-panel';
-  redigerPanel.hidden = true;
-  redigerPanel.appendChild(redigering.el);
 
   const lagreStatus = document.createElement('div');
   lagreStatus.className = 'lagre-status';
@@ -181,10 +305,11 @@ function lagPubKort(event) {
         pris: verdier.pris === '' ? null : Number(verdier.pris),
         prisTekst: verdier.prisTekst || null,
       });
-      badge.className = `badge badge-${event.kategori}`;
-      badge.textContent = event.kategori;
-      tittel.textContent = `${event.fremhevet ? '★ ' : ''}${event.tittel}`;
-      m.textContent = `${event.sted ?? '—'} · ${formaterDato(event.start)}${event.deaktivert ? ' · deaktivert' : ''}`;
+      badge.dataset.kategori = event.kategori;
+      badge.textContent = event.kategori === 'pafunn' ? 'påfunn' : event.kategori;
+      kort.dataset.kategori = event.kategori;
+      tittel.textContent = event.tittel;
+      stedInfo.textContent = event.sted ?? '—';
       lagreStatus.className = 'lagre-status';
       lagreStatus.textContent = '';
       visSuksess('Endringer lagret.');
@@ -196,10 +321,11 @@ function lagPubKort(event) {
   };
   redigerPanel.appendChild(lagreStatus);
   redigerPanel.appendChild(lagreKnapp);
+  kort.appendChild(redigerPanel);
 
   redigerKnapp.onclick = () => {
     redigerPanel.hidden = !redigerPanel.hidden;
-    redigerKnapp.textContent = redigerPanel.hidden ? '✎ Rediger' : '✕ Lukk redigering';
+    redigerKnapp.textContent = redigerPanel.hidden ? 'Rediger' : 'Skjul redigering';
     if (!redigerPanel.hidden) redigering.bildeCrop.lastInnVedVisning();
   };
 
@@ -218,10 +344,8 @@ function lagPubKort(event) {
     dKnapp.disabled = false;
     if (data.ok) {
       event.deaktivert = data.deaktivert;
-      dKnapp.classList.toggle('aktiv', data.deaktivert);
-      dKnapp.textContent = data.deaktivert ? '↺ Aktiver igjen' : '🚫 Deaktiver';
+      dKnapp.textContent = data.deaktivert ? 'Aktiver igjen' : 'Deaktiver';
       kort.classList.toggle('er-deaktivert', data.deaktivert);
-      m.textContent = `${event.sted ?? '—'} · ${formaterDato(event.start)}${data.deaktivert ? ' · deaktivert' : ''}`;
       visSuksess(data.deaktivert ? `«${event.tittel}» er deaktivert.` : `«${event.tittel}» er aktivert igjen.`);
       if (!visDeaktiverte && data.deaktivert) render();
     } else {
@@ -229,20 +353,7 @@ function lagPubKort(event) {
     }
   };
 
-  const knappRad = document.createElement('div');
-  knappRad.className = 'pub-knapp-rad';
-  knappRad.appendChild(redigerKnapp);
-  knappRad.appendChild(dKnapp);
-
-  kort.appendChild(knappRad);
-  kort.appendChild(redigerPanel);
-
   return kort;
-}
-
-function oppdaterTeller() {
-  const liste = synlige();
-  el.teller.textContent = `${liste.length} av ${alle.length} kommende publiserte`;
 }
 
 export async function lastInnPubliserte(tving = false) {
@@ -278,6 +389,12 @@ export function fremhevetDenneUka() {
   return alle.filter((e) =>
     e.fremhevet && new Date(e.start) >= mandag && new Date(e.start) <= søndagSlutt,
   ).length;
+}
+
+function oppdaterFremhevetUka() {
+  if (!el.fremhevetUka) return;
+  const antall = fremhevetDenneUka();
+  el.fremhevetUka.textContent = antall > 0 ? `${antall} fremhevet denne uka` : '';
 }
 
 el.sok?.addEventListener('input', () => {
