@@ -3,6 +3,7 @@ import pool from '../../backend/db/pool.mjs';
 function tilLegacyStatus(status) {
   if (status === 'approved') return 'godkjent';
   if (status === 'rejected') return 'avslatt';
+  if (status === 'triaged') return 'triaged';
   return 'pending';
 }
 
@@ -126,6 +127,23 @@ export async function markerGodkjent(
       legacyId,
       publishedEventId,
     ],
+  );
+
+  return result.rowCount > 0;
+}
+
+// Marker candidate som triagert — sendt fra "Fra API" til "Til vurdering".
+// IKKE publisering: samme som avslå/godkjenn er dette et statusskifte, ikke
+// et nytt sett med sideeffekter.
+export async function markerTriagert(legacyId) {
+  const result = await pool.query(
+    `
+      UPDATE event_candidates
+      SET status = 'triaged'
+      WHERE legacy_id = $1 AND status = 'pending'
+      RETURNING id
+    `,
+    [legacyId],
   );
 
   return result.rowCount > 0;

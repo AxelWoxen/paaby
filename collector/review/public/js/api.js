@@ -50,6 +50,7 @@ export const api = {
   hentPubliserte:    () => get('/api/publiserte'),
 
   godkjenn:  (id, data)    => post(`/api/godkjenn/${encodeURIComponent(id)}`, data),
+  triager:   (id, data)    => post(`/api/triager/${encodeURIComponent(id)}`, data),
   avslaa:    (id)          => post(`/api/avslaa/${encodeURIComponent(id)}`),
   oppdaterKandidat: (id, data) => post(`/api/kandidat/${encodeURIComponent(id)}/oppdater`, data),
 

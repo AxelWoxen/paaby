@@ -29,7 +29,10 @@
 </header>
 
 <nav class="faner grid" role="tablist" aria-label="Adminseksjoner">
-  <button type="button" class="fane-knapp aktiv" data-fane="til-vurdering">
+  <button type="button" class="fane-knapp aktiv" data-fane="fra-api">
+    Fra API <span class="fane-teller" id="fane-teller-fra-api">0</span>
+  </button>
+  <button type="button" class="fane-knapp" data-fane="til-vurdering">
     Til vurdering <span class="fane-teller" id="fane-teller-til-vurdering">0</span>
   </button>
   <button type="button" class="fane-knapp" data-fane="innsendte">
@@ -41,8 +44,33 @@
 
 <main class="innhold grid">
 
+  <!-- ─── FRA API ────────────────────────────────────────────────────────── -->
+  <section id="panel-fra-api" class="panel">
+    <div class="verktoylinje">
+      <input type="search" id="fra-api-sok" class="sok-input" placeholder="Søk på tittel eller sted…" aria-label="Søk blant events fra API" />
+      <div class="kategori-filtre" id="fra-api-filtre" role="group" aria-label="Filtrer på kategori">
+        <button type="button" class="kategori-filter-chip aktiv" data-filter="alle">Alle</button>
+        <button type="button" class="kategori-filter-chip" data-filter="musikk">Musikk</button>
+        <button type="button" class="kategori-filter-chip" data-filter="klubb">Klubb</button>
+        <button type="button" class="kategori-filter-chip" data-filter="pafunn">Påfunn</button>
+      </div>
+      <label class="avkryssing">
+        <input type="checkbox" id="fra-api-skjul-passerte" checked /> Skjul passerte
+      </label>
+    </div>
+    <p class="feed-teller">
+      <span id="fra-api-teller"></span>
+      <button type="button" id="fra-api-avslaa-passerte" class="knapp knapp-sekundaer" hidden>Avslå alle passerte</button>
+    </p>
+    <div id="fra-api-feed" class="feed"></div>
+    <div id="fra-api-tom" class="tom-tilstand" hidden>
+      <strong>Ingenting nytt fra API. Godt jobba.</strong>
+      <p>Nye funn fra collectoren dukker opp her, før de sendes videre til Til vurdering.</p>
+    </div>
+  </section>
+
   <!-- ─── TIL VURDERING ─────────────────────────────────────────────────── -->
-  <section id="panel-til-vurdering" class="panel">
+  <section id="panel-til-vurdering" class="panel" hidden>
     <div class="verktoylinje">
       <input type="search" id="vurdering-sok" class="sok-input" placeholder="Søk på tittel eller sted…" aria-label="Søk blant events til vurdering" />
       <div class="kategori-filtre" id="vurdering-filtre" role="group" aria-label="Filtrer på kategori">
@@ -62,7 +90,7 @@
     <div id="vurdering-feed" class="feed"></div>
     <div id="vurdering-tom" class="tom-tilstand" hidden>
       <strong>Ingenting til vurdering. Godt jobba.</strong>
-      <p>Nye funn fra collectoren og manuelt lagt til events dukker opp her.</p>
+      <p>Manuelt lagt inn events og ting du har sendt videre fra Fra API dukker opp her.</p>
     </div>
   </section>
 

@@ -2,6 +2,7 @@
 
 import { api } from './api.js';
 import { visFeil } from './toast.js';
+import * as fraApi from './views/fra-api.js';
 import * as tilVurdering from './views/til-vurdering.js';
 import * as innsendte from './views/innsendte.js';
 import * as publiserte from './views/publiserte.js';
@@ -9,6 +10,7 @@ import './views/nytt-event.js';
 
 const faner = document.querySelectorAll('.fane-knapp');
 const paneler = {
+  'fra-api': document.getElementById('panel-fra-api'),
   'til-vurdering': document.getElementById('panel-til-vurdering'),
   innsendte: document.getElementById('panel-innsendte'),
   publiserte: document.getElementById('panel-publiserte'),
@@ -24,8 +26,8 @@ function byttFane(navn) {
 
 faner.forEach((f) => f.addEventListener('click', () => byttFane(f.dataset.fane)));
 
-const startFane = location.hash.replace('#', '') || 'til-vurdering';
-byttFane(paneler[startFane] ? startFane : 'til-vurdering');
+const startFane = location.hash.replace('#', '') || 'fra-api';
+byttFane(paneler[startFane] ? startFane : 'fra-api');
 
 // ─── Miljø-badge ────────────────────────────────────────────────────────────
 // Robust signal: NODE_ENV settes eksplisitt av `npm run review:prod`
@@ -44,11 +46,12 @@ async function visMiljo() {
   badge.hidden = false;
 }
 
-// ─── Candidates (Til vurdering + Innsendte deler samme kilde) ──────────────
+// ─── Candidates (Fra API + Til vurdering + Innsendte deler samme kilde) ────
 async function lastInnCandidates() {
   try {
     const candidates = await api.hentCandidates();
     candidates.forEach((e) => { e._fremhevet = false; });
+    fraApi.settCandidates(candidates);
     tilVurdering.settCandidates(candidates);
     innsendte.settCandidates(candidates);
     oppdaterFaneTeller();
@@ -59,6 +62,8 @@ async function lastInnCandidates() {
 }
 
 function oppdaterFaneTeller() {
+  const fraApiEl = document.getElementById('fane-teller-fra-api');
+  if (fraApiEl) fraApiEl.textContent = String(fraApi.fraApiAntall());
   const innsendteEl = document.getElementById('fane-teller-innsendte');
   if (innsendteEl) innsendteEl.textContent = String(innsendte.innsendteAntall());
   const vurderingEl = document.getElementById('fane-teller-til-vurdering');

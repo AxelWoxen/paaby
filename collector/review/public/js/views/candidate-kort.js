@@ -102,10 +102,14 @@ function lagMiniatyrbilde(event) {
 
 /**
  * @param {Object} event  candidate fra /api/candidates
- * @param {{ visInnsender: boolean, fjernFraListe: () => void }} valg
+ * @param {{ visInnsender?: boolean, modus?: 'vurdering' | 'fra-api' }} valg
+ *   modus 'vurdering' (standard): "Godkjenn" publiserer (Til vurdering/Innsendte).
+ *   modus 'fra-api': "Godkjenn" sender til vurdering i stedet — ingen
+ *   publisering ennå, og fremhev-stjernen skjules (avgjøres ved faktisk
+ *   publisering, ikke her).
  * @returns {{ el: HTMLElement, lastInnBilde: () => void }}
  */
-export function lagKandidatKort(event, { visInnsender = false } = {}) {
+export function lagKandidatKort(event, { visInnsender = false, modus = 'vurdering' } = {}) {
   const kort = document.createElement('article');
   kort.className = 'admin-kort kandidat-kort';
   kort.dataset.id = event.id;
@@ -312,7 +316,7 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
 
   const gKnapp = document.createElement('button');
   gKnapp.className = 'knapp knapp-primaer knapp-godkjenn';
-  gKnapp.textContent = 'Godkjenn';
+  gKnapp.textContent = modus === 'fra-api' ? 'Send til vurdering' : 'Godkjenn';
 
   const aKnapp = document.createElement('button');
   aKnapp.className = 'knapp knapp-destruktiv knapp-avslaa';
@@ -323,6 +327,9 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
   fKnapp.title = 'Fremhev ved publisering';
   fKnapp.textContent = '★';
   fKnapp.setAttribute('aria-pressed', 'false');
+  // Fremhev avgjøres først når eventet faktisk publiseres (Til vurdering),
+  // ikke når en rå collector-candidate bare sendes videre dit.
+  if (modus === 'fra-api') fKnapp.hidden = true;
 
   fKnapp.onclick = () => {
     event._fremhevet = !event._fremhevet;
@@ -339,21 +346,41 @@ export function lagKandidatKort(event, { visInnsender = false } = {}) {
   gKnapp.onclick = async () => {
     settKnapperDisabled(true);
     gKnapp.textContent = '…';
-    const data = await api.godkjenn(event.id, {
-      kuratortekst: kuratorTa.value,
-      fremhevet: event._fremhevet === true,
-      gjentas: gjentasKontroll.hentVerdi(),
-    });
+
+    const data = modus === 'fra-api'
+      ? await api.triager(event.id, {
+          kuratortekst: kuratorTa.value,
+          gjentas: gjentasKontroll.hentVerdi(),
+        })
+      : await api.godkjenn(event.id, {
+          kuratortekst: kuratorTa.value,
+          fremhevet: event._fremhevet === true,
+          gjentas: gjentasKontroll.hentVerdi(),
+        });
+
     if (data.ok) {
       kort.style.transition = 'opacity .2s';
       kort.style.opacity = '0';
-      event._status = 'godkjent';
-      visSuksess(`«${event.tittel}» er publisert${event._fremhevet ? ' og fremhevet' : ''}.`);
-      setTimeout(() => kort.remove(), 200);
+      if (modus === 'fra-api') {
+        event._status = 'triaged';
+        visSuksess(`«${event.tittel}» er sendt til vurdering.`);
+      } else {
+        event._status = 'godkjent';
+        visSuksess(`«${event.tittel}» er publisert${event._fremhevet ? ' og fremhevet' : ''}.`);
+      }
+      setTimeout(() => {
+        kort.remove();
+        // Trengs kun ved triage: Til vurdering-fanen må vite at et nytt
+        // event nå er tilgjengelig der. Vanlig godkjenn (publisering) fjerner
+        // fortsatt bare kortet lokalt, uten full refetch/flimmer i lista.
+        if (modus === 'fra-api') {
+          document.dispatchEvent(new CustomEvent('paaby:candidates-endret'));
+        }
+      }, 200);
     } else {
       settKnapperDisabled(false);
-      gKnapp.textContent = 'Godkjenn';
-      visFeil(data.feil ?? 'Kunne ikke godkjenne eventet.');
+      gKnapp.textContent = modus === 'fra-api' ? 'Send til vurdering' : 'Godkjenn';
+      visFeil(data.feil ?? (modus === 'fra-api' ? 'Kunne ikke sende til vurdering.' : 'Kunne ikke godkjenne eventet.'));
     }
   };
 

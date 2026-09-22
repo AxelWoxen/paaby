@@ -22,6 +22,7 @@ import {
   lesCandidates,
   leggTilCandidates,
   markerGodkjent,
+  markerTriagert,
   markerAvslatt,
   oppdaterCandidatePayload,
 } from '../store/candidates-db.js';
@@ -222,12 +223,16 @@ app.get('/api/miljo', (_req, res) => {
 
 // ─── Candidates ─────────────────────────────────────────────────────────────
 
-// Hent alle events som venter på review.
+// Hent alle events som venter på review — rene collector-funn som ennå
+// ikke er triagert ("Fra API") OG alt som venter på faktisk publisering
+// (manuelt lagt inn, eller triagert fra "Fra API") ("Til vurdering").
+// Frontend skiller selv på _status/_kilde (se views/fra-api.js og
+// views/til-vurdering.js) — samme liste, ett kall.
 app.get('/api/candidates', async (_req, res) => {
   const alle = await lesCandidates();
 
   res.json(
-    alle.filter((event) => event._status === 'pending'),
+    alle.filter((event) => event._status === 'pending' || event._status === 'triaged'),
   );
 });
 
@@ -378,6 +383,56 @@ app.post('/api/kandidat/:id/oppdater', async (req, res) => {
 
     res.status(500).json({
       feil: 'Kunne ikke oppdatere kandidat',
+    });
+  }
+});
+
+
+// Triager en collector-candidate: sender den fra "Fra API" til "Til
+// vurdering". IKKE publisering — kun et statusskifte (pending → triaged),
+// pluss at en ev. kuratortekst/gjentas man har begynt på blir med videre.
+app.post('/api/triager/:id', async (req, res) => {
+  const { id } = req.params;
+  const { kuratortekst, gjentas } = req.body ?? {};
+
+  const alle = await lesCandidates();
+  const event = alle.find((candidate) => candidate.id === id);
+
+  if (!event) {
+    return res.status(404).json({
+      feil: 'Event ikke funnet',
+    });
+  }
+
+  const {
+    _status, _kilde,
+    _innsenderNavn, _innsenderOrg, _innsenderKontakt, _innsenderNotat,
+    _muligDuplikat, _duplikatHint,
+    ...basisPayload
+  } = event;
+
+  const payload = {
+    ...basisPayload,
+    kuratortekst: tekstEllerNull(kuratortekst),
+    gjentas: gjentas || null,
+  };
+
+  try {
+    await oppdaterCandidatePayload(id, payload);
+    const ok = await markerTriagert(id);
+
+    if (!ok) {
+      return res.status(404).json({
+        feil: 'Event ikke funnet, eller allerede behandlet',
+      });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Kunne ikke triagere kandidat:', err);
+
+    res.status(500).json({
+      feil: 'Kunne ikke sende kandidaten til vurdering',
     });
   }
 });

@@ -1,12 +1,12 @@
-/* til-vurdering.js — siste steg før publisering. Viser:
-   - manuelt lagt inn (source='manuell', status='pending') — rett fra
-     «Nytt event», ikke sett av noen ennå.
-   - triagerte collector-funn (status='triaged') — sendt hit fra
-     «Fra API» (views/fra-api.js) etter en første gjennomgang.
-   Rå, ikke-triagerte collector-funn hører hjemme i Fra API, ikke her — det
-   er hele poenget med triage-steget: alt i denne lista er allerede sett
-   gjennom én gang. Innsendinger fra arrangører vises i Innsendte-fanen
-   (samme underliggende tabell, se server.js). */
+/* fra-api.js — rå, ikke-triagerte funn fra collectoren (source='collector',
+   status='pending'). Dette er FØRSTE stopp for alt collectoren finner
+   automatisk — blandes bevisst ikke med manuelt lagt inn eller allerede
+   gjennomgåtte events (se views/til-vurdering.js).
+
+   "Godkjenn" her betyr IKKE publisering. Den sender candidaten videre til
+   Til vurdering (status settes til 'triaged' via /api/triager/:id) — samme
+   candidate-rad i databasen, bare et statusskifte. Faktisk publisering
+   skjer først når Til vurdering-fanen godkjenner. */
 
 import { api } from '../api.js';
 import { visSuksess, visFeil } from '../toast.js';
@@ -17,23 +17,20 @@ import { lagKandidatKort } from './candidate-kort.js';
 let alle = [];
 let sokTekst = '';
 let aktivKategori = 'alle';
-let skjulPasserte = true; // matcher HTML-checkboxens `checked` — bevisst på som standard
+let skjulPasserte = true;
 
 const el = {
-  feed: document.getElementById('vurdering-feed'),
-  tom: document.getElementById('vurdering-tom'),
-  teller: document.getElementById('vurdering-teller'),
-  sok: document.getElementById('vurdering-sok'),
-  skjulPasserte: document.getElementById('vurdering-skjul-passerte'),
-  kategoriChips: document.querySelectorAll('#vurdering-filtre .kategori-filter-chip'),
-  avslaaPasserte: document.getElementById('vurdering-avslaa-passerte'),
+  feed: document.getElementById('fra-api-feed'),
+  tom: document.getElementById('fra-api-tom'),
+  teller: document.getElementById('fra-api-teller'),
+  sok: document.getElementById('fra-api-sok'),
+  skjulPasserte: document.getElementById('fra-api-skjul-passerte'),
+  kategoriChips: document.querySelectorAll('#fra-api-filtre .kategori-filter-chip'),
+  avslaaPasserte: document.getElementById('fra-api-avslaa-passerte'),
 };
 
 function grunnlisten() {
-  return alle.filter((e) =>
-    e._status === 'triaged'
-    || (e._status === 'pending' && e._kilde === 'manuell'),
-  );
+  return alle.filter((e) => e._status === 'pending' && e._kilde === 'collector');
 }
 
 function matcherSok(event) {
@@ -59,10 +56,10 @@ function oppdaterTeller(liste) {
 
   if (!harFilter) {
     el.teller.textContent = skjulPasserte
-      ? `${kommendeTotalt} kommende${passerteTotalt ? ` · ${passerteTotalt} passerte skjult` : ''}`
-      : `${totalt.length} til vurdering`;
+      ? `${kommendeTotalt} nye${passerteTotalt ? ` · ${passerteTotalt} passerte skjult` : ''}`
+      : `${totalt.length} fra API`;
   } else {
-    el.teller.textContent = `${liste.length} av ${totalt.length} til vurdering`;
+    el.teller.textContent = `${liste.length} av ${totalt.length} fra API`;
   }
 
   if (el.avslaaPasserte) el.avslaaPasserte.hidden = passerteTotalt === 0;
@@ -78,7 +75,7 @@ function render() {
     .slice()
     .sort((a, b) => new Date(a.start) - new Date(b.start))
     .forEach((event) => {
-      const { el: kortEl, lastInnBilde } = lagKandidatKort(event, { visInnsender: false });
+      const { el: kortEl, lastInnBilde } = lagKandidatKort(event, { visInnsender: false, modus: 'fra-api' });
       el.feed.appendChild(kortEl);
       void lastInnBilde;
     });
@@ -89,7 +86,7 @@ export function settCandidates(candidates) {
   render();
 }
 
-export function tilVurderingAntall() {
+export function fraApiAntall() {
   return grunnlisten().length;
 }
 
@@ -112,9 +109,9 @@ el.kategoriChips?.forEach((chip) => {
   });
 });
 
-// Bulk-avslå passerte kandidater. Kaller det EKSISTERENDE avslå-endepunktet
-// én kandidat om gangen (ingen ny backendlogikk) — viser fremdrift underveis
-// siden dette kan være 100+ kall, og oppsummerer til slutt.
+// Bulk-avslå passerte, rene collector-funn — samme mønster som Til
+// vurdering sin «Avslå alle passerte» (kaller eksisterende /api/avslaa/:id
+// én og én, viser fremdrift, oppsummerer).
 el.avslaaPasserte?.addEventListener('click', async () => {
   const passerte = grunnlisten().filter(erPassert);
   if (passerte.length === 0) return;
