@@ -134,7 +134,9 @@ a { color: var(--aksent-tekst); }
 .topbar-hoyre { display: flex; align-items: center; gap: var(--gap-m); }
 .innlogget-som { font-size: var(--tekst-label); color: var(--graa); }
 .innlogget-som:empty { display: none; }
-.logo { font-size: var(--tekst-sidetittel); font-weight: 700; }
+.logo-lockup { display: inline-flex; align-items: center; gap: 0.5rem; }
+.logo-bilde { display: block; height: 28px; width: auto; }
+.logo-admin-tekst { font-size: var(--tekst-sidetittel); font-weight: 700; }
 
 /* Miljø: produksjon skal være tydelig, ikke alarmerende — solid svart, ikke
    rødt (rødt er kategorifargen for musikk, og kan ikke også bety «fare»). */
