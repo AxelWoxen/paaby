@@ -36,7 +36,7 @@ let forrigeAktivtElement   = null; /* fokus returneres hit når modal lukkes */
    ======================== */
 
 export function åpneModal(event) {
-  trackEvent('kort_åpnet', { kategori: event.kategori });
+  trackEvent('kort_åpnet', { id: event.id, kategori: event.kategori });
   åpenEvent            = event;
   forrigeAktivtElement = document.activeElement;
 
@@ -265,7 +265,7 @@ function byggHandlinger(event) {
     a.rel       = 'noopener noreferrer';
     a.className = 'knapp knapp-primaer';
     a.textContent = 'mer info / billett';
-    a.addEventListener('click', () => trackEvent('mer_info_klikket', { id: event.id }), { once: true });
+    a.addEventListener('click', () => trackEvent('mer_info_klikket', { id: event.id, kategori: event.kategori }), { once: true });
     div.appendChild(a);
   }
 
@@ -364,8 +364,15 @@ function leggTilModalLyttere(event) {
   });
 }
 
+/* Sporing: event_delt skal bety en faktisk BEKREFTET deling, ikke bare at
+   del-knappen ble klikket. Det betyr at vi tracker etter at handlingen har
+   lyktes, ikke før den starter:
+     — navigator.share(): kun hvis løftet fullfører (avbrutt dialog kaster
+       og fanges i catch — da trackes ingenting).
+     — clipboard-fallback: kun hvis writeText() faktisk lykkes.
+     — window.prompt()-fallback: aldri — vi har ingen måte å vite om
+       brukeren faktisk kopierte lenken derfra. */
 async function delEvent(event, knapp) {
-  trackEvent('event_delt', { id: event.id });
   const base  = KONFIG.prodDomene || window.location.origin;
   const path  = window.location.pathname;
   const delUrl = `${base}${path}#event/${encodeURIComponent(event.id)}`;
@@ -375,8 +382,9 @@ async function delEvent(event, knapp) {
   if (navigator.share) {
     try {
       await navigator.share({ title: event.tittel, text: tekst, url: delUrl });
+      trackEvent('event_delt', { id: event.id, kategori: event.kategori });
     } catch {
-      /* Brukeren avbrøt — ikke vis feil */
+      /* Brukeren avbrøt — ikke vis feil, ikke track */
     }
     return;
   }
@@ -385,6 +393,7 @@ async function delEvent(event, knapp) {
     await navigator.clipboard.writeText(delUrl);
     knapp.textContent = 'lenke kopiert!';
     setTimeout(() => { knapp.textContent = 'del'; }, 2000);
+    trackEvent('event_delt', { id: event.id, kategori: event.kategori });
   } catch {
     window.prompt('Kopier denne lenken:', delUrl);
   }

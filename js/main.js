@@ -474,7 +474,10 @@ function initLagretSync() {
       if (tekst) tekst.textContent = lagret ? 'lagret' : 'lagre';
       modalHjerte.setAttribute('aria-pressed', String(lagret));
     }
-    if (lagret) trackEvent('event_lagret', { id });
+    if (lagret) {
+      const event = tilstand.alleEventer.find((e) => e.id === id);
+      trackEvent('event_lagret', { id, kategori: event?.kategori });
+    }
     if (tilstand.visLagret) oppdaterFeed();
   });
 }
