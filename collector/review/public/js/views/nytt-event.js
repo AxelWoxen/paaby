@@ -7,6 +7,7 @@
 import { api } from '../api.js';
 import { visSuksess, visFeil } from '../toast.js';
 import { lagGjentasKontroll } from '../gjentas-ui.js';
+import { lagTagVelgerEl } from '../ui-helpers.js';
 
 const felt = {
   tittel: document.getElementById('ny-tittel'),
@@ -23,18 +24,27 @@ const felt = {
 
 const kategoriKnapper = document.querySelectorAll('#ny-kategori-velger .kategori-chip');
 const gjentasHost  = document.getElementById('ny-gjentas-host');
+const tagsHost     = document.getElementById('ny-tags-host');
 const submitKnapp  = document.getElementById('ny-submit');
 const feilBoks     = document.getElementById('ny-feil');
 const form         = document.getElementById('nytt-event-form');
 
 let aktivKategori = 'musikk';
 let gjentasKontroll = null;
+let tagVelger = null;
 
 function initGjentas() {
   if (!gjentasHost) return;
   gjentasKontroll = lagGjentasKontroll(null);
   gjentasHost.innerHTML = '';
   gjentasHost.appendChild(gjentasKontroll.el);
+}
+
+function initTags() {
+  if (!tagsHost) return;
+  tagVelger = lagTagVelgerEl([]);
+  tagsHost.innerHTML = '';
+  tagsHost.appendChild(tagVelger.el);
 }
 
 kategoriKnapper.forEach((btn) => {
@@ -60,6 +70,7 @@ function tomSkjema() {
   kategoriKnapper.forEach((k, i) => k.classList.toggle('aktiv', i === 0));
   aktivKategori = kategoriKnapper[0]?.dataset.kat ?? 'musikk';
   initGjentas();
+  initTags();
 }
 
 form?.addEventListener('submit', async (e) => {
@@ -90,6 +101,7 @@ form?.addEventListener('submit', async (e) => {
     lenke: felt.lenke.value.trim() || null,
     bilde: felt.bilde.value.trim() || null,
     gjentas: gjentasKontroll?.hentVerdi() ?? null,
+    tags: tagVelger?.hentVerdier() ?? [],
   });
 
   submitKnapp.disabled = false;
@@ -106,3 +118,4 @@ form?.addEventListener('submit', async (e) => {
 });
 
 initGjentas();
+initTags();

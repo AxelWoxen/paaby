@@ -421,6 +421,10 @@ a { color: var(--aksent-tekst); }
 .kategori-chip[data-verdi="klubb"].aktiv  { color: var(--klubb-tekst); }
 .kategori-chip[data-verdi="pafunn"].aktiv { color: var(--pafunn-tekst); }
 
+.tag-velger { display: flex; gap: var(--gap-s); flex-wrap: wrap; margin-bottom: 0.4rem; }
+.tag-chip.aktiv { background: var(--blaa); border-color: var(--blaa); color: var(--svart); }
+.tag-hint { font-size: 0.76rem; color: var(--graa); margin: 0 0 0.85rem; }
+
 .lagre-status { font-size: 0.8rem; min-height: 1.1em; color: var(--graa); }
 .lagre-status.feil { color: var(--svart); font-weight: 600; }
 

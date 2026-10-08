@@ -1,4 +1,5 @@
 import pool from '../../backend/db/pool.mjs';
+import { utledTags } from '../../js/application/tags.js';
 
 export async function lesPubliserte() {
   const result = await pool.query(`
@@ -28,7 +29,16 @@ export async function lesPubliserte() {
       e.recurrence_rule_raw AS gjentas,
       e.featured AS fremhevet,
 
-      (e.status = 'inactive') AS deaktivert
+      (e.status = 'inactive') AS deaktivert,
+
+      -- Skalar subquery i stedet for en vanlig LEFT JOIN: en vanlig join mot
+      -- event_tags ville gitt én rad per tag og dermed duplisert eventet i
+      -- lista (samme fallgruve som flere event_categories-rader).
+      (
+        SELECT COALESCE(array_agg(et.tag_slug ORDER BY et.tag_slug), ARRAY[]::text[])
+        FROM event_tags et
+        WHERE et.event_id = e.id
+      ) AS tags
 
     FROM events e
 
@@ -61,6 +71,26 @@ export async function lesPubliserte() {
       ? event.sistVerifisert.toISOString()
       : event.sistVerifisert,
 }));
+}
+
+// Erstatter hele tagsettet for et event — enklest å forstå og garantert
+// riktig etter en redigering, i stedet for å regne ut en diff.
+async function settEventTags(client, eventId, tags) {
+  await client.query(
+    `DELETE FROM event_tags WHERE event_id = $1`,
+    [eventId],
+  );
+
+  for (const slug of tags) {
+    await client.query(
+      `
+        INSERT INTO event_tags (event_id, tag_slug)
+        VALUES ($1, $2)
+        ON CONFLICT DO NOTHING
+      `,
+      [eventId, slug],
+    );
+  }
 }
 
 function lagSlug(tekst) {
@@ -224,6 +254,15 @@ export async function publiserEvent(
         event.slutt ?? null,
       ],
     );
+
+    // 5. Tags — regnet ut på nytt her også (ikke bare ved lagring i review),
+    // slik at eldre candidates uten tags-felt likevel får daytime/evening/
+    // late-evening og "free" (når prisen er entydig) ved publisering.
+    const tags = utledTags(event.tags, {
+      pris: event.pris,
+      start: event.start,
+    });
+    await settEventTags(client, eventId, tags);
 
     await client.query('COMMIT');
 
@@ -394,9 +433,17 @@ export async function oppdaterPublisertEvent(id, data) {
       ],
     );
 
+    // Tags — regnet ut fra de NYE data-verdiene (pris/start kan nettopp ha
+    // blitt endret i samme redigering), ikke de gamle lagrede.
+    const tags = utledTags(data.tags, {
+      pris: data.pris,
+      start: data.start,
+    });
+    await settEventTags(client, eventId, tags);
+
     await client.query('COMMIT');
 
-    return true;
+    return { tags };
   } catch (err) {
     await client.query('ROLLBACK');
     throw err;

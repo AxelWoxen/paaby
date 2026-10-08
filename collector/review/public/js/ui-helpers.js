@@ -33,6 +33,78 @@ export function lagKategoriVelgerEl(aktivKat) {
   return { el: rad, hentVerdi: () => valgt };
 }
 
+/* Må holdes i sync med js/application/tags.js (TILLATTE_TAGS) og seed-dataen
+   i backend/db/migrations/007_event_tags.sql — admin-UI-et dupliserer
+   listen bevisst i stedet for å dele modulen over nettverk, siden dette
+   kjører i nettleseren. */
+export const TAGS = [
+  ['free',         'Free'],
+  ['drop-in',      'Drop-in'],
+  ['ticket',       'Ticket'],
+  ['outdoor',      'Outdoor'],
+  ['indoor',       'Indoor'],
+  ['daytime',      'Daytime'],
+  ['evening',      'Evening'],
+  ['late-evening', 'Late evening'],
+  ['18+',          '18+'],
+  ['20+',          '20+'],
+  ['live',         'Live'],
+  ['dj',           'DJ'],
+  ['activity',     'Activity'],
+  ['market',       'Market'],
+  ['community',    'Community'],
+  ['pop-up',       'Pop-up'],
+  ['festival',     'Festival'],
+];
+
+/* Enkel multiselect-chiprad for tags. I motsetning til kategori-velgeren er
+   dette ikke exclusive — flere chips kan være aktive samtidig.
+   Daytime/evening/late-evening og "free" blir regnet ut på nytt av
+   serveren ved lagring uansett hva som står her — chipsene viser bare
+   gjeldende tilstand og lar admin justere resten fritt. */
+export function lagTagVelgerEl(aktiveTags = []) {
+  const wrap = document.createElement('div');
+  wrap.className = 'tag-velger';
+  const valgt = new Set(aktiveTags ?? []);
+  const knapper = new Map();
+
+  function settAktiv(slug, aktiv) {
+    const btn = knapper.get(slug);
+    if (!btn) return;
+    btn.classList.toggle('aktiv', aktiv);
+    btn.setAttribute('aria-pressed', String(aktiv));
+  }
+
+  TAGS.forEach(([slug, txt]) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = `chip tag-chip${valgt.has(slug) ? ' aktiv' : ''}`;
+    btn.dataset.verdi = slug;
+    btn.textContent = txt;
+    btn.setAttribute('aria-pressed', String(valgt.has(slug)));
+    btn.onclick = () => {
+      if (valgt.has(slug)) valgt.delete(slug);
+      else valgt.add(slug);
+      settAktiv(slug, valgt.has(slug));
+    };
+    knapper.set(slug, btn);
+    wrap.appendChild(btn);
+  });
+
+  return {
+    el: wrap,
+    hentVerdier: () => [...valgt],
+    // Brukes til å gjenspeile tags serveren faktisk lagret (etter at
+    // automatiske tidstag/"free" er regnet ut) uten å bygge hele skjemaet
+    // på nytt.
+    settVerdier: (nyeTags) => {
+      valgt.clear();
+      (nyeTags ?? []).forEach((slug) => valgt.add(slug));
+      knapper.forEach((_btn, slug) => settAktiv(slug, valgt.has(slug)));
+    },
+  };
+}
+
 export function lagFelt(label, verdi, type = 'text', { pakrevd = false, plassholder = '' } = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'felt-gruppe';
@@ -260,6 +332,14 @@ export function lagRedigeringsFelter(event) {
   const tBesk      = lagTekstomrade('Beskrivelse', event.beskrivelse, 3);
   const tKur       = lagTekstomrade('Kuratortekst (vises i kortet)', event.kuratortekst, 2);
 
+  const tagLabel = document.createElement('label');
+  tagLabel.className = 'felt-label';
+  tagLabel.textContent = 'Tags';
+  const tagVelger = lagTagVelgerEl(event.tags);
+  const tagHint = document.createElement('p');
+  tagHint.className = 'tag-hint';
+  tagHint.textContent = 'Daytime/evening/late-evening og «free» beregnes automatisk fra starttid og pris ved lagring.';
+
   const el = document.createElement('div');
   el.className = 'rediger-felter';
   el.appendChild(katLabel);
@@ -274,6 +354,9 @@ export function lagRedigeringsFelter(event) {
   el.appendChild(fLenke.wrap);
   el.appendChild(fBilde.wrap);
   el.appendChild(bildeCrop.el);
+  el.appendChild(tagLabel);
+  el.appendChild(tagVelger.el);
+  el.appendChild(tagHint);
 
   function hentVerdier() {
     return {
@@ -291,8 +374,9 @@ export function lagRedigeringsFelter(event) {
       kuratortekst: tKur.ta.value.trim(),
       lenke: fLenke.input.value.trim(),
       bilde: fBilde.input.value.trim(),
+      tags: tagVelger.hentVerdier(),
     };
   }
 
-  return { el, hentVerdier, bildeCrop, felter: { fTittel, fStart, tKur } };
+  return { el, hentVerdier, bildeCrop, felter: { fTittel, fStart, tKur, tagVelger } };
 }

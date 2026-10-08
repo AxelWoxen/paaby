@@ -1,4 +1,5 @@
 import pool from '../../backend/db/pool.mjs';
+import { utledTags } from '../../js/application/tags.js';
 
 function tilLegacyStatus(status) {
   if (status === 'approved') return 'godkjent';
@@ -56,6 +57,14 @@ export async function leggTilCandidates(eventer, { source = 'collector' } = {}) 
     for (const event of eventer) {
       const { _status, ...payload } = event;
 
+      // Automatiske tags (daytime/evening/late-evening fra starttid, "free"
+      // fra pris når den er entydig) settes allerede her, slik at nye
+      // candidates ikke dukker opp i review uten dem.
+      payload.tags = utledTags(payload.tags, {
+        pris: payload.pris,
+        start: payload.start,
+      });
+
       const result = await client.query(
         `
           INSERT INTO event_candidates (
@@ -95,6 +104,16 @@ export async function leggTilCandidates(eventer, { source = 'collector' } = {}) 
 // Oppdater payload for en candidate (brukes av "Lagre endringer" i review-
 // verktøyet, både for vanlige candidates og innsendte).
 export async function oppdaterCandidatePayload(legacyId, payload) {
+  // Samme automatiske tag-regel som ved opprettelse — overstyrer alltid
+  // tidstag, og "free" når prisen er entydig (ellers admins eget valg).
+  const endeligPayload = {
+    ...payload,
+    tags: utledTags(payload.tags, {
+      pris: payload.pris,
+      start: payload.start,
+    }),
+  };
+
   const result = await pool.query(
     `
       UPDATE event_candidates
@@ -102,10 +121,13 @@ export async function oppdaterCandidatePayload(legacyId, payload) {
       WHERE legacy_id = $1
       RETURNING id
     `,
-    [legacyId, JSON.stringify(payload)],
+    [legacyId, JSON.stringify(endeligPayload)],
   );
 
-  return result.rowCount > 0;
+  return {
+    ok: result.rowCount > 0,
+    tags: endeligPayload.tags,
+  };
 }
 
 // Marker candidate som godkjent og koble den til publisert event.

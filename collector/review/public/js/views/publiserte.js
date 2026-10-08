@@ -304,12 +304,14 @@ function lagPubKort(event) {
         sted: verdier.sted,
         pris: verdier.pris === '' ? null : Number(verdier.pris),
         prisTekst: verdier.prisTekst || null,
+        tags: data.tags,
       });
       badge.dataset.kategori = event.kategori;
       badge.textContent = event.kategori === 'pafunn' ? 'påfunn' : event.kategori;
       kort.dataset.kategori = event.kategori;
       tittel.textContent = event.tittel;
       stedInfo.textContent = event.sted ?? '—';
+      redigering.felter.tagVelger.settVerdier(data.tags);
       lagreStatus.className = 'lagre-status';
       lagreStatus.textContent = '';
       visSuksess('Endringer lagret.');

@@ -9,6 +9,7 @@ import crypto from 'crypto';
 import pool from '../db/pool.mjs';
 import { osloLokalTilISO } from '../../js/application/oslo-tid.js';
 import { erGyldigUrl } from '../../js/application/validering.js';
+import { utledTags } from '../../js/application/tags.js';
 
 const TILLATTE_KATEGORIER = new Set(['musikk', 'klubb', 'pafunn']);
 const UKEDAGER = ['mandag', 'tirsdag', 'onsdag', 'torsdag', 'fredag', 'lørdag', 'søndag'];
@@ -274,6 +275,10 @@ export async function lagreInnsending(verdier, bilde, bildeUrlBygger) {
     bilde:        verdier.bildeLenke, // overskrives under hvis fil lastet opp
     gjentas:      verdier.gjentas,
     sistVerifisert: new Date().toISOString(),
+
+    // Innsendere velger ikke tags selv — kun automatiske (daytime/evening/
+    // late-evening fra starttid, "free" når prisen er entydig gratis).
+    tags: utledTags([], { pris: verdier.pris, start: verdier.startISO }),
   };
 
   const { muligDuplikat, hint } = await finnMuligDuplikat(

@@ -270,11 +270,13 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
       event.tittel = verdier.tittel;
       event.kategori = verdier.kategori;
       event.sted = verdier.sted;
+      event.tags = data.tags;
       tittelEl.textContent = verdier.tittel;
       badge.dataset.kategori = verdier.kategori;
       badge.textContent = verdier.kategori === 'pafunn' ? 'påfunn' : verdier.kategori;
       kort.dataset.kategori = verdier.kategori;
       stedInfo.textContent = verdier.sted || '—';
+      redigering.felter.tagVelger.settVerdier(data.tags);
       visSuksess('Endringer lagret.');
     } else {
       lagreStatus.className = 'lagre-status feil';

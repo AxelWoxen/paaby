@@ -366,18 +366,22 @@ app.post('/api/kandidat/:id/oppdater', async (req, res) => {
 
     lenke: tekstEllerNull(body.lenke),
     bilde: tekstEllerNull(body.bilde),
+
+    // Automatiske tags (tidstag/"free") regnes ut på nytt i
+    // oppdaterCandidatePayload — her sendes bare admins eget valg videre.
+    tags: Array.isArray(body.tags) ? body.tags : event.tags,
   };
 
   try {
-    const ok = await oppdaterCandidatePayload(id, payload);
+    const resultat = await oppdaterCandidatePayload(id, payload);
 
-    if (!ok) {
+    if (!resultat.ok) {
       return res.status(404).json({
         feil: 'Event ikke funnet',
       });
     }
 
-    res.json({ ok: true });
+    res.json({ ok: true, tags: resultat.tags });
   } catch (err) {
     console.error('Kunne ikke oppdatere kandidat:', err);
 
@@ -573,7 +577,7 @@ app.post('/api/oppdater/:id', async (req, res) => {
   }
 
   try {
-    const ok = await oppdaterPublisertEvent(
+    const resultat = await oppdaterPublisertEvent(
       req.params.id,
       {
         tittel,
@@ -596,16 +600,18 @@ app.post('/api/oppdater/:id', async (req, res) => {
 
         lenke: tekstEllerNull(body.lenke),
         bilde: tekstEllerNull(body.bilde),
+
+        tags: Array.isArray(body.tags) ? body.tags : [],
       },
     );
 
-    if (!ok) {
+    if (!resultat) {
       return res.status(404).json({
         feil: 'Event ikke funnet',
       });
     }
 
-    res.json({ ok: true });
+    res.json({ ok: true, tags: resultat.tags });
   } catch (err) {
     console.error(
       'Kunne ikke oppdatere event:',
@@ -727,6 +733,10 @@ app.post('/api/manuell', async (req, res) => {
   if (body.gjentas) {
     event.gjentas = body.gjentas;
   }
+
+  // Tags valgt i "Nytt event"-skjemaet — automatiske tags legges til av
+  // leggTilCandidates() under.
+  event.tags = Array.isArray(body.tags) ? body.tags : [];
 
   // Sjekk både review-køen og publiserte events i PostgreSQL.
   const [candidates, publiserte] = await Promise.all([
