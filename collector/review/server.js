@@ -745,7 +745,21 @@ app.post('/api/manuell', async (req, res) => {
     });
   }
 
-  await leggTilCandidates(nye, { source: 'manuell' });
+  const antallLagtTil = await leggTilCandidates(nye, { source: 'manuell' });
+
+  // leggTilCandidates() gjør ON CONFLICT (legacy_id) DO NOTHING — dedupliser()
+  // kan ha sagt "ikke duplikat" (fuzzy-match), mens selve legacy_id likevel
+  // kolliderer med en rad som allerede finnes. Da er antallLagtTil 0, og vi
+  // må IKKE svare ok:true — admin ville ellers tro eventet ble lagt til.
+  if (antallLagtTil === 0) {
+    const erPublisert = publiserte.some((p) => p.id === event.id);
+
+    return res.status(409).json({
+      feil: erPublisert
+        ? 'Eventet er allerede publisert i Påby.'
+        : 'Eventet finnes allerede i Påby.',
+    });
+  }
 
   res.json({
     ok: true,
