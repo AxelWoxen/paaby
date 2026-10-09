@@ -52,8 +52,19 @@
        Selvhostet Umami: bytt src til https://din-instans.no/script.js.
 
        Se js/application/sporing.js for hvordan trackEvent() bruker denne.
-       ============================== -->
-  <script defer src="https://cloud.umami.is/script.js" data-website-id="da8bf02b-0671-4e3c-afb6-255a4afeb357"></script>
+
+       data-exclude-hash="true": modal.js bruker history.replaceState() for
+       å skrive #event/{id} inn i URL-en når en modal åpnes (og fjerne den
+       igjen ved lukking) — se åpneModal()/lukkModal(). Umami patcher selv
+       history.pushState/replaceState og sender automatisk en ny pageview
+       hver gang den patchede URL-en endrer seg. Uten dette attributtet
+       regnes derfor hver modal-åpning/lukking som et eget sidebesøk.
+       data-exclude-hash fjerner kun hash-delen FRA UMAMIS EGEN
+       URL-sammenligning (den rører ikke window.location/den ekte URL-en) —
+       vanlige sidebesøk (full navigasjon, uten hash) spores fortsatt helt
+       normalt, og egne hendelser som kort_åpnet er alltid upåvirket siden
+       de sendes via umami.track(), ikke denne automatikken. -->
+  <script defer src="https://cloud.umami.is/script.js" data-website-id="da8bf02b-0671-4e3c-afb6-255a4afeb357" data-exclude-hash="true"></script>
   <script>
     window.__paaby_track = (navn, data) => window.umami?.track(navn, data);
   </script>
