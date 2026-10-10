@@ -1060,6 +1060,38 @@ textarea {
   background: var(--graa);
 }
 
+/* Flytende lukkeknapp — kun bunnark-visningen på mobil (< 640px, se
+   «MODAL DESKTOP» lenger ned, samme brytpunkt som dra-håndtaket og
+   dra-for-å-lukke-gesten i modal.js bruker). Ligger utenfor
+   .modal-container (position: fixed relativt til selve viewporten, ikke
+   det scrollbare kortet) — står derfor fast nederst til høyre uansett
+   hvor langt man har scrollet i beskrivelsen, så tommelen alltid når den
+   uten å måtte opp til krysset i det øvre hjørnet. */
+.modal-lukk-flytende {
+  position: fixed;
+  right: calc(var(--gap-m) + env(safe-area-inset-right));
+  bottom: calc(var(--gap-l) + env(safe-area-inset-bottom));
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--hvit);
+  background: color-mix(in srgb, var(--svart) 55%, transparent);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 2;
+  transition: background 0.15s;
+}
+
+.modal-lukk-flytende:hover,
+.modal-lukk-flytende:active {
+  background: color-mix(in srgb, var(--svart) 70%, transparent);
+}
+
 /* Dra-håndtak — visuelt signal om at arket kan dras ned for å lukkes
    (i tillegg til kryss-knappen, klikk på bakgrunn og Escape). Kun bunnark-
    visningen (< 640px, se «MODAL DESKTOP» lenger ned) har denne gesten —
@@ -1191,6 +1223,17 @@ textarea {
   line-height: 1.65;
 }
 
+/* Teksten lagres med linjeskift fra admin sin textarea — uten dette slår
+   nettleserens standard whitespace-håndtering dem sammen til én lang
+   paragraf. pre-line bevarer avsnitt/linjeskift uten å bevare dobbel
+   mellomrom o.l. (slik pre/pre-wrap ville gjort). Skopet til p-elementet
+   spesifikt — .modal-beskrivelse gjenbrukes også som klasse på selve
+   <textarea>-en i send-inn/index.html, og den skal fortsatt ha sin
+   vanlige (naturlige) whitespace-oppførsel mens man skriver. */
+p.modal-beskrivelse {
+  white-space: pre-line;
+}
+
 .modal-handlinger {
   display: flex;
   gap: var(--gap-s);
@@ -1266,6 +1309,10 @@ body.modal-aapen {
   .modal-drahandtak {
     display: none;
   }
+
+  .modal-lukk-flytende {
+    display: none;
+  }
 }
 
 
@@ -1291,6 +1338,9 @@ body.modal-aapen {
   color: var(--graa);
   font-style: italic;
   line-height: 1.55;
+  /* Samme årsak som .modal-beskrivelse — kuratortekst kommer også fra en
+     textarea i admin og kan ha egne linjeskift. */
+  white-space: pre-line;
 }
 
 

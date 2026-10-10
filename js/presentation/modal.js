@@ -530,10 +530,12 @@ function initDraForÅLukke() {
    ======================== */
 
 export function initModal() {
-  const modal     = document.getElementById('modal');
-  const lukkKnapp = document.getElementById('modal-lukk');
+  const modal             = document.getElementById('modal');
+  const lukkKnapp         = document.getElementById('modal-lukk');
+  const lukkKnappFlytende = document.getElementById('modal-lukk-flytende');
 
   lukkKnapp.addEventListener('click', lukkModal);
+  lukkKnappFlytende?.addEventListener('click', lukkModal);
 
   /* Klikk på bakgrunn (selve overlay-en) lukker modal */
   modal.addEventListener('click', (e) => {
