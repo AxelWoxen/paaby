@@ -43,6 +43,7 @@
   </button>
   <button type="button" class="fane-knapp" data-fane="publiserte">Publiserte</button>
   <button type="button" class="fane-knapp" data-fane="nytt-event">+ Nytt event</button>
+  <button type="button" class="fane-knapp" data-fane="innsikt">Innsikt</button>
 </nav>
 
 <main class="innhold grid">
@@ -226,6 +227,82 @@
       <button type="submit" id="ny-submit" class="skjema-submit">Legg til — send til vurdering</button>
       <p class="skjema-feil" id="ny-feil" hidden></p>
     </form>
+  </section>
+
+  <!-- ─── INNSIKT ────────────────────────────────────────────────────────── -->
+  <section id="panel-innsikt" class="panel" hidden>
+    <div class="innsikt-hode">
+      <div class="innsikt-periodevelger" id="innsikt-periodevelger" role="group" aria-label="Velg periode">
+        <button type="button" class="periode-knapp" data-periode="7">7 dager</button>
+        <button type="button" class="periode-knapp" data-periode="30">30 dager</button>
+        <button type="button" class="periode-knapp" data-periode="90">90 dager</button>
+        <button type="button" class="periode-knapp" data-periode="alt">Alt</button>
+      </div>
+      <p class="innsikt-siden" id="innsikt-siden"></p>
+    </div>
+
+    <p class="innsikt-info">
+      Tallene er basert på brukere som har godtatt statistikk. En «bruker» betyr her en
+      anonym nettleser/enhet, ikke nødvendigvis én fysisk person.
+    </p>
+    <p class="innsikt-lite-data" id="innsikt-lite-data" hidden>
+      Lite datagrunnlag — ikke overtolk prosenter ennå.
+    </p>
+
+    <div id="innsikt-last" class="tom-melding">Laster…</div>
+
+    <div id="innsikt-innhold" hidden>
+      <section class="innsikt-seksjon">
+        <div class="innsikt-kpi-grid" id="innsikt-kpi"></div>
+      </section>
+
+      <section class="innsikt-seksjon">
+        <h2 class="innsikt-overskrift">Produktfunnel</h2>
+        <div id="innsikt-funnel"></div>
+      </section>
+
+      <section class="innsikt-seksjon">
+        <h2 class="innsikt-overskrift">Utvikling over tid</h2>
+        <div id="innsikt-tidsserie"></div>
+      </section>
+
+      <section class="innsikt-seksjon">
+        <h2 class="innsikt-overskrift">Topp events</h2>
+        <div id="innsikt-topp-events" class="innsikt-tabell-wrapper"></div>
+      </section>
+
+      <section class="innsikt-seksjon innsikt-to-kolonner">
+        <div>
+          <h2 class="innsikt-overskrift">Kategorier</h2>
+          <div id="innsikt-kategorier" class="innsikt-tabell-wrapper"></div>
+        </div>
+        <div>
+          <h2 class="innsikt-overskrift">Tags</h2>
+          <div id="innsikt-tags" class="innsikt-tabell-wrapper"></div>
+        </div>
+      </section>
+
+      <section class="innsikt-seksjon innsikt-to-kolonner">
+        <div>
+          <h2 class="innsikt-overskrift">Lagringsdybde (akkurat nå)</h2>
+          <div id="innsikt-lagringsdybde"></div>
+        </div>
+        <div>
+          <h2 class="innsikt-overskrift">Tilbake innen 7 dager</h2>
+          <div id="innsikt-retention"></div>
+        </div>
+      </section>
+
+      <section class="innsikt-seksjon">
+        <h2 class="innsikt-overskrift">Trafikkilder</h2>
+        <div id="innsikt-kilder" class="innsikt-tabell-wrapper"></div>
+      </section>
+    </div>
+
+    <div id="innsikt-feil" class="tom-tilstand" hidden>
+      <strong>Kunne ikke hente innsikt</strong>
+      <p id="innsikt-feil-tekst"></p>
+    </div>
   </section>
 
 </main>

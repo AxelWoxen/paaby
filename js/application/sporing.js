@@ -26,14 +26,32 @@
  * trackEvent() gjør ingenting (og krasjer ikke) hvis:
  *   — brukeren ikke har samtykket ennå (samtykke-stripen, se main.js)
  *   — window.__paaby_track ikke er definert (f.eks. Website ID ikke satt ennå)
+ *
+ * EKSTRA SINKER: i tillegg til window.__paaby_track kan andre moduler
+ * registrere seg som mottaker av ALLE trackEvent()-kall via
+ * registrerAnalyseSink() — brukt av js/main.js til å videresende relevante
+ * hendelser til vårt eget first-party analytics-API
+ * (js/network/analytics-api.js). sporing.js vet selv ingenting om hvilke
+ * hendelser det er, eller hvordan de sendes — den eneste jobben her er
+ * fortsatt bare "kall registrerte mottakere når sporing er aktivert".
  * ══════════════════════════════════════════════════════════
  */
 
 let sporingsAktivert = false;
+const ekstraSinker = [];
 
 /** Kalles av samtykke-logikken i main.js etter at brukeren har klikket Ok. */
 export function aktiverSporing() {
   sporingsAktivert = true;
+}
+
+/**
+ * Registrerer en ekstra mottaker av alle trackEvent()-kall (i tillegg til
+ * window.__paaby_track). Kalles av js/main.js ved oppstart.
+ * @param {(navn: string, data: Object) => void} sink
+ */
+export function registrerAnalyseSink(sink) {
+  ekstraSinker.push(sink);
 }
 
 /**
@@ -51,5 +69,13 @@ export function trackEvent(navn, data = {}) {
     }
   } catch {
     /* Sporingsfeil skal aldri krasje appen */
+  }
+
+  for (const sink of ekstraSinker) {
+    try {
+      sink(navn, data);
+    } catch {
+      /* Sporingsfeil skal aldri krasje appen */
+    }
   }
 }

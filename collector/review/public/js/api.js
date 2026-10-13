@@ -48,6 +48,7 @@ export const api = {
 
   hentCandidates:    () => get('/api/candidates'),
   hentPubliserte:    () => get('/api/publiserte'),
+  hentInnsikt:       (periode) => get(`/api/innsikt?periode=${encodeURIComponent(periode)}`),
 
   godkjenn:  (id, data)    => post(`/api/godkjenn/${encodeURIComponent(id)}`, data),
   triager:   (id, data)    => post(`/api/triager/${encodeURIComponent(id)}`, data),

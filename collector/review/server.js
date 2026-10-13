@@ -41,6 +41,8 @@ import {
   oppdaterGjentas,
 } from '../store/published.js';
 
+import { hentInnsikt } from './insight.js';
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 if (!process.env.SESSION_SECRET) {
@@ -218,6 +220,24 @@ app.use('/fonts', express.static(path.join(__dirname, '../../fonts')));
 // (collector/package.json) — ingen gjetting ut fra f.eks. DATABASE_URL.
 app.get('/api/miljo', (_req, res) => {
   res.json({ produksjon: ER_PROD });
+});
+
+
+// ─── Innsikt ────────────────────────────────────────────────────────────────
+
+// Server-side aggregert produktanalyse (se review/insight.js) — beskyttet av
+// samme krevInnlogging som resten av panelet (montert over, linje 198).
+app.get('/api/innsikt', async (req, res) => {
+  try {
+    const data = await hentInnsikt(req.query.periode);
+    res.json(data);
+  } catch (err) {
+    console.error('Kunne ikke hente innsikt:', err);
+
+    res.status(500).json({
+      feil: 'Kunne ikke hente innsikt',
+    });
+  }
 });
 
 

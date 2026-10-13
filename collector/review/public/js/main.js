@@ -6,6 +6,7 @@ import * as fraApi from './views/fra-api.js';
 import * as tilVurdering from './views/til-vurdering.js';
 import * as innsendte from './views/innsendte.js';
 import * as publiserte from './views/publiserte.js';
+import * as innsikt from './views/innsikt.js';
 import './views/nytt-event.js';
 
 const faner = document.querySelectorAll('.fane-knapp');
@@ -15,12 +16,14 @@ const paneler = {
   innsendte: document.getElementById('panel-innsendte'),
   publiserte: document.getElementById('panel-publiserte'),
   'nytt-event': document.getElementById('panel-nytt-event'),
+  innsikt: document.getElementById('panel-innsikt'),
 };
 
 function byttFane(navn) {
   faner.forEach((f) => f.classList.toggle('aktiv', f.dataset.fane === navn));
   Object.entries(paneler).forEach(([n, el]) => { if (el) el.hidden = n !== navn; });
   if (navn === 'publiserte') publiserte.lastInnPubliserte();
+  if (navn === 'innsikt') innsikt.lastInnInnsikt();
   history.replaceState(null, '', `#${navn}`);
 }
 

@@ -11,7 +11,12 @@ import { hentLagredeIder }                         from './application/lagret.js
 import { visEventer, visSkeletonKort }             from './presentation/feed.js';
 import { initModal, åpneModal, lukkModal,
          hentÅpenEvent }                           from './presentation/modal.js';
-import { aktiverSporing, trackEvent }              from './application/sporing.js';
+import { aktiverSporing, trackEvent,
+         registrerAnalyseSink }                     from './application/sporing.js';
+import { erGyldigAnalyticsEventNavn }               from './application/analytics-events.js';
+import { hentEllerLagVisitorId, hentEllerLagSesjon,
+         utledSesjonKontekst }                       from './application/analyse-identitet.js';
+import { sendSesjon, sendHendelse, sendLagredeSync } from './network/analytics-api.js';
 import { velgUtvalg, visForside, initSeAlt,
          visSkeletonUtvalg }                       from './presentation/forside.js';
 import { utvidGjentakende }                        from './application/gjentas.js';
@@ -474,9 +479,11 @@ function initLagretSync() {
       if (tekst) tekst.textContent = lagret ? 'lagret' : 'lagre';
       modalHjerte.setAttribute('aria-pressed', String(lagret));
     }
+    const event = tilstand.alleEventer.find((e) => e.id === id);
     if (lagret) {
-      const event = tilstand.alleEventer.find((e) => e.id === id);
       trackEvent('event_lagret', { id, kategori: event?.kategori });
+    } else {
+      trackEvent('event_fjernet_lagret', { id, kategori: event?.kategori });
     }
     if (tilstand.visLagret) oppdaterFeed();
   });
@@ -582,12 +589,69 @@ function initBunnNav() {
 
 
 /* ========================
-   SAMTYKKE OG SPORING
+   SAMTYKKE, SPORING OG FIRST-PARTY-ANALYTICS
    ======================== */
+
+/* Visitor-ID holdes i minnet etter første henting denne sidelasten —
+   unngår å lese localStorage på nytt for hvert trackEvent()-kall. */
+let analyseVisitorId = null;
+
+/* Videresender ALLE trackEvent()-kall til vårt eget analytics-API, i
+   tillegg til Umami. sporing.js vet selv ingenting om dette — se
+   registrerAnalyseSink() der. Kalles ALDRI før samtykke (registreres kun
+   inni initAnalyse(), som selv kun kalles fra initSamtykke() etter at
+   samtykke er bekreftet). */
+function analyseSink(navn, data) {
+  /* Enhver sporet handling regnes som aktivitet — forlenger/roterer
+     session akkurat som ekte besøk ville gjort (se analyse-identitet.js). */
+  const { sessionId, erNy } = hentEllerLagSesjon();
+
+  if (erNy) {
+    const kontekst = utledSesjonKontekst(
+      window.location.search,
+      document.referrer,
+      window.location.hostname,
+    );
+    sendSesjon({ visitorId: analyseVisitorId, sessionId, ...kontekst });
+  }
+
+  if (!erGyldigAnalyticsEventNavn(navn)) return;
+
+  sendHendelse({
+    visitorId: analyseVisitorId,
+    sessionId,
+    eventName: navn,
+    eventId: data?.id ?? null,
+    category: data?.kategori ?? null,
+    properties: navn === 'filter_valgt' ? { type: data?.type, verdi: data?.verdi } : {},
+  });
+}
+
+/* Kalles kun etter bekreftet statistikk-samtykke. Oppretter/gjenbruker
+   anonym identitet, registrerer sesjonen og synker eksisterende
+   localStorage-lagringer inn i analytics ÉN gang pr. sidelast — se
+   oppgavens DEL 3/4. Fire-and-forget: ingen av dette blokkerer UI. */
+function initAnalyse() {
+  analyseVisitorId = hentEllerLagVisitorId();
+  registrerAnalyseSink(analyseSink);
+
+  const { sessionId, erNy } = hentEllerLagSesjon();
+  if (erNy) {
+    const kontekst = utledSesjonKontekst(
+      window.location.search,
+      document.referrer,
+      window.location.hostname,
+    );
+    sendSesjon({ visitorId: analyseVisitorId, sessionId, ...kontekst });
+  }
+
+  sendLagredeSync({ visitorId: analyseVisitorId, eventIds: hentLagredeIder() });
+}
 
 function initSamtykke() {
   if (localStorage.getItem('paaby-samtykke') === 'ja') {
     aktiverSporing();
+    initAnalyse();
     return;
   }
 
@@ -599,6 +663,7 @@ function initSamtykke() {
     localStorage.setItem('paaby-samtykke', 'ja');
     stripe.classList.add('skjult');
     aktiverSporing();
+    initAnalyse();
   }, { once: true });
 }
 

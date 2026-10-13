@@ -4,6 +4,7 @@ import eventRoutes from './routes/eventRoutes.mjs';
 import innsendingRoutes from './routes/innsendingRoutes.mjs';
 import bildeRoutes from './routes/bildeRoutes.mjs';
 import feedbackRoutes from './routes/feedbackRoutes.mjs';
+import analyticsRoutes from './routes/analyticsRoutes.mjs';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
@@ -73,6 +74,23 @@ const feedbackLimiter = rateLimit({
 });
 
 app.use('/api/feedback', feedbackLimiter, feedbackRoutes);
+
+// Første-parts produktanalyse (Innsikt). Fyres mye oftere enn innsendinger
+// (hvert kort_åpnet/filter_valgt osv. hos en vanlig nettleser-bruker), men
+// er fire-and-forget fra klienten og skal aldri kunne brukes til spam av
+// skrivende data — derfor egen, romsligere men fortsatt begrenset grense.
+const analyticsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: 'error',
+    message: 'For mange forespørsler. Prøv igjen senere.'
+  }
+});
+
+app.use('/api/analytics', analyticsLimiter, analyticsRoutes);
 
 app.listen(PORT, () => {
   console.log(`Påby API kjører på http://localhost:${PORT}`);

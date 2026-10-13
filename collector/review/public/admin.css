@@ -562,6 +562,98 @@ a { color: var(--aksent-tekst); }
 }
 
 
+/* ─── Innsikt ─────────────────────────────────────────────────────────── */
+.innsikt-hode {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: var(--gap-m); margin-bottom: var(--gap-m);
+}
+.innsikt-periodevelger { display: flex; gap: var(--gap-s); flex-wrap: wrap; }
+.periode-knapp {
+  padding: 0.45rem 0.9rem; border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-s); font-size: var(--tekst-brod); color: var(--graa);
+  transition: border-color .15s, color .15s, background .15s;
+}
+.periode-knapp:hover { border-color: var(--graa); color: var(--paper); }
+.periode-knapp.aktiv { background: var(--blaa); border-color: var(--blaa); color: var(--svart); }
+.innsikt-siden { font-size: var(--tekst-label); color: var(--graa); }
+
+.innsikt-info {
+  font-size: 0.8rem; color: var(--graa); margin-bottom: var(--gap-s);
+  padding: 0.6rem 0.85rem; background: var(--flate-2); border-radius: var(--radius-s);
+}
+.innsikt-lite-data {
+  font-size: 0.8rem; color: var(--svart); font-weight: 600;
+  margin-bottom: var(--gap-l); padding: 0.5rem 0.85rem;
+  border: 1.5px solid var(--svart); border-radius: var(--radius-s); display: inline-block;
+}
+.innsikt-lite-data[hidden] { display: none; }
+
+.innsikt-seksjon { margin-bottom: var(--gap-xl); }
+.innsikt-overskrift {
+  font-size: var(--tekst-label); font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--graa); margin-bottom: var(--gap-m);
+}
+.innsikt-to-kolonner { display: grid; grid-template-columns: 1fr 1fr; gap: var(--gap-xl); }
+@media (max-width: 900px) { .innsikt-to-kolonner { grid-template-columns: 1fr; } }
+
+/* KPI-kort */
+.innsikt-kpi-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--gap-m);
+}
+.innsikt-kpi-kort {
+  background: var(--hvit); border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-0); padding: var(--gap-m);
+}
+.innsikt-kpi-navn {
+  font-size: var(--tekst-label); color: var(--graa);
+  text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 0.4rem;
+}
+.innsikt-kpi-verdi { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+.innsikt-kpi-endring { font-size: 0.76rem; color: var(--graa); margin-top: 0.3rem; }
+.innsikt-opp { color: var(--blaa); font-weight: 600; }
+.innsikt-ned { color: var(--svart); font-weight: 600; }
+
+/* Funnel / lagringsdybde (delt stolpe-stil) */
+.innsikt-funnel-rad {
+  display: grid; grid-template-columns: 220px 1fr auto; gap: var(--gap-m);
+  align-items: center; margin-bottom: var(--gap-s); font-size: 0.85rem;
+}
+.innsikt-funnel-etikett { color: var(--graa); }
+.innsikt-funnel-bar-wrap { background: var(--flate-2); border-radius: var(--radius-s); overflow: hidden; height: 20px; }
+.innsikt-funnel-bar { background: var(--blaa); height: 100%; }
+.innsikt-funnel-tall { white-space: nowrap; font-size: 0.8rem; }
+@media (max-width: 640px) {
+  .innsikt-funnel-rad { grid-template-columns: 1fr; gap: 0.3rem; }
+}
+
+/* Tidsserie */
+.innsikt-tidsserie-legende { display: flex; gap: var(--gap-m); flex-wrap: wrap; margin-bottom: var(--gap-s); }
+.innsikt-tidsserie-legende-rad { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--graa); cursor: pointer; }
+.innsikt-tidsserie-legende-rad input { cursor: pointer; accent-color: var(--blaa); }
+.innsikt-tidsserie-prikk { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.innsikt-tidsserie-svg-wrapper { overflow-x: auto; }
+.innsikt-tidsserie-svg { width: 100%; min-width: 480px; height: auto; display: block; }
+.innsikt-tidsserie-akse { stroke: var(--flate-2); stroke-width: 1.5; }
+.innsikt-tidsserie-linje { opacity: 0.95; }
+
+/* Tabeller */
+.innsikt-tabell-wrapper { overflow-x: auto; }
+.innsikt-tabell { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.innsikt-tabell th, .innsikt-tabell td { padding: 0.5rem 0.65rem; text-align: left; border-bottom: 1.5px solid var(--flate-2); white-space: nowrap; }
+.innsikt-tabell td:first-child, .innsikt-tabell th:first-child { white-space: normal; }
+.innsikt-tabell .innsikt-tall { text-align: right; font-variant-numeric: tabular-nums; }
+.innsikt-th-sorterbar { cursor: pointer; color: var(--graa); user-select: none; }
+.innsikt-th-sorterbar:hover { color: var(--paper); }
+.innsikt-th-sorterbar[data-sortert]::after { content: ' ▾'; }
+.innsikt-th-sorterbar[data-sortert="asc"]::after { content: ' ▴'; }
+
+.innsikt-retention-kort {
+  background: var(--hvit); border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-0); padding: var(--gap-m);
+}
+
+
 /* ─── Responsivt ──────────────────────────────────────────────────────── */
 @media (max-width: 640px) {
   .topbar { padding-top: var(--gap-m); padding-bottom: var(--gap-s); }
