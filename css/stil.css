@@ -631,14 +631,6 @@ textarea {
   --kort-tekst: var(--pafunn-tekst);
 }
 
-/* Utvalgte kort bruker alltid aksentblått, uansett kategori (Figma:
-   "Eventkort Anbefaling", node-id=761-735) — samme spesifisitet som
-   regelen over, men står etter den og vinner derfor for .utvalg-kort. */
-.utvalg-kort[data-kategori] {
-  --kort-farge: var(--blaa);
-  --kort-tekst: var(--hvit);
-}
-
 .kort:hover,
 .utvalg-kort:hover {
   transform: scale(1.015);
@@ -665,17 +657,6 @@ textarea {
 
 .utvalg-bilde-wrapper {
   aspect-ratio: 16 / 6;
-}
-
-/* Diagonal mørk nedtoning over bildet, kun utvalgte kort — holder
-   tags/tittel/meta lesbare uansett motiv (Figma: "Background shading"). */
-.utvalg-bilde-wrapper::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  background: linear-gradient(115deg, rgba(11, 6, 7, 0.44) 0%, rgba(11, 6, 7, 0) 60%);
-  pointer-events: none;
 }
 
 .kort-bilde,
@@ -778,42 +759,6 @@ textarea {
   display: block;
   width: auto;
   height: 28px;
-}
-
-/* Tags-rad på utvalgte kort, rett over infoboksen (.utvalg-innhold er
-   75px høy og ligger absolutt nederst til venstre — denne raden sitter
-   rett over, uendret posisjonering av selve infoboksen). "Kuratert
-   utvalg" vises alltid, "Gjentas" kun når event.gjentas er satt (se
-   js/presentation/forside.js). */
-.utvalg-tags {
-  position: absolute;
-  left: var(--gap-s);
-  bottom: calc(75px + 0.5rem);
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--gap-s);
-}
-
-.utvalg-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  height: 28px;
-  padding: 0 0.65rem;
-  border-radius: var(--radius-s);
-  background: var(--blaa);
-  color: var(--hvit);
-  font-family: var(--font-tekst);
-  font-size: 0.75rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.utvalg-tag-ikon {
-  display: block;
-  flex-shrink: 0;
 }
 
 .gjentas-badge {
@@ -1583,13 +1528,11 @@ body.modal-aapen {
   font-size: 1.3rem;
   font-weight: 700;
   line-height: 1.2;
-  -webkit-text-stroke: 0.6px var(--blaa);
 }
 
 .utvalg-meta {
   font-size: 0.85rem;
   color: var(--kort-tekst);
-  -webkit-text-stroke: 0.35px var(--blaa);
 }
 
 

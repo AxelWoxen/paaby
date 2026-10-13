@@ -11,32 +11,6 @@ import { åpneModal }                             from './modal.js';
 
 const MAKS = 3;
 
-/* Ikon for "gjentas"-taggen — samme strek-baserte SVG-mønster som andre
-   inline-ikoner i appen (se BINDERS_SVG i feed.js). */
-const GJENTAS_SVG = '<svg class="utvalg-tag-ikon" width="13" height="13" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.36M21 12a9 9 0 0 1-15.5 6.36" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/><path d="M18 3v4h-4M6 21v-4h4" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-
-/* Tags-raden over infoboksen. "Kuratert utvalg" vises alltid — "Gjentas"
-   kun når eventet faktisk gjentar seg (samme betingelse som den
-   eksisterende gjentas-badgen på vanlige kort, se feed.js). */
-function lagUtvalgTags(event) {
-  const tags = document.createElement('div');
-  tags.className = 'utvalg-tags';
-
-  const kuratertTag = document.createElement('span');
-  kuratertTag.className   = 'utvalg-tag';
-  kuratertTag.textContent = 'Kuratert utvalg';
-  tags.appendChild(kuratertTag);
-
-  if (event.gjentas) {
-    const gjentasTag = document.createElement('span');
-    gjentasTag.className = 'utvalg-tag';
-    gjentasTag.innerHTML  = `${GJENTAS_SVG}<span>Gjentas</span>`;
-    tags.appendChild(gjentasTag);
-  }
-
-  return tags;
-}
-
 /* ─── Hilsen ─────────────────────────────────────────────────────────────────── */
 
 function hentGreeting(time) {
@@ -169,7 +143,6 @@ function lagUtvalgKort(event) {
 meta.textContent = `${event.sted} · ${formaterTid(event.start)} · ${formaterPrisKort(event.pris, event.prisTekst)}`;  innhold.appendChild(meta);
 
 
-  el.appendChild(lagUtvalgTags(event));
   el.appendChild(innhold);
 
   const åpne = () => åpneModal(event);
