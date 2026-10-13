@@ -6,6 +6,27 @@
    Eller erstatt hele strengen med en annen SVG-form. */
 const BINDERS_SVG = '<svg class="binders-ikon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" stroke="currentColor" stroke-width="2.75" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
+const GJENTAS_IKON_SVG = '<svg class="gjentas-badge-ikon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 21v-5h5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+/** Badge som vises på kort for events som gjentar seg (se design i Figma node 761:733). */
+export function lagGjentasBadge() {
+  const badge = document.createElement('div');
+  badge.className = 'gjentas-badge';
+
+  const ikon = document.createElement('img');
+  ikon.className = 'gjentas-badge-ikon';
+  ikon.src = '/bilder/gjentasBadge.svg';
+  ikon.alt = '';
+
+  const tekst = document.createElement('span');
+  tekst.textContent = 'Eventet gjentas';
+
+  badge.appendChild(ikon);
+  badge.appendChild(tekst);
+
+  return badge;
+}
+
 import { erLagret, veksleLagret }                               from '../application/lagret.js';
 import { formaterPrisKort, formaterPrisTekst, formaterTid,
          formaterAvstand }                                       from '../application/formatering.js';
@@ -151,12 +172,9 @@ export function lagKort(event) {
   piktogram.alt = '';
   bildeWrapper.appendChild(piktogram);
 
-  /* Gjentas-badge (ribbon øvre venstre hjørne — bak kategoripiktogrammet) */
+  /* Gjentas-badge (nedre venstre hjørne av bildet) */
   if (event.gjentas) {
-    const gjentasBadge = document.createElement('div');
-    gjentasBadge.className   = 'gjentas-badge';
-    gjentasBadge.textContent = 'gjentas';
-    bildeWrapper.insertBefore(gjentasBadge, piktogram);
+    bildeWrapper.appendChild(lagGjentasBadge());
   }
 
   /* Hjerte-knapp */

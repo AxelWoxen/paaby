@@ -8,6 +8,7 @@ import { hentEventbilde, KATEGORI_BILDER,
          KATEGORI_PIKTOGRAM_EVENT }                from '../application/kategori-bilder.js';
 import { bindBildeLasting, markerBildeLastet }    from '../application/bilde-lasting.js';
 import { åpneModal }                             from './modal.js';
+import { lagGjentasBadge }                       from './feed.js';
 
 const MAKS = 3;
 
@@ -114,6 +115,10 @@ function lagUtvalgKort(event) {
   piktogram.src = KATEGORI_PIKTOGRAM_EVENT[event.kategori];
   piktogram.alt = '';
   bildeWrapper.appendChild(piktogram);
+
+  if (event.gjentas) {
+    bildeWrapper.appendChild(lagGjentasBadge());
+  }
 
   el.appendChild(bildeWrapper);
 

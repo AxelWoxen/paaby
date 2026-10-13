@@ -763,23 +763,30 @@ textarea {
 
 .gjentas-badge {
   position: absolute;
-  top: 45px;
-  right: -40px;
+  bottom: 68px;
+  left: var(--gap-s);
   z-index: 2;
-  width: 180px;
-  padding: 3px 0;
-  transform: rotate(45deg);
-  text-align: center;
-  font-size: 0.58rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: lowercase;
-  background: var(--aksent);
-  color: var(--paper);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--kort-farge);
+  color: var(--hvit);
+  font-size: 0.73rem;
+  font-weight: 500;
   pointer-events: none;
 }
-.gjentas-badge {
-  display: none;
+
+.gjentas-badge span {
+  line-height: 1;
+  transform: translateY(1px);
+}
+
+.gjentas-badge-ikon {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
 }
 
 
@@ -1634,20 +1641,20 @@ body.modal-aapen {
 /* === SIDE-FOOTER === */
 
 .side-footer {
+    background: var(--blaa);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: center;
-  gap: 0 0.1rem;
+  gap: 0.5rem;
+  padding: 28px 16px;
   text-align: center;
-  padding: var(--gap-s) var(--gap-m);
-  padding-bottom: max(var(--gap-s), env(safe-area-inset-bottom));
 }
 
 .side-footer a {
   display: inline-block;
   padding: var(--gap-s) 0.4rem;
-  color: var(--graa);
+  color: var(--kort-tekst);
   font-size: 0.75rem;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -2154,8 +2161,8 @@ body.modal-aapen {
   .utvalg-innhold {
     width: 82%;
     max-width: none;
-    height: 60px;
-
+    height: auto;
+    min-height: 60px;
     padding: 0.5rem 0.75rem;
     gap: 2px;
     border-radius: 0 10px 0 0;
@@ -2165,7 +2172,7 @@ body.modal-aapen {
 
   .kort-tittel,
 .utvalg-tittel {
-  font-size: 1.15rem;
+  font-size: 1.05rem;
 }
 
 
