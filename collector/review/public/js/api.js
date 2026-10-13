@@ -42,6 +42,14 @@ async function get(url) {
   return res.json();
 }
 
+async function del(url) {
+  const res = await fetch(url, { method: 'DELETE', headers: { 'X-Paaby-Admin': '1' } });
+  håndterUtlogget(res.status);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok && data.feil === undefined) data.feil = `Serverfeil (${res.status})`;
+  return data;
+}
+
 export const api = {
   miljo:            () => get('/api/miljo').catch(() => ({ produksjon: false, ukjent: true })),
   meg:              () => get('/api/meg').catch(() => ({ epost: null })),
@@ -61,4 +69,8 @@ export const api = {
   oppdaterPublisert: (id, data) => post(`/api/oppdater/${encodeURIComponent(id)}`, data),
 
   leggTilManuelt: (data) => post('/api/manuell', data),
+
+  hentBrukere:   () => get('/api/brukere'),
+  opprettBruker: (data) => post('/api/brukere', data),
+  slettBruker:   (id) => del(`/api/brukere/${encodeURIComponent(id)}`),
 };

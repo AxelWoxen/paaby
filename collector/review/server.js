@@ -15,7 +15,7 @@ import connectPgSimple from 'connect-pg-simple';
 import rateLimit from 'express-rate-limit';
 
 import pool from '../../backend/db/pool.mjs';
-import { loggInn } from './auth/brukere.mjs';
+import { loggInn, hentBrukere, opprettBruker, slettBruker } from './auth/brukere.mjs';
 import { krevInnlogging, krevPaabyHeader } from './auth/middleware.mjs';
 
 import {
@@ -202,6 +202,60 @@ app.use(krevPaabyHeader);
 
 app.get('/api/meg', (req, res) => {
   res.json({ epost: req.session.brukerEpost, rolle: req.session.rolle });
+});
+
+
+// ─── Brukere (onboarding av nye admins) ────────────────────────────────────
+// Kun rolle 'admin' kan se/opprette/slette brukere. Dette er den eneste
+// måten nye rader i admin_users oppstår på utenom
+// scripts/opprett-bruker.mjs (som fortsatt virker, f.eks. for førstegangs-
+// oppsett uten noen innlogget admin ennå).
+
+function krevAdmin(req, res, next) {
+  if (req.session.rolle !== 'admin') {
+    return res.status(403).json({ feil: 'Kun admin kan administrere brukere' });
+  }
+  next();
+}
+
+app.get('/api/brukere', krevAdmin, async (_req, res) => {
+  res.json(await hentBrukere());
+});
+
+app.post('/api/brukere', krevAdmin, async (req, res) => {
+  const epost = (req.body.epost ?? '').trim().toLowerCase();
+  const passord = req.body.passord ?? '';
+  const rolle = req.body.rolle ?? 'admin';
+
+  if (!epost || !epost.includes('@')) {
+    return res.status(400).json({ feil: 'Ugyldig e-postadresse' });
+  }
+  if (passord.length < 12) {
+    return res.status(400).json({ feil: 'Passordet må være minst 12 tegn' });
+  }
+  if (!['admin', 'editor', 'viewer'].includes(rolle)) {
+    return res.status(400).json({ feil: 'Ugyldig rolle' });
+  }
+
+  try {
+    const bruker = await opprettBruker(epost, passord, rolle);
+    res.json({ ok: true, bruker });
+  } catch (err) {
+    if (err.kode === 'finnes_allerede') {
+      return res.status(409).json({ feil: err.message });
+    }
+    console.error('Kunne ikke opprette bruker:', err);
+    res.status(500).json({ feil: 'Kunne ikke opprette bruker' });
+  }
+});
+
+app.delete('/api/brukere/:id', krevAdmin, async (req, res) => {
+  if (req.params.id === req.session.brukerId) {
+    return res.status(400).json({ feil: 'Du kan ikke slette din egen bruker' });
+  }
+  const slettet = await slettBruker(req.params.id);
+  if (!slettet) return res.status(404).json({ feil: 'Bruker ikke funnet' });
+  res.json({ ok: true });
 });
 
 // Server review-grensesnittet fra collector/review/public.

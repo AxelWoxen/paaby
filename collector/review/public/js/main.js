@@ -7,6 +7,7 @@ import * as tilVurdering from './views/til-vurdering.js';
 import * as innsendte from './views/innsendte.js';
 import * as publiserte from './views/publiserte.js';
 import * as innsikt from './views/innsikt.js';
+import * as brukere from './views/brukere.js';
 import './views/nytt-event.js';
 
 const faner = document.querySelectorAll('.fane-knapp');
@@ -17,6 +18,7 @@ const paneler = {
   publiserte: document.getElementById('panel-publiserte'),
   'nytt-event': document.getElementById('panel-nytt-event'),
   innsikt: document.getElementById('panel-innsikt'),
+  brukere: document.getElementById('panel-brukere'),
 };
 
 function byttFane(navn) {
@@ -24,6 +26,7 @@ function byttFane(navn) {
   Object.entries(paneler).forEach(([n, el]) => { if (el) el.hidden = n !== navn; });
   if (navn === 'publiserte') publiserte.lastInnPubliserte();
   if (navn === 'innsikt') innsikt.lastInnInnsikt();
+  if (navn === 'brukere') brukere.lastInnBrukere();
   history.replaceState(null, '', `#${navn}`);
 }
 
@@ -78,9 +81,11 @@ document.addEventListener('paaby:candidates-endret', lastInnCandidates);
 // ─── Innlogget som ──────────────────────────────────────────────────────────
 async function visInnloggetSom() {
   const el = document.getElementById('innlogget-som');
-  if (!el) return;
-  const { epost } = await api.meg();
-  el.textContent = epost ?? '';
+  const { epost, rolle } = await api.meg();
+  if (el) el.textContent = epost ?? '';
+
+  const brukereFane = document.getElementById('fane-knapp-brukere');
+  if (brukereFane) brukereFane.hidden = rolle !== 'admin';
 }
 
 async function start() {

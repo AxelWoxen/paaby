@@ -1,7 +1,8 @@
-// brukere.mjs — innloggingssjekk mot admin_users (backend/db/migrations/004_admin_auth.sql).
+// brukere.mjs — innloggingssjekk + brukeradministrasjon mot admin_users
+// (backend/db/migrations/004_admin_auth.sql).
 //
-// Ingen offentlig registrering: rader i admin_users opprettes kun via
-// scripts/opprett-bruker.mjs, kjørt manuelt av eieren.
+// Ingen offentlig registrering: nye rader opprettes kun av en allerede
+// innlogget admin, via /api/brukere i server.js (se krevAdmin der).
 
 import bcrypt from 'bcryptjs';
 import pool from '../../../backend/db/pool.mjs';
@@ -36,4 +37,41 @@ export async function loggInn(epost, passord) {
   );
 
   return { id: bruker.id, email: bruker.email, role: bruker.role };
+}
+
+export async function hentBrukere() {
+  const result = await pool.query(
+    `SELECT id, email, role, created_at, last_login_at FROM admin_users ORDER BY created_at`,
+  );
+  return result.rows;
+}
+
+/**
+ * Oppretter en ny admin-bruker. Kaster med `.kode = 'finnes_allerede'` hvis
+ * e-posten er i bruk.
+ */
+export async function opprettBruker(epost, passord, rolle) {
+  const hash = await bcrypt.hash(passord, 12);
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO admin_users (email, password_hash, role)
+       VALUES ($1, $2, $3)
+       RETURNING id, email, role, created_at`,
+      [epost.trim().toLowerCase(), hash, rolle],
+    );
+    return result.rows[0];
+  } catch (err) {
+    if (err.code === '23505') { // unique_violation på email
+      const feil = new Error('E-postadressen er allerede i bruk');
+      feil.kode = 'finnes_allerede';
+      throw feil;
+    }
+    throw err;
+  }
+}
+
+export async function slettBruker(id) {
+  const result = await pool.query(`DELETE FROM admin_users WHERE id = $1`, [id]);
+  return result.rowCount > 0;
 }

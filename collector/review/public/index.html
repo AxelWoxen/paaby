@@ -44,6 +44,7 @@
   <button type="button" class="fane-knapp" data-fane="publiserte">Publiserte</button>
   <button type="button" class="fane-knapp" data-fane="nytt-event">+ Nytt event</button>
   <button type="button" class="fane-knapp" data-fane="innsikt">Innsikt</button>
+  <button type="button" class="fane-knapp" data-fane="brukere" id="fane-knapp-brukere" hidden>Brukere</button>
 </nav>
 
 <main class="innhold grid">
@@ -302,6 +303,41 @@
     <div id="innsikt-feil" class="tom-tilstand" hidden>
       <strong>Kunne ikke hente innsikt</strong>
       <p id="innsikt-feil-tekst"></p>
+    </div>
+  </section>
+
+  <!-- ─── BRUKERE ────────────────────────────────────────────────────────── -->
+  <section id="panel-brukere" class="panel" hidden>
+    <form id="brukere-form" class="skjema" novalidate>
+      <div class="skjema-seksjon">
+        <h2>Opprett bruker</h2>
+        <p class="tag-hint">Gi den nye brukeren e-posten og passordet under, slik at de kan logge inn selv.</p>
+
+        <div class="felt-gruppe">
+          <label class="felt-label" for="brukere-epost">E-post *</label>
+          <input type="email" id="brukere-epost" class="admin-input" placeholder="navn@paaby.no" required />
+        </div>
+        <div class="felt-gruppe">
+          <label class="felt-label" for="brukere-passord">Passord * (minst 12 tegn)</label>
+          <input type="text" id="brukere-passord" class="admin-input" placeholder="Minst 12 tegn" required />
+        </div>
+        <div class="felt-gruppe">
+          <label class="felt-label" for="brukere-rolle">Rolle</label>
+          <select id="brukere-rolle" class="admin-select">
+            <option value="admin">Admin</option>
+            <option value="editor">Editor</option>
+            <option value="viewer">Viewer</option>
+          </select>
+        </div>
+
+        <button type="submit" id="brukere-submit" class="skjema-submit">Opprett bruker</button>
+        <p class="skjema-feil" id="brukere-feil" hidden></p>
+      </div>
+    </form>
+
+    <div class="skjema-seksjon">
+      <h2>Eksisterende brukere</h2>
+      <div id="brukere-tabell" class="innsikt-tabell-wrapper"></div>
     </div>
   </section>
 
