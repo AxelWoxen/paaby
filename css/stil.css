@@ -898,6 +898,12 @@ textarea {
   overflow: hidden;
 }
 
+.kort-innhold > *,
+.utvalg-innhold > * {
+  position: relative;
+  top: 4px;
+}
+
 .kort-innhold {
   width: 50%;
 }
