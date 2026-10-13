@@ -186,31 +186,23 @@ export function lagKort(event) {
   tittel.textContent = event.tittel;
   innhold.appendChild(tittel);
 
-  const meta = document.createElement('div');
-  meta.className = 'kort-meta';
+  
+const meta = document.createElement('p');
+meta.className = 'kort-meta';
 
-  const sted = document.createElement('span');
-  sted.className   = 'sted';
-  sted.textContent = event.sted;
-  meta.appendChild(sted);
+const info = [
+  event.sted || 'Sted ikke oppgitt',
+  formaterTid(event.start),
+  formaterPrisKort(event.pris, event.prisTekst)
+];
 
-  if (event._avstand != null) {
-    const avstand = document.createElement('span');
-    avstand.className   = 'avstand';
-    avstand.textContent = formaterAvstand(event._avstand);
-    meta.appendChild(avstand);
-  }
-  innhold.appendChild(meta);
+if (event._avstand != null) {
+  info.push(formaterAvstand(event._avstand));
+}
 
-  const footer = document.createElement('div');
-  footer.className = 'kort-footer';
+meta.textContent = info.join(' · ');
+innhold.appendChild(meta);
 
-  const tidTekst = formaterTid(event.start);
-  const prisTekst = formaterPrisKort(event.pris, event.prisTekst);
-
-  footer.textContent = `${tidTekst} · ${prisTekst}`;
-
-  innhold.appendChild(footer);
   artikkel.appendChild(innhold);
 
   return artikkel;
