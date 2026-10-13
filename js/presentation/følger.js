@@ -1,18 +1,21 @@
 /* følger.js — presentasjonslaget for "Følger"-visningen.
-   Rendrer kommende eventer gruppert per fulgt sted. */
+   Rendrer UKENS eventer (ikke alle fremtidige) gruppert per fulgt sted.
+   Selve uke-vinduet (ukeMandag()/ukeVindu()/filtrerTilUke() + ukeOffset)
+   beregnes i main.js — nøyaktig samme flyt som standardfeeden bruker —
+   denne modulen mottar allerede uke-filtrerte eventer og grupperer dem
+   per fulgt sted. Ingen egen uke-logikk her. */
 
 import { lagKort, leggTilKortLyttere }        from './feed.js';
 import { hentFulgteSteder, sluttÅFølge,
          normaliserSted }                      from '../application/fulgte-steder.js';
-import { skjulPasserte }                       from '../application/gruppering.js';
 import { sorterEventer }                       from '../application/sortering.js';
 
 /**
  * Rendrer følger-visningen inn i #feed.
- * @param {Object[]} alleEventer   - Alle kjente eventer (brukes til modal-oppslag)
- * @param {Function} onAvfølg      - Kalles etter at brukeren slutter å følge et sted
+ * @param {Object[]} ukensEventer - Eventer i valgt uke (passerte allerede fjernet av main.js)
+ * @param {Function} onAvfølg     - Kalles etter at brukeren slutter å følge et sted
  */
-export function visFølgerVisning(alleEventer, onAvfølg) {
+export function visFølgerVisning(ukensEventer, onAvfølg) {
   const feed = document.getElementById('feed');
   feed.innerHTML = '';
 
@@ -26,7 +29,16 @@ export function visFølgerVisning(alleEventer, onAvfølg) {
     return;
   }
 
-  const kommende = skjulPasserte(alleEventer);
+  const fulgteNøkler   = fulgte.map(normaliserSted);
+  const harNoeDenneUka = ukensEventer.some((e) => fulgteNøkler.includes(normaliserSted(e.sted || '')));
+
+  if (!harNoeDenneUka) {
+    const p = document.createElement('p');
+    p.className   = 'tom-feed';
+    p.textContent = 'Ingen events fra stedene du følger denne uka.';
+    feed.appendChild(p);
+    return;
+  }
 
   for (const stedsnavn of fulgte) {
     const seksjon = document.createElement('section');
@@ -52,14 +64,14 @@ export function visFølgerVisning(alleEventer, onAvfølg) {
     /* Eventer på dette stedet, sortert etter dato */
     const nøkkel     = normaliserSted(stedsnavn);
     const stedEventer = sorterEventer(
-      kommende.filter((e) => normaliserSted(e.sted || '') === nøkkel),
+      ukensEventer.filter((e) => normaliserSted(e.sted || '') === nøkkel),
       'tid-stigende',
     );
 
     if (stedEventer.length === 0) {
       const tom = document.createElement('p');
       tom.className   = 'følger-tom';
-      tom.textContent = 'Ingenting på plakaten akkurat nå.';
+      tom.textContent = 'Ingenting denne uka.';
       seksjon.appendChild(tom);
     } else {
       const grid = document.createElement('div');
@@ -73,8 +85,9 @@ export function visFølgerVisning(alleEventer, onAvfølg) {
     feed.appendChild(seksjon);
   }
 
-  /* Kortlyttere — åpner modal og håndterer lagre-knapp */
-  leggTilKortLyttere(feed, alleEventer);
+  /* Kortlyttere — åpner modal og håndterer lagre-knapp.
+     ukensEventer dekker alle kort som faktisk ble rendret over. */
+  leggTilKortLyttere(feed, ukensEventer);
 
   /* Avfølg-lyttere */
   feed.querySelectorAll('.avfølg-knapp').forEach((knapp) => {

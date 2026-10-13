@@ -54,9 +54,23 @@ const tilstand = {
    OPPDATER FEED
    ======================== */
 
+/* Samme uke-vindu («denne uka» + tilstand.ukeOffset) som standardfeeden
+   bruker — delt ut i en liten hjelper slik at Følger kan gjenbruke NØYAKTIG
+   samme ukeMandag()/ukeVindu()/filtrerTilUke()-flyt uten en egen,
+   parallell implementasjon. Lagret-visningen bruker IKKE denne — den er
+   uke-uavhengig med vilje og skal forbli det. */
+function hentUkensAktiveEventer() {
+  const aktive       = skjulPasserte(tilstand.alleEventer);
+  const mandag       = ukeMandag();
+  const { fra, til } = ukeVindu(mandag, tilstand.ukeOffset);
+  return { mandag, ukensEventer: filtrerTilUke(aktive, fra, til) };
+}
+
 function oppdaterFeed() {
   if (tilstand.visFølger) {
-    visFølgerVisning(tilstand.alleEventer, oppdaterFeed);
+    const { mandag, ukensEventer } = hentUkensAktiveEventer();
+    visFølgerVisning(ukensEventer, oppdaterFeed);
+    oppdaterUkeNav(mandag);
     oppdaterTreffLinje(0);
     return;
   }
@@ -69,11 +83,7 @@ function oppdaterFeed() {
     eventer = tilstand.alleEventer.filter((e) => lagredeIder.includes(e.id));
     eventer = skjulPasserte(eventer);
   } else {
-    const aktive = skjulPasserte(tilstand.alleEventer);
-
-    const mandag        = ukeMandag();
-    const { fra, til }   = ukeVindu(mandag, tilstand.ukeOffset);
-    const ukensEventer   = filtrerTilUke(aktive, fra, til);
+    const { mandag, ukensEventer } = hentUkensAktiveEventer();
 
     ukeTom  = ukensEventer.length === 0;
     eventer = filtrerEventer(ukensEventer, tilstand.aktivFiltre, tilstand.brukerPosisjon);
@@ -138,7 +148,7 @@ function oppdaterTreffLinje(antall) {
     lagretInfo?.classList.add('skjult');
     sorteringDiv?.classList.add('skjult');
     sidestolpe?.classList.add('skjult');
-    ukeNav?.classList.add('skjult');
+    ukeNav?.classList.remove('skjult'); /* Følger bruker nå samme uke-nav som standardfeeden */
   } else if (tilstand.visLagret) {
     teller.textContent = antall === 0 ? 'ingenting lagret' : `${antall} forslag lagret`;
     tilbakeKnapp.classList.remove('skjult');
@@ -461,6 +471,7 @@ function initFølgerKnapp() {
     nullstillModusKnapper();
     tilstand.visFølger = true;
     tilstand.visLagret = false;
+    tilstand.ukeOffset = 0; /* Følger skal alltid åpnes på denne uka, se uke-nav-krav */
     visFølgerKnapp.classList.add('aktiv');
     visFølgerKnapp.setAttribute('aria-pressed', 'true');
     oppdaterFeed();
