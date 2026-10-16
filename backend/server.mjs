@@ -46,10 +46,12 @@ app.use('/api/events', eventsLimiter);
 app.use('/api/events', eventRoutes);
 
 // Strengere grense enn /api/events — innsendinger skriver til databasen og
-// er et naturlig mål for spam/bot-trafikk.
+// er et naturlig mål for spam/bot-trafikk. Satt høyt nok til at én arrangør
+// kan sende inn et helt program (6-10 events) i samme økt — hvert event
+// postes fortsatt som egen request mot dette endepunktet.
 const innsendingerLimiter = rateLimit({
   windowMs: 60 * 60 * 1000,
-  max: 5,
+  max: 30,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

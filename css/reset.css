@@ -43,6 +43,13 @@ svg {
   display: block;
 }
 
+/* Et author-stylesheet som setter display på img vinner alltid over
+   UA-stilarkets [hidden]{display:none} (origin, ikke spesifisitet) — uten
+   denne regelen ignoreres hidden-attributtet på alle <img>. */
+img[hidden] {
+  display: none;
+}
+
 img {
   max-width: 100%;
 }

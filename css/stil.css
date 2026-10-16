@@ -1892,9 +1892,8 @@ body.modal-aapen {
   margin-top: var(--gap-s);
 }
 
-/* Bonusboks og "om deg" — skal bevisst se annerledes ut enn selve
-   eventkortet (stiplet kant, ingen kategorifarge). */
-.send-inn-bonusboks,
+/* "Om deg" — skal bevisst se annerledes ut enn selve eventkortet (stiplet
+   kant, ingen kategorifarge). */
 .send-inn-omdeg-boks {
   margin-top: var(--gap-l);
   padding: var(--gap-m) var(--gap-l);
@@ -1920,6 +1919,137 @@ body.modal-aapen {
 
 .send-inn-bekreftelse-tekst {
   font-size: 1.05rem;
+  margin-bottom: var(--gap-m);
+}
+
+/* === OVERSIKT — flere events i samme økt ===
+   Grid med auto-fill: wrapper naturlig til én kolonne på mobil (2×minmax
+   220px > de ~340px som er igjen av 375px-skjermen etter padding), og
+   skalerer opp til 2-3 kolonner på bredere skjermer — uten egne
+   media queries. */
+.send-inn-eventgrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--gap-m);
+  margin-top: var(--gap-l);
+}
+
+.send-inn-eventkort {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--flate-2);
+  border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  text-align: left;
+}
+.send-inn-eventkort:hover {
+  border-color: var(--graa);
+}
+.send-inn-eventkort--sendt {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.send-inn-eventkort-bilde-wrapper {
+  aspect-ratio: 4 / 3;
+  background: var(--hvit);
+  overflow: hidden;
+}
+.send-inn-eventkort-bilde-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.send-inn-eventkort-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--graa);
+  font-size: 0.78rem;
+}
+
+.send-inn-eventkort-innhold {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--gap-s) var(--gap-m);
+  flex: 1;
+}
+.send-inn-eventkort-tittel {
+  font-family: var(--font-tittel);
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.2;
+}
+.send-inn-eventkort-meta,
+.send-inn-eventkort-sted {
+  font-size: 0.8rem;
+  color: var(--graa);
+}
+
+.send-inn-eventkort-status {
+  align-self: flex-start;
+  margin-top: 0.3rem;
+  padding: 0.15rem var(--gap-s);
+  border-radius: var(--radius-s);
+  font-size: 0.72rem;
+}
+.send-inn-eventkort-status--feilet { background: rgba(217, 52, 43, 0.15); color: #D9342B; }
+.send-inn-eventkort-status--sendt  { background: rgba(140, 177, 244, 0.15); color: var(--blaa); }
+
+.send-inn-eventkort-fjern {
+  position: absolute;
+  top: var(--gap-s);
+  right: var(--gap-s);
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 1rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.send-inn-eventkort-fjern:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.send-inn-legg-til-kort {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-s);
+  min-height: 180px;
+  background: none;
+  border: 1.5px dashed var(--flate-2);
+  border-radius: var(--radius-m);
+  color: var(--graa);
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.send-inn-legg-til-kort:hover {
+  border-color: var(--graa);
+  color: var(--paper);
+}
+.send-inn-legg-til-plus {
+  font-size: 2rem;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.send-inn-tilbake-knapp {
   margin-bottom: var(--gap-m);
 }
 

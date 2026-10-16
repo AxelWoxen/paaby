@@ -242,6 +242,24 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
   const redigering = lagRedigeringsFelter(event);
   panel.appendChild(redigering.el);
 
+  // Henter NÅVÆRENDE skjemaverdier (konvertert til Oslo-ISO), uansett om
+  // «Lagre endringer» noensinne er trykket. Brukes av Lagre endringer,
+  // Godkjenn og Send til vurdering — slik publiserer/lagrer alle tre
+  // nøyaktig det som faktisk står i skjemaet akkurat nå.
+  function hentOgValiderRedigering() {
+    const verdier = redigering.hentVerdier();
+    if (!verdier.tittel || !verdier.start) {
+      return { feil: 'Tittel og starttidspunkt er påkrevd.' };
+    }
+    return {
+      redigering: {
+        ...verdier,
+        start: datetimeLocalTilOsloISO(verdier.start),
+        slutt: datetimeLocalTilOsloISO(verdier.slutt),
+      },
+    };
+  }
+
   const lagreStatus = document.createElement('div');
   lagreStatus.className = 'lagre-status';
 
@@ -251,19 +269,15 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
   lagreKnapp.textContent = 'Lagre endringer';
 
   lagreKnapp.onclick = async () => {
-    const verdier = redigering.hentVerdier();
-    if (!verdier.tittel || !verdier.start) {
+    const { redigering: redigeringData, feil } = hentOgValiderRedigering();
+    if (feil) {
       lagreStatus.className = 'lagre-status feil';
-      lagreStatus.textContent = 'Tittel og starttidspunkt er påkrevd.';
+      lagreStatus.textContent = feil;
       return;
     }
     lagreKnapp.disabled = true;
     lagreKnapp.textContent = '…';
-    const data = await api.oppdaterKandidat(event.id, {
-      ...verdier,
-      start: datetimeLocalTilOsloISO(verdier.start),
-      slutt: datetimeLocalTilOsloISO(verdier.slutt),
-    });
+    const data = await api.oppdaterKandidat(event.id, redigeringData);
     lagreKnapp.disabled = false;
     lagreKnapp.textContent = 'Lagre endringer';
     if (data.ok) {
@@ -286,11 +300,6 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
   };
   panel.appendChild(lagreStatus);
   panel.appendChild(lagreKnapp);
-
-  // Kuratortekst-feltet finnes allerede inne i redigering.el (lagRedigeringsFelter
-  // sin egen tKur) — IKKE dupliser det. Godkjenn leser samme felt, ikke et
-  // eget skjult felt utenfor redigeringspanelet.
-  const kuratorTa = redigering.felter.tKur.ta;
 
   const gjentasKontroll = lagGjentasKontroll(event.gjentas ?? null);
 
@@ -346,16 +355,25 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
   }
 
   gKnapp.onclick = async () => {
+    // Samme skjemaverdier som «Lagre endringer» ville sendt — Godkjenn/Send
+    // til vurdering skal publisere/lagre nøyaktig det som står i skjemaet nå,
+    // uten at man først må trykke «Lagre endringer» (se hentOgValiderRedigering).
+    const { redigering: redigeringData, feil } = hentOgValiderRedigering();
+    if (feil) {
+      visFeil(feil);
+      return;
+    }
+
     settKnapperDisabled(true);
     gKnapp.textContent = '…';
 
     const data = modus === 'fra-api'
       ? await api.triager(event.id, {
-          kuratortekst: kuratorTa.value,
+          redigering: redigeringData,
           gjentas: gjentasKontroll.hentVerdi(),
         })
       : await api.godkjenn(event.id, {
-          kuratortekst: kuratorTa.value,
+          redigering: redigeringData,
           fremhevet: event._fremhevet === true,
           gjentas: gjentasKontroll.hentVerdi(),
         });

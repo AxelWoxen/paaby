@@ -88,6 +88,64 @@ function tallEllerNull(verdi) {
     : Number(verdi);
 }
 
+// Bygger en normalisert candidate-payload fra skjemafeltene i redigerings-
+// panelet (lagRedigeringsFelter sin hentVerdier()-form). Brukt av BÅDE
+// /api/kandidat/:id/oppdater og /api/godkjenn|triager/:id når klienten
+// sender med den nåværende redigeringen — én implementasjon av candidate-
+// feltene, ikke to som kan gli fra hverandre.
+//
+// `event` er candidaten slik den ligger lagret nå (for basisfelter som
+// ikke er del av redigeringsskjemaet, f.eks. id/gjentas), `body` er de
+// redigerte feltene (enten req.body direkte, eller req.body.redigering).
+function byggRedigertPayload(event, body) {
+  const tittel = body.tittel?.trim();
+  const start = body.start?.trim();
+
+  if (!tittel || !start) {
+    return { feil: 'Tittel og starttidspunkt er påkrevd' };
+  }
+
+  // Interne _-felt (status, kilde, innsenderdata, duplikat-varsel) hører
+  // hjemme i egne kolonner, ikke i payload — fjernes før lagring.
+  const {
+    _status, _kilde,
+    _innsenderNavn, _innsenderOrg, _innsenderKontakt, _innsenderNotat,
+    _muligDuplikat, _duplikatHint,
+    ...basisPayload
+  } = event;
+
+  const payload = {
+    ...basisPayload,
+    tittel,
+    kategori: body.kategori ?? event.kategori,
+
+    sted: tekstEllerNull(body.sted),
+    adresse: tekstEllerNull(body.adresse),
+
+    lat: tallEllerNull(body.lat),
+    lng: tallEllerNull(body.lng),
+
+    start,
+    slutt: tekstEllerNull(body.slutt),
+
+    pris: tallEllerNull(body.pris),
+    prisTekst: tekstEllerNull(body.prisTekst),
+
+    beskrivelse: tekstEllerNull(body.beskrivelse),
+    kuratortekst: tekstEllerNull(body.kuratortekst),
+
+    lenke: tekstEllerNull(body.lenke),
+    bilde: tekstEllerNull(body.bilde),
+
+    // Automatiske tags (tidstag/"free") regnes ut på nytt i
+    // oppdaterCandidatePayload/publiserEvent — her sendes bare admins eget
+    // valg videre.
+    tags: Array.isArray(body.tags) ? body.tags : event.tags,
+  };
+
+  return { payload };
+}
+
 
 // ─── Express ────────────────────────────────────────────────────────────────
 
@@ -338,14 +396,20 @@ app.post('/api/avslaa/:id', async (req, res) => {
 
 // Godkjenn candidate.
 //
-// Eventet publiseres til PostgreSQL og kandidaten markeres deretter
-// som godkjent i candidates.json.
+// Publiserer NØYAKTIG det som står i redigeringsskjemaet akkurat nå (sendt
+// som req.body.redigering), ikke bare den sist LAGREDE candidate-payloaden
+// — ellers tapes endringer (bilde, tittel, ...) man har gjort uten først å
+// trykke «Lagre endringer». redigering lagres derfor til candidaten (samme
+// validering/parsing som /api/kandidat/:id/oppdater) FØR publisering, slik
+// at publiserEvent alltid jobber på den ferskeste versjonen — og slik at
+// endringene ikke går tapt selv om selve publiseringen skulle feile.
 app.post('/api/godkjenn/:id', async (req, res) => {
   const { id } = req.params;
   const {
     kuratortekst,
     fremhevet,
     gjentas,
+    redigering,
   } = req.body ?? {};
 
   const alle = await lesCandidates();
@@ -358,17 +422,41 @@ app.post('/api/godkjenn/:id', async (req, res) => {
     });
   }
 
-  try {
-    const publishedEventId = await publiserEvent(event, {
-  kuratortekst,
-  fremhevet,
-  gjentas,
-});
+  let eventÅPublisere = event;
+  let kuratortekstÅBruke = kuratortekst;
 
-await markerGodkjent(
-  id,
-  publishedEventId,
-);  
+  if (redigering && typeof redigering === 'object') {
+    const { payload, feil } = byggRedigertPayload(event, redigering);
+
+    if (feil) {
+      return res.status(400).json({ feil });
+    }
+
+    const lagreResultat = await oppdaterCandidatePayload(id, payload);
+
+    if (!lagreResultat.ok) {
+      return res.status(404).json({
+        feil: 'Event ikke funnet',
+      });
+    }
+
+    eventÅPublisere = { ...payload, tags: lagreResultat.tags };
+    kuratortekstÅBruke = eventÅPublisere.kuratortekst;
+  }
+
+  try {
+    const publishedEventId = await publiserEvent(eventÅPublisere, {
+      kuratortekst: kuratortekstÅBruke,
+      fremhevet,
+      gjentas,
+    });
+
+    // Markeres godkjent KUN hvis publisering faktisk lyktes (linjen over
+    // kastet ellers og vi havner i catch under, uten å nå hit).
+    await markerGodkjent(
+      id,
+      publishedEventId,
+    );
 
     res.json({
       ok: true,
@@ -391,15 +479,6 @@ app.post('/api/kandidat/:id/oppdater', async (req, res) => {
   const { id } = req.params;
   const body = req.body ?? {};
 
-  const tittel = body.tittel?.trim();
-  const start = body.start?.trim();
-
-  if (!tittel || !start) {
-    return res.status(400).json({
-      feil: 'Tittel og starttidspunkt er påkrevd',
-    });
-  }
-
   const alle = await lesCandidates();
   const event = alle.find((candidate) => candidate.id === id);
 
@@ -409,42 +488,11 @@ app.post('/api/kandidat/:id/oppdater', async (req, res) => {
     });
   }
 
-  // Interne _-felt (status, kilde, innsenderdata, duplikat-varsel) hører
-  // hjemme i egne kolonner, ikke i payload — fjernes før lagring.
-  const {
-    _status, _kilde,
-    _innsenderNavn, _innsenderOrg, _innsenderKontakt, _innsenderNotat,
-    _muligDuplikat, _duplikatHint,
-    ...basisPayload
-  } = event;
+  const { payload, feil } = byggRedigertPayload(event, body);
 
-  const payload = {
-    ...basisPayload,
-    tittel,
-    kategori: body.kategori ?? event.kategori,
-
-    sted: tekstEllerNull(body.sted),
-    adresse: tekstEllerNull(body.adresse),
-
-    lat: tallEllerNull(body.lat),
-    lng: tallEllerNull(body.lng),
-
-    start,
-    slutt: tekstEllerNull(body.slutt),
-
-    pris: tallEllerNull(body.pris),
-    prisTekst: tekstEllerNull(body.prisTekst),
-
-    beskrivelse: tekstEllerNull(body.beskrivelse),
-    kuratortekst: tekstEllerNull(body.kuratortekst),
-
-    lenke: tekstEllerNull(body.lenke),
-    bilde: tekstEllerNull(body.bilde),
-
-    // Automatiske tags (tidstag/"free") regnes ut på nytt i
-    // oppdaterCandidatePayload — her sendes bare admins eget valg videre.
-    tags: Array.isArray(body.tags) ? body.tags : event.tags,
-  };
+  if (feil) {
+    return res.status(400).json({ feil });
+  }
 
   try {
     const resultat = await oppdaterCandidatePayload(id, payload);
@@ -467,11 +515,13 @@ app.post('/api/kandidat/:id/oppdater', async (req, res) => {
 
 
 // Triager en collector-candidate: sender den fra "Fra API" til "Til
-// vurdering". IKKE publisering — kun et statusskifte (pending → triaged),
-// pluss at en ev. kuratortekst/gjentas man har begynt på blir med videre.
+// vurdering". IKKE publisering — kun et statusskifte (pending → triaged).
+// Hvis admin har redigert felter i skjemaet (bilde, tittel, ...) før
+// «Send til vurdering» trykkes, skal de endringene bli med videre —
+// samme prinsipp og samme bygge-/valideringslogikk som /api/godkjenn/:id.
 app.post('/api/triager/:id', async (req, res) => {
   const { id } = req.params;
-  const { kuratortekst, gjentas } = req.body ?? {};
+  const { kuratortekst, gjentas, redigering } = req.body ?? {};
 
   const alle = await lesCandidates();
   const event = alle.find((candidate) => candidate.id === id);
@@ -482,18 +532,30 @@ app.post('/api/triager/:id', async (req, res) => {
     });
   }
 
-  const {
-    _status, _kilde,
-    _innsenderNavn, _innsenderOrg, _innsenderKontakt, _innsenderNotat,
-    _muligDuplikat, _duplikatHint,
-    ...basisPayload
-  } = event;
+  let payload;
 
-  const payload = {
-    ...basisPayload,
-    kuratortekst: tekstEllerNull(kuratortekst),
-    gjentas: gjentas || null,
-  };
+  if (redigering && typeof redigering === 'object') {
+    const bygget = byggRedigertPayload(event, redigering);
+
+    if (bygget.feil) {
+      return res.status(400).json({ feil: bygget.feil });
+    }
+
+    payload = { ...bygget.payload, gjentas: gjentas || null };
+  } else {
+    const {
+      _status, _kilde,
+      _innsenderNavn, _innsenderOrg, _innsenderKontakt, _innsenderNotat,
+      _muligDuplikat, _duplikatHint,
+      ...basisPayload
+    } = event;
+
+    payload = {
+      ...basisPayload,
+      kuratortekst: tekstEllerNull(kuratortekst),
+      gjentas: gjentas || null,
+    };
+  }
 
   try {
     await oppdaterCandidatePayload(id, payload);
