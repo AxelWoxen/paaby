@@ -189,6 +189,23 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
   const prisInfo = document.createElement('span');
   prisInfo.textContent = formaterPris(event.pris, event.prisTekst);
   infoRad.appendChild(prisInfo);
+
+  const kartEl = document.createElement('a');
+  kartEl.className = 'ekstern-lenke';
+  kartEl.target = '_blank';
+  kartEl.rel = 'noopener noreferrer';
+  kartEl.textContent = 'kart';
+  infoRad.appendChild(kartEl);
+  function oppdaterKartLenke(adresse) {
+    if (adresse) {
+      kartEl.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresse)}`;
+      kartEl.hidden = false;
+    } else {
+      kartEl.hidden = true;
+    }
+  }
+  oppdaterKartLenke(event.adresse);
+
   if (event.lenke) {
     try {
       const url = new URL(event.lenke);
@@ -281,15 +298,17 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
     lagreKnapp.disabled = false;
     lagreKnapp.textContent = 'Lagre endringer';
     if (data.ok) {
-      event.tittel = verdier.tittel;
-      event.kategori = verdier.kategori;
-      event.sted = verdier.sted;
+      event.tittel = redigeringData.tittel;
+      event.kategori = redigeringData.kategori;
+      event.sted = redigeringData.sted;
+      event.adresse = redigeringData.adresse;
       event.tags = data.tags;
-      tittelEl.textContent = verdier.tittel;
-      badge.dataset.kategori = verdier.kategori;
-      badge.textContent = verdier.kategori === 'pafunn' ? 'påfunn' : verdier.kategori;
-      kort.dataset.kategori = verdier.kategori;
-      stedInfo.textContent = verdier.sted || '—';
+      tittelEl.textContent = redigeringData.tittel;
+      badge.dataset.kategori = redigeringData.kategori;
+      badge.textContent = redigeringData.kategori === 'pafunn' ? 'påfunn' : redigeringData.kategori;
+      kort.dataset.kategori = redigeringData.kategori;
+      stedInfo.textContent = redigeringData.sted || '—';
+      oppdaterKartLenke(redigeringData.adresse);
       redigering.felter.tagVelger.settVerdier(data.tags);
       visSuksess('Endringer lagret.');
     } else {

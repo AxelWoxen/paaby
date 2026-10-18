@@ -4,6 +4,7 @@ import { utledTags } from '../../js/application/tags.js';
 export async function lesPubliserte() {
   const result = await pool.query(`
     SELECT
+      e.id AS "_dbId",
       e.legacy_id AS id,
       e.title AS tittel,
       ec.category_slug AS kategori,

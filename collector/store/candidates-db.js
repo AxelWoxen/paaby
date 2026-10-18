@@ -14,6 +14,7 @@ function tilLegacyStatus(status) {
 export async function lesCandidates() {
   const result = await pool.query(`
     SELECT
+      id,
       legacy_id,
       payload,
       status,
@@ -31,6 +32,7 @@ export async function lesCandidates() {
   return result.rows.map((row) => ({
     ...row.payload,
     id: row.legacy_id,
+    _dbId: row.id,
     _status: tilLegacyStatus(row.status),
     _kilde: row.source,
     _innsenderNavn: row.submitter_name,
@@ -130,28 +132,92 @@ export async function oppdaterCandidatePayload(legacyId, payload) {
   };
 }
 
-// Marker candidate som godkjent og koble den til publisert event.
+// Marker candidate som godkjent og koble den til publisert event. Kobler
+// samtidig evt. event_sources-rad(er) for denne candidaten til det
+// publiserte eventet — candidate_id beholdes som provenance, se
+// 009_external_source_identity.sql.
 export async function markerGodkjent(
   legacyId,
   publishedEventId,
 ) {
-  const result = await pool.query(
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const result = await client.query(
+      `
+        UPDATE event_candidates
+        SET
+          status = 'approved',
+          published_event_id = $2,
+          reviewed_at = NOW()
+        WHERE legacy_id = $1
+        RETURNING id
+      `,
+      [
+        legacyId,
+        publishedEventId,
+      ],
+    );
+
+    if (result.rowCount > 0) {
+      await client.query(
+        `UPDATE event_sources SET event_id = $2 WHERE candidate_id = $1`,
+        [result.rows[0].id, publishedEventId],
+      );
+    }
+
+    await client.query('COMMIT');
+    return result.rowCount > 0;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+// Setter inn ÉN candidate og returnerer dens UUID — brukes av kilde-synk-
+// flyten (collector/store/external-event-refs.js:opprettCandidateOgRef),
+// som trenger id-en med én gang for å kunne koble en event_sources-rad til
+// den. Tar en ALLEREDE ÅPEN transaksjons-client — selve transaksjonen eies
+// av kalleren, slik at candidate + ref alltid lagres atomisk sammen.
+export async function leggTilEnCandidateMedClient(
+  client,
+  event,
+  { source = 'collector', muligDuplikat = false, duplikatHint = null } = {},
+) {
+  const { _status, _dbId, ...payload } = event;
+  payload.tags = utledTags(payload.tags, {
+    pris: payload.pris,
+    start: payload.start,
+  });
+
+  const result = await client.query(
     `
-      UPDATE event_candidates
-      SET
-        status = 'approved',
-        published_event_id = $2,
-        reviewed_at = NOW()
-      WHERE legacy_id = $1
+      INSERT INTO event_candidates (
+        legacy_id, payload, status, source, possible_duplicate, duplicate_hint
+      )
+      VALUES ($1, $2::jsonb, 'pending', $3, $4, $5)
+      ON CONFLICT (legacy_id) DO NOTHING
       RETURNING id
     `,
-    [
-      legacyId,
-      publishedEventId,
-    ],
+    [event.id, JSON.stringify(payload), source, muligDuplikat, duplikatHint],
   );
 
-  return result.rowCount > 0;
+  if (result.rowCount > 0) {
+    return { id: result.rows[0].id, lagtTil: true };
+  }
+
+  // Fantes allerede (samme legacy_id, f.eks. fra en tidligere kilde-run) —
+  // hent id-en som faktisk står der, slik at kalleren fortsatt kan koble en
+  // ref til den.
+  const eksisterende = await client.query(
+    `SELECT id FROM event_candidates WHERE legacy_id = $1`,
+    [event.id],
+  );
+  return { id: eksisterende.rows[0]?.id ?? null, lagtTil: false };
 }
 
 // Marker candidate som triagert — sendt fra "Fra API" til "Til vurdering".
