@@ -1,11 +1,7 @@
 // Adapter for Ticketmaster Discovery API v2.
 // Offisiell dokumentasjon: https://developer.ticketmaster.com/products-and-docs/apis/discovery-api/v2/
 //
-// IKKE testet mot det ekte API-et i denne omgang (ingen TICKETMASTER_API_KEY
-// tilgjengelig i dette prosjektet) — kun bygget mot den offentlige, stabile
-// kontrakten (endepunkt, auth, _embedded.events-formen, dates/classifications/
-// priceRanges/_embedded.venues). Bør kjøres mot en ekte nøkkel og verifiseres
-// før den brukes i produksjon.
+// Verifisert mot det ekte API-et og kjørt i production (rollout 2026-10-18).
 //
 // Strategi:
 //  1. apikey hentes fra source.tokenEnv (default 'TICKETMASTER_API_KEY') —
@@ -42,6 +38,14 @@ async function hentSide(source, apiKey, side) {
     startDateTime: tilApiTidspunkt(nå),
     endDateTime: tilApiTidspunkt(til),
   });
+  // geoPoint+radius+unit — Discovery API sin egen geo-filtrering (ikke
+  // city=Oslo, se config/sources.js for begrunnelse). radius/unit gir bare
+  // mening sammen med geoPoint, derfor satt kun når geoPoint faktisk finnes.
+  if (source.geoPoint) {
+    params.set('geoPoint', source.geoPoint);
+    if (source.radius != null) params.set('radius', String(source.radius));
+    if (source.unit) params.set('unit', source.unit);
+  }
   if (source.city) params.set('city', source.city);
 
   const res = await fetch(`${API_BASE}?${params.toString()}`, {

@@ -42,12 +42,23 @@ export const SOURCES = [
     id:              'ticketmaster-no',
     adapter:         'ticketmaster',
     tokenEnv:        'TICKETMASTER_API_KEY',
-    // countryCode + city er Ticketmaster Discovery API v2 sine egne,
-    // strukturerte filterparametre (ikke fritekstsøk på "Oslo" i tittel/
-    // beskrivelse) — se adapters/ticketmaster.js. Horisonten (30 dager)
-    // håndheves uansett globalt av run.js, i tillegg til adapterens egen.
+    // geoPoint+radius (ikke city=Oslo) — Discovery API sin egen,
+    // strukturerte geo-filtrering (se adapters/ticketmaster.js). Byttet fra
+    // city=Oslo etter en coverage-analyse (2026-10-18) som viste at
+    // Unity Arena (Oslo-regionens største nye arena, 7 events i 30-dagers
+    // vinduet, bl.a. Stevie Wonder/J. Cole/The Prodigy) er tagget
+    // venue.city="Fornebu" i Discovery API-et og dermed usynlig for
+    // city=Oslo — selv om ticketmaster.no sin egen Oslo-side eksplisitt
+    // lister Unity Arena som et Oslo-spillested. geoPoint=25km rundt Oslo
+    // sentrum fanger opp dette uten å dra inn Bergen/Kristiansand/Tønsberg/
+    // Fredrikstad/Lena (verifisert: 0 tap av city=Oslo sine 38 treff, +7
+    // nye, 0 falske positive fra andre byer ved 25km).
+    // countryCode beholdt som ekstra sikkerhet nær landegrensen, kostet
+    // ingenting i testen (identisk resultat med/uten).
     countryCode:     'NO',
-    city:            'Oslo',
+    geoPoint:        'u4xsudv', // Oslo sentrum (59.9139, 10.7522), 7-tegns geohash
+    radius:          25,
+    unit:            'km',
     defaultKategori: 'musikk',
   },
   {

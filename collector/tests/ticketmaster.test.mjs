@@ -14,7 +14,9 @@ const SOURCE = {
   adapter: 'ticketmaster',
   tokenEnv: 'TICKETMASTER_API_KEY',
   countryCode: 'NO',
-  city: 'Oslo',
+  geoPoint: 'u4xsudv',
+  radius: 25,
+  unit: 'km',
   defaultKategori: 'musikk',
 };
 
@@ -121,5 +123,57 @@ test('manglende TICKETMASTER_API_KEY → tydelig feil, ingen nettverkskall', asy
     );
   } finally {
     if (opprinnelig !== undefined) process.env.TICKETMASTER_API_KEY = opprinnelig;
+  }
+});
+
+test('requesten bruker geoPoint+radius+unit (ikke city) når source er konfigurert med geoPoint', async () => {
+  // Regresjon for coverage-analysen 2026-10-18: city=Oslo misset Unity
+  // Arena (tagget venue.city="Fornebu"). Bytt til geo/radius — denne
+  // testen fanger opp om noen ved et uhell bytter tilbake til city.
+  const opprinnelig = process.env.TICKETMASTER_API_KEY;
+  process.env.TICKETMASTER_API_KEY = 'test-nøkkel';
+
+  const originalFetch = global.fetch;
+  let kaltMedUrl = null;
+  global.fetch = async (url) => {
+    kaltMedUrl = url;
+    return { ok: true, json: async () => ({ _embedded: { events: [] }, page: { totalPages: 1 } }) };
+  };
+
+  try {
+    await hentTicketmasterEvents(SOURCE);
+    const params = new URL(kaltMedUrl).searchParams;
+    assert.equal(params.get('geoPoint'), 'u4xsudv');
+    assert.equal(params.get('radius'), '25');
+    assert.equal(params.get('unit'), 'km');
+    assert.equal(params.get('countryCode'), 'NO');
+    assert.equal(params.has('city'), false, 'city skal IKKE sendes lenger for ticketmaster-no');
+  } finally {
+    global.fetch = originalFetch;
+    if (opprinnelig !== undefined) process.env.TICKETMASTER_API_KEY = opprinnelig;
+    else delete process.env.TICKETMASTER_API_KEY;
+  }
+});
+
+test('requesten bruker fortsatt city (ikke geoPoint) for en source uten geoPoint — adapteren beholder begge evner', async () => {
+  const opprinnelig = process.env.TICKETMASTER_API_KEY;
+  process.env.TICKETMASTER_API_KEY = 'test-nøkkel';
+
+  const originalFetch = global.fetch;
+  let kaltMedUrl = null;
+  global.fetch = async (url) => {
+    kaltMedUrl = url;
+    return { ok: true, json: async () => ({ _embedded: { events: [] }, page: { totalPages: 1 } }) };
+  };
+
+  try {
+    await hentTicketmasterEvents({ ...SOURCE, geoPoint: undefined, radius: undefined, unit: undefined, city: 'Bergen' });
+    const params = new URL(kaltMedUrl).searchParams;
+    assert.equal(params.get('city'), 'Bergen');
+    assert.equal(params.has('geoPoint'), false);
+  } finally {
+    global.fetch = originalFetch;
+    if (opprinnelig !== undefined) process.env.TICKETMASTER_API_KEY = opprinnelig;
+    else delete process.env.TICKETMASTER_API_KEY;
   }
 });
