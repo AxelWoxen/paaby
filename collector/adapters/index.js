@@ -6,11 +6,13 @@
 import { hentBroadcastEvents } from './broadcast-events.js';
 import { hentTicketmasterEvents } from './ticketmaster.js';
 import { hentTikkioEvents } from './tikkio.js';
+import { hentBillettoEvents } from './billetto.js';
 
 export const ADAPTERS = {
   'broadcast-events': hentBroadcastEvents,
   'ticketmaster': hentTicketmasterEvents,
   'tikkio': hentTikkioEvents,
+  'billetto': hentBillettoEvents,
 };
 
 /**

@@ -85,4 +85,15 @@ export const SOURCES = [
     lat:     59.91552,
     lng:     10.7518,
   },
+  {
+    id:              'billetto-oslo',
+    adapter:         'billetto',
+    tokenEnv:        'BILLETTO_API_KEY', // adapteren sjekker selv at BILLETTO_API_SECRET også finnes
+    // subregion=Oslo — valgt etter live coverage-test (2026-10-20) av alle
+    // fire dokumenterte geofelt (postal_code/macroregion/region/subregion),
+    // se adapters/billetto.js. Viktig: API-et er domene-skopet (billetto.no
+    // = Norge), ikke land-skopet via parameter — ingen country_code finnes.
+    subregion:       'Oslo',
+    defaultKategori: 'pafunn',
+  },
 ];
