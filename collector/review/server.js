@@ -787,38 +787,27 @@ app.post('/api/manuell', async (req, res) => {
     return osloLokalTilISO(Number(år), Number(maned), Number(dag), Number(time), Number(min));
   };
 
-  // Bygg et råobjekt som normalize.js kan behandle på samme måte
-  // som events fra broadcast-adapteren.
+  // Kategori valgt i skjemaet → generiske categoryHints normalize.js kjenner
+  // (samme hint-vokabular som Broadcast/Ticketmaster/Tikkio-adapterne bruker).
+  const kategoriHints = {
+    musikk: ['concert'],
+    klubb: ['club'],
+    pafunn: ['other'],
+  };
+
+  // Bygg et external-event i det felles formatet normalize.js forventer
+  // etter multi-source-refaktoren (samme form som core/sync.js sine
+  // adaptere produserer) — IKKE det gamle Broadcast-spesifikke formatet.
   const råEvent = {
-    name: body.tittel,
-    start_time: tilOsloISO(body.start),
+    title: body.tittel,
+    description: body.beskrivelse ?? '',
 
-    details: body.beskrivelse ?? '',
-    tagsFlattened: '',
+    start: tilOsloISO(body.start),
+    end: tilOsloISO(body.slutt),
 
-    custom_fields: {
-      type:
-        body.kategori === 'klubb'
-          ? 'Club'
-          : 'Concert',
-
-      end_time: tilOsloISO(body.slutt),
-
-      freeEntry: pris === 0,
-
-      cover:
-        pris
-          ? String(pris)
-          : '',
-
-      ticketUrl: body.lenke ?? '',
-    },
-
-    place: {
+    venue: {
       name: body.sted,
-      address: body.adresse ?? '',
-      city: 'Oslo',
-      postal_code: '',
+      address: body.adresse ?? null,
 
       latitude:
         body.lat
@@ -831,27 +820,18 @@ app.post('/api/manuell', async (req, res) => {
           : null,
     },
 
-    imagekit:
-      body.bilde
-        ? { url: body.bilde }
-        : null,
-
-    _source: {
-      defaultKategori: body.kategori ?? 'musikk',
-
-      sted: body.sted,
-      adresse: body.adresse ?? null,
-
-      lat:
-        body.lat
-          ? Number(body.lat)
-          : null,
-
-      lng:
-        body.lng
-          ? Number(body.lng)
-          : null,
+    pricing: {
+      min: pris,
+      max: pris,
+      currency: 'NOK',
+      text: body.prisTekst ?? null,
     },
+
+    sourceUrl: body.lenke ?? null,
+    imageUrl: body.bilde ?? null,
+
+    defaultCategory: body.kategori ?? 'musikk',
+    categoryHints: kategoriHints[body.kategori] ?? [],
   };
 
   const event = normaliser(råEvent);
