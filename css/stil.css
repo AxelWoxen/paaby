@@ -1637,6 +1637,49 @@ body.modal-aapen {
   opacity: 0.85;
 }
 
+/* To likeverdige valg (Tillat/Nei takk) — samme størrelse/padding som
+   .samtykke-knapp, kun fargen skiller dem, se oppgavens DEL 5. */
+.samtykke-knapp-rad {
+  display: flex;
+  gap: var(--gap-s);
+  flex-shrink: 0;
+}
+
+.samtykke-knapp--sekundaer {
+  font-family: var(--font-tekst);
+  font-size: 0.8rem;
+  background: transparent;
+  color: var(--graa);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.3rem 1rem;
+  border-radius: var(--radius-s);
+  white-space: nowrap;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.samtykke-knapp--sekundaer:hover {
+  opacity: 0.85;
+}
+
+/* === PERSONVERN: STATISTIKK PÅ/AV === */
+
+.personvern-statistikk-knapp {
+  font-family: var(--font-tekst);
+  font-size: 0.85rem;
+  background: var(--aksent);
+  color: var(--aksent-kontrast);
+  padding: 0.4rem 1.1rem;
+  border-radius: var(--radius-s);
+  margin-top: var(--gap-s);
+}
+
+.personvern-statistikk-knapp[aria-pressed="false"] {
+  background: transparent;
+  color: var(--graa);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
 
 /* === SIDE-FOOTER === */
 

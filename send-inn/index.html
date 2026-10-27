@@ -36,11 +36,31 @@
   <link rel="stylesheet" href="/css/stil.css" />
   <link rel="stylesheet" href="/css/uke.css" />
 
-  <!-- Samme Umami-oppsett som index.html — trengs for at trackEvent()
-       (event_innsendt) faktisk skal nå frem herfra. -->
-  <script defer src="https://cloud.umami.is/script.js" data-website-id="da8bf02b-0671-4e3c-afb6-255a4afeb357"></script>
+  <!-- Samme Umami-oppsett/samtykke-gating som index.html — se kommentaren
+       der. Denne siden har ingen egen samtykke-stripe (samtykke gis på
+       forsiden), så Umami lastes her KUN hvis samtykke allerede er gitt. -->
   <script>
-    window.__paaby_track = (navn, data) => window.umami?.track(navn, data);
+    window.__paaby_track = function () {}; // no-op til (og hvis) Umami faktisk lastes
+
+    window.__paaby_lastUmami = function () {
+      if (window.__paaby_umamiLastet) return;
+      window.__paaby_umamiLastet = true;
+
+      const s = document.createElement('script');
+      s.defer = true;
+      s.src = 'https://cloud.umami.is/script.js';
+      s.setAttribute('data-website-id', 'da8bf02b-0671-4e3c-afb6-255a4afeb357');
+      s.addEventListener('load', () => {
+        window.__paaby_track = (navn, data) => window.umami?.track(navn, data);
+      });
+      document.head.appendChild(s);
+    };
+
+    try {
+      if (localStorage.getItem('paaby-samtykke') === 'ja') window.__paaby_lastUmami();
+    } catch {
+      /* localStorage utilgjengelig (f.eks. privat modus) — statistikk forblir av */
+    }
   </script>
 </head>
 <body>

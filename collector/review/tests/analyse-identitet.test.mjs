@@ -14,6 +14,7 @@ import {
   utledSesjonKontekst,
   hentEllerLagVisitorId,
   hentEllerLagSesjon,
+  fjernIdentitet,
 } from '../../../js/application/analyse-identitet.js';
 
 function lagFalskStorage(innhold = {}) {
@@ -128,6 +129,41 @@ test('hentEllerLagSesjon: roterer til ny session etter >30 min inaktivitet', () 
   assert.notEqual(andre.sessionId, forste.sessionId);
   assert.equal(andre.erNy, true);
 });
+
+/* ========================
+   fjernIdentitet (samtykke-tilbaketrekking)
+   ======================== */
+
+test('fjernIdentitet: fjerner BÅDE visitor-ID og session fra lagring', () => {
+  const storage = lagFalskStorage({
+    'paaby-analyse-id': 'fast-id-123',
+    'paaby-analyse-sesjon': JSON.stringify({ sessionId: 'sesjon-abc', sisteAktivitet: 1_000_000 }),
+  });
+
+  fjernIdentitet(storage);
+
+  assert.equal(storage.getItem('paaby-analyse-id'), null);
+  assert.equal(storage.getItem('paaby-analyse-sesjon'), null);
+});
+
+test('fjernIdentitet: neste hentEllerLagVisitorId()/hentEllerLagSesjon() etter tilbaketrekking gir en HELT NY, usammenhengende identitet', () => {
+  const storage = lagFalskStorage();
+  const gammelId = hentEllerLagVisitorId(storage);
+  const { sessionId: gammelSesjon } = hentEllerLagSesjon(storage, 1_000_000);
+
+  fjernIdentitet(storage);
+
+  const nyId = hentEllerLagVisitorId(storage);
+  const { sessionId: nySesjon, erNy } = hentEllerLagSesjon(storage, 1_000_000);
+  assert.notEqual(nyId, gammelId);
+  assert.notEqual(nySesjon, gammelSesjon);
+  assert.equal(erNy, true);
+});
+
+test('fjernIdentitet: tom lagring i utgangspunktet krasjer ikke', () => {
+  assert.doesNotThrow(() => fjernIdentitet(lagFalskStorage()));
+});
+
 
 test('hentEllerLagSesjon: aktivitet innen 30 min forlenger sesjonen fremover (glidende vindu)', () => {
   const storage = lagFalskStorage();

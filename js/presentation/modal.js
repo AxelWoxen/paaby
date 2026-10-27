@@ -156,6 +156,7 @@ function byggModalInnhold(event) {
     const følgKnapp = document.createElement('button');
     følgKnapp.className      = `følg-knapp${fulgtNå ? ' fulgt' : ''}`;
     følgKnapp.dataset.sted   = event.sted;
+    if (event.stedId) følgKnapp.dataset.stedId = event.stedId;
     følgKnapp.textContent    = fulgtNå ? 'følger ✓' : `+ følg ${event.sted}`;
     følgKnapp.setAttribute('aria-pressed', String(fulgtNå));
     stedRad.appendChild(følgKnapp);
@@ -348,14 +349,16 @@ function leggTilModalLyttere(event) {
   if (følgKnapp) {
     følgKnapp.addEventListener('click', () => {
       const sted       = følgKnapp.dataset.sted;
+      const venueId    = følgKnapp.dataset.stedId || null;
       const erNåFulgt  = veksleFulgt(sted);
       følgKnapp.classList.toggle('fulgt', erNåFulgt);
       følgKnapp.textContent = erNåFulgt ? 'følger ✓' : `+ følg ${sted}`;
       følgKnapp.setAttribute('aria-pressed', String(erNåFulgt));
 
-      /* Sporing: kun når man begynner å følge, ikke ved avfølging
-         (samme prinsipp som event_lagret over — track opt-in, ikke opt-out) */
-      if (erNåFulgt) trackEvent('sted_fulgt', { sted });
+      /* Sporing: både opt-in og opt-out er et reelt preferansesignal her
+         (i motsetning til event_lagret/event_fjernet_lagret, der kun
+         opt-in trackes) — se oppgavens DEL 3. */
+      trackEvent(erNåFulgt ? 'sted_fulgt' : 'sted_avfulgt', { sted, venueId });
     });
   }
 

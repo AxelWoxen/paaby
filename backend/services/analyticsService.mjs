@@ -13,6 +13,7 @@ import pool from '../db/pool.mjs';
 import {
   ANALYTICS_EVENT_NAVN,
   erGyldigAnalyticsEventNavn,
+  erGyldigSurface,
   utledBaseEventId,
 } from '../../js/application/analytics-events.js';
 
@@ -26,11 +27,38 @@ const MAKS_UTM_LENGDE = 100;
 const MAKS_REFERRER_HOST_LENGDE = 255;
 const MAKS_PAYLOAD_BYTES = 4096;
 
-// Eneste tillatte properties-nøkler — "filter_valgt" er i dag det eneste
-// event-navnet som faktisk har properties. Alt annet strippes stille, i
-// stedet for å avvise hele requesten (en avdatert klient skal ikke knekke).
-const TILLATTE_PROPERTY_NOKLER = new Set(['type', 'verdi']);
+// Tillatte properties-nøkler PR. event-navn — et bevisst begrenset sett,
+// ikke fritekst-JSON (se oppgavens DEL 2/8). Ukjente nøkler for et gitt
+// event-navn strippes stille, i stedet for å avvise hele requesten (en
+// avdatert klient skal ikke knekke).
 const MAKS_PROPERTY_VERDI_LENGDE = 60;
+const MAKS_IMPRESSION_POSITION = 1000;
+const MAKS_STED_LENGDE = 120;
+
+function erGyldigPosition(verdi) {
+  return typeof verdi === 'number' && Number.isInteger(verdi) && verdi >= 1 && verdi <= MAKS_IMPRESSION_POSITION;
+}
+
+// @returns {verdi: unknown} | null  — null betyr "dropp denne nøkkelen"
+const PROPERTY_VALIDATORER = {
+  filter_valgt: {
+    type: (v) => (typeof v === 'string' ? String(v).slice(0, MAKS_PROPERTY_VERDI_LENGDE) : null),
+    verdi: (v) => (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
+      ? String(v).slice(0, MAKS_PROPERTY_VERDI_LENGDE) : null),
+  },
+  event_impression: {
+    surface: (v) => (erGyldigSurface(v) ? v : null),
+    position: (v) => (erGyldigPosition(v) ? v : null),
+  },
+  sted_fulgt: {
+    sted: (v) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, MAKS_STED_LENGDE) : null),
+    venueId: (v) => (erGyldigUuid(v) ? v : null),
+  },
+  sted_avfulgt: {
+    sted: (v) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, MAKS_STED_LENGDE) : null),
+    venueId: (v) => (erGyldigUuid(v) ? v : null),
+  },
+};
 
 function erGyldigUuid(verdi) {
   return typeof verdi === 'string' && UUID_REGEX.test(verdi);
@@ -51,14 +79,19 @@ function forStorPayload(body) {
   }
 }
 
-function rensProperties(properties) {
+function rensProperties(properties, eventName) {
   if (!properties || typeof properties !== 'object' || Array.isArray(properties)) return {};
+
+  const validatorer = PROPERTY_VALIDATORER[eventName];
+  if (!validatorer) return {};
 
   const renset = {};
   for (const [nokkel, verdi] of Object.entries(properties)) {
-    if (!TILLATTE_PROPERTY_NOKLER.has(nokkel)) continue;
-    if (typeof verdi !== 'string' && typeof verdi !== 'number' && typeof verdi !== 'boolean') continue;
-    renset[nokkel] = String(verdi).slice(0, MAKS_PROPERTY_VERDI_LENGDE);
+    const valider = validatorer[nokkel];
+    if (!valider) continue;
+    const gyldigVerdi = valider(verdi);
+    if (gyldigVerdi === null) continue;
+    renset[nokkel] = gyldigVerdi;
   }
   return renset;
 }
@@ -105,7 +138,7 @@ export function validerEventBody(body) {
     eventName: event_name,
     eventId: tekstEllerNull(event_id, MAKS_EVENT_ID_LENGDE),
     category: tekstEllerNull(category, MAKS_CATEGORY_LENGDE),
-    properties: rensProperties(properties),
+    properties: rensProperties(properties, event_name),
   };
 }
 
@@ -179,6 +212,40 @@ export async function registrerSession({ visitorId, sessionId, platform, utmSour
 // aldri på svaret (fire-and-forget), så dette er kun til logging/tester.
 export class UkjentSessionError extends Error {}
 
+// Slår opp Påbys INTERNE, stabile UUID-er for et analytics-event — ALDRI
+// stolt blindt på klienten (samme prinsipp som base_event_id/utledBaseEventId).
+// Lar historiske analytics-rader overleve endring av legacy_id/slug, merges
+// og fremtidig entity resolution (se 010_analytics_stable_ids.sql).
+//
+// occurrence_uuid settes KUN når eventId er eventets EGEN (ikke-gjentakende)
+// forekomst — eventId === baseEventId, altså uten "__YYYY-MM-DD"-suffiks.
+// Gjentakende eventers dato-spesifikke visninger er syntetiske (generert i
+// js/application/gjentas.js) og har ingen egen event_occurrences-rad å peke
+// på. Én events-rad har i dag alltid nøyaktig én event_occurrences-rad (se
+// collector/store/published.js), så oppslaget under er trygt uten videre
+// disambiguering.
+async function slåOppStabileIder(client, eventId, baseEventId) {
+  if (!baseEventId) return { eventUuid: null, occurrenceUuid: null };
+
+  const { rows } = await client.query(
+    `
+      SELECT e.id AS event_uuid, o.id AS occurrence_uuid
+      FROM events e
+      LEFT JOIN event_occurrences o ON o.event_id = e.id
+      WHERE e.legacy_id = $1
+      LIMIT 1
+    `,
+    [baseEventId],
+  );
+  if (rows.length === 0) return { eventUuid: null, occurrenceUuid: null };
+
+  const erEgenForekomst = eventId === baseEventId;
+  return {
+    eventUuid: rows[0].event_uuid,
+    occurrenceUuid: erEgenForekomst ? rows[0].occurrence_uuid : null,
+  };
+}
+
 export async function registrerEvent({ visitorId, sessionId, eventName, eventId, category, properties }) {
   const client = await pool.connect();
   try {
@@ -194,15 +261,17 @@ export async function registrerEvent({ visitorId, sessionId, eventName, eventId,
     }
 
     const baseEventId = eventId ? utledBaseEventId(eventId) : null;
+    const { eventUuid, occurrenceUuid } = await slåOppStabileIder(client, eventId, baseEventId);
 
     await client.query(
       `
         INSERT INTO analytics_events (
-          visitor_id, session_id, event_name, event_id, base_event_id, category, properties, created_at
+          visitor_id, session_id, event_name, event_id, base_event_id, category, properties,
+          event_uuid, occurrence_uuid, created_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
       `,
-      [visitorId, sessionId, eventName, eventId, baseEventId, category, JSON.stringify(properties ?? {})],
+      [visitorId, sessionId, eventName, eventId, baseEventId, category, JSON.stringify(properties ?? {}), eventUuid, occurrenceUuid],
     );
 
     // Saved-state er STATE, ikke eventlogg — holdes i sync i samme

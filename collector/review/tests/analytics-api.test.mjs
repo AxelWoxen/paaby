@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import crypto from 'node:crypto';
 
 import pool from '../../../backend/db/pool.mjs';
+import { publiserEvent } from '../../store/published.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = 3913; // egen testport — kolliderer ikke med de andre test-serverne
@@ -22,6 +23,7 @@ const BASE = `http://localhost:${PORT}`;
 
 let serverProsess;
 const opprettedeVisitorIder = [];
+const opprettedeEventIder = [];
 
 before(async () => {
   serverProsess = spawn('node', [path.join(__dirname, '../../../backend/server.mjs')], {
@@ -49,6 +51,9 @@ after(async () => {
     await pool.query(`DELETE FROM analytics_events WHERE visitor_id = ANY($1)`, [opprettedeVisitorIder]);
     await pool.query(`DELETE FROM analytics_sessions WHERE visitor_id = ANY($1)`, [opprettedeVisitorIder]);
     await pool.query(`DELETE FROM analytics_visitors WHERE visitor_id = ANY($1)`, [opprettedeVisitorIder]);
+  }
+  if (opprettedeEventIder.length > 0) {
+    await pool.query(`DELETE FROM events WHERE id = ANY($1)`, [opprettedeEventIder]);
   }
 });
 
@@ -208,4 +213,196 @@ test('filter_valgt: kun properties-nøklene type/verdi beholdes, andre nøkler s
 
   const { rows } = await pool.query(`SELECT properties FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
   assert.deepEqual(rows[0].properties, { type: 'kategori', verdi: 'musikk' });
+});
+
+
+// ─── event_impression ──────────────────────────────────────────────────────
+
+test('event_impression er et gyldig first-party event, og lagres med gyldige surface/position-properties', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+
+  const res = await post('/api/analytics/event', {
+    visitor_id: visitorId,
+    session_id: sessionId,
+    event_name: 'event_impression',
+    event_id: `impresjon-test-${crypto.randomUUID()}`,
+    category: 'musikk',
+    properties: { surface: 'utforsk', position: 3 },
+  });
+  assert.equal(res.status, 200);
+
+  const { rows } = await pool.query(
+    `SELECT event_name, properties FROM analytics_events WHERE visitor_id = $1`,
+    [visitorId],
+  );
+  assert.equal(rows[0].event_name, 'event_impression');
+  assert.deepEqual(rows[0].properties, { surface: 'utforsk', position: 3 });
+});
+
+test('event_impression: ugyldig surface/position strippes (lagres aldri), men selve eventet avvises ikke', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+
+  const res = await post('/api/analytics/event', {
+    visitor_id: visitorId,
+    session_id: sessionId,
+    event_name: 'event_impression',
+    event_id: `impresjon-test-${crypto.randomUUID()}`,
+    properties: { surface: 'ukjent-flate', position: -5, ekstra_felt: 'skal-bort' },
+  });
+  assert.equal(res.status, 200);
+
+  const { rows } = await pool.query(`SELECT properties FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.deepEqual(rows[0].properties, {});
+});
+
+test('event_impression: filter_valgt sine nøkler (type/verdi) godtas ikke som impression-properties', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+
+  await post('/api/analytics/event', {
+    visitor_id: visitorId,
+    session_id: sessionId,
+    event_name: 'event_impression',
+    event_id: `impresjon-test-${crypto.randomUUID()}`,
+    properties: { type: 'kategori', verdi: 'musikk' },
+  });
+
+  const { rows } = await pool.query(`SELECT properties FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.deepEqual(rows[0].properties, {});
+});
+
+
+// ─── sted_fulgt / sted_avfulgt ──────────────────────────────────────────────
+
+test('sted_fulgt og sted_avfulgt er gyldige first-party events, og lagres med sted+venueId', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+  const venueId = crypto.randomUUID();
+
+  const fulgtRes = await post('/api/analytics/event', {
+    visitor_id: visitorId,
+    session_id: sessionId,
+    event_name: 'sted_fulgt',
+    properties: { sted: 'BLÅ', venueId },
+  });
+  assert.equal(fulgtRes.status, 200);
+
+  const avfulgtRes = await post('/api/analytics/event', {
+    visitor_id: visitorId,
+    session_id: sessionId,
+    event_name: 'sted_avfulgt',
+    properties: { sted: 'BLÅ', venueId },
+  });
+  assert.equal(avfulgtRes.status, 200);
+
+  const { rows } = await pool.query(
+    `SELECT event_name, properties FROM analytics_events WHERE visitor_id = $1 ORDER BY id`,
+    [visitorId],
+  );
+  assert.equal(rows.length, 2);
+  assert.equal(rows[0].event_name, 'sted_fulgt');
+  assert.deepEqual(rows[0].properties, { sted: 'BLÅ', venueId });
+  assert.equal(rows[1].event_name, 'sted_avfulgt');
+  assert.deepEqual(rows[1].properties, { sted: 'BLÅ', venueId });
+});
+
+test('sted_fulgt: ugyldig venueId (ikke en UUID) strippes, men sted beholdes', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+
+  await post('/api/analytics/event', {
+    visitor_id: visitorId,
+    session_id: sessionId,
+    event_name: 'sted_fulgt',
+    properties: { sted: 'Rockefeller', venueId: 'ikke-en-uuid' },
+  });
+
+  const { rows } = await pool.query(`SELECT properties FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.deepEqual(rows[0].properties, { sted: 'Rockefeller' });
+});
+
+
+// ─── Stabile event_uuid/occurrence_uuid ─────────────────────────────────────
+
+async function lagPublisertTestEvent(tittel) {
+  const eventId = await publiserEvent({
+    id: `analytics-uuid-test-${crypto.randomUUID()}`,
+    tittel,
+    kategori: 'pafunn',
+    sted: 'Analytics-testscenen',
+    adresse: 'Testgate 1',
+    lat: 59.9, lng: 10.7,
+    start: '2026-12-11T20:00:00+01:00',
+    slutt: null,
+    pris: 100,
+    prisTekst: '100 kr',
+    beskrivelse: 'Test',
+    lenke: `https://eksempel.no/${crypto.randomUUID()}`,
+    bilde: null,
+    tags: [],
+  }, {});
+  opprettedeEventIder.push(eventId);
+  return eventId;
+}
+
+test('stable UUID: kort_åpnet på eventets egen (ikke-gjentakende) forekomst setter BÅDE event_uuid og occurrence_uuid', async () => {
+  const eventUuid = await lagPublisertTestEvent('UUID-test ikke-gjentakende');
+  const { rows: legacyRad } = await pool.query(`SELECT legacy_id FROM events WHERE id = $1`, [eventUuid]);
+  const legacyId = legacyRad[0].legacy_id;
+  const { rows: occRad } = await pool.query(`SELECT id FROM event_occurrences WHERE event_id = $1`, [eventUuid]);
+  const occurrenceUuid = occRad[0].id;
+
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+
+  await post('/api/analytics/event', {
+    visitor_id: visitorId, session_id: sessionId, event_name: 'kort_åpnet', event_id: legacyId,
+  });
+
+  const { rows } = await pool.query(`SELECT event_uuid, occurrence_uuid FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.equal(rows[0].event_uuid, eventUuid);
+  assert.equal(rows[0].occurrence_uuid, occurrenceUuid);
+});
+
+test('stable UUID: en syntetisk gjentakelses-forekomst ("__YYYY-MM-DD") setter event_uuid, men IKKE occurrence_uuid', async () => {
+  const eventUuid = await lagPublisertTestEvent('UUID-test gjentakende');
+  const { rows: legacyRad } = await pool.query(`SELECT legacy_id FROM events WHERE id = $1`, [eventUuid]);
+  const legacyId = legacyRad[0].legacy_id;
+  const syntetiskEventId = `${legacyId}__2026-12-18`;
+
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+
+  await post('/api/analytics/event', {
+    visitor_id: visitorId, session_id: sessionId, event_name: 'kort_åpnet', event_id: syntetiskEventId,
+  });
+
+  const { rows } = await pool.query(`SELECT event_uuid, occurrence_uuid, base_event_id FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.equal(rows[0].base_event_id, legacyId);
+  assert.equal(rows[0].event_uuid, eventUuid);
+  assert.equal(rows[0].occurrence_uuid, null);
+});
+
+test('stable UUID: ukjent event_id (finnes ikke i events) gir null for begge, krasjer ikke', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+
+  const res = await post('/api/analytics/event', {
+    visitor_id: visitorId, session_id: sessionId, event_name: 'kort_åpnet', event_id: `finnes-ikke-${crypto.randomUUID()}`,
+  });
+  assert.equal(res.status, 200);
+
+  const { rows } = await pool.query(`SELECT event_uuid, occurrence_uuid FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.equal(rows[0].event_uuid, null);
+  assert.equal(rows[0].occurrence_uuid, null);
 });

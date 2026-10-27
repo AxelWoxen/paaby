@@ -115,3 +115,19 @@ export function hentEllerLagSesjon(storage = window.localStorage, naa = Date.now
   skrivJson(storage, SESJON_NOKKEL, { sessionId, sisteAktivitet: naa });
   return { sessionId, erNy: true };
 }
+
+/**
+ * Sletter den lokale visitor-/session-identiteten. Kalles ved
+ * tilbaketrekking av samtykke (personvernsiden) — gjør FØLGENDE besøk
+ * usammenhengende med tidligere besøk, akkurat som hvis brukeren hadde
+ * slettet nettleserdataene sine (se personvern/index.html). Rører ALDRI
+ * historiske serverrader — kun lokal identitet.
+ */
+export function fjernIdentitet(storage = window.localStorage) {
+  try {
+    storage.removeItem(VISITOR_NOKKEL);
+    storage.removeItem(SESJON_NOKKEL);
+  } catch {
+    /* se skrivJson over */
+  }
+}

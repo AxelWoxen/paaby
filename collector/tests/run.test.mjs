@@ -304,3 +304,62 @@ test('to events med samme tittel/dato/sted i SAMME kjøring (ingen forhåndslast
   const [ref1, ref2] = refRader.rows;
   assert.notEqual(ref1.candidate_id, ref2.candidate_id); // hver ref peker på SIN EGEN candidate
 });
+
+
+// ─── event_source_changes (source change history) ──────────────────────────
+// Se 011_event_source_changes.sql — denne historikken må IKKE påvirke
+// CHANGED-policyen selv (dekket av CHANGED-testen over, som fortsatt passerer
+// uendret med disse endringene).
+
+test('event_source_changes: UNCHANGED skriver ingen historikkrad', async () => {
+  const external = lagExternal({ title: 'Testhendelse HISTORIKK UENDRET', externalId: 'ext-history-unchanged' });
+  const paaby = normaliser(external);
+  opprettedeLegacyIder.push(paaby.id);
+
+  await behandleEvent(external, paaby, { avslåtteIder: new Set(), eksisterende: [], tellere: tomTellere() });
+  await behandleEvent(external, paaby, { avslåtteIder: new Set(), eksisterende: [], tellere: tomTellere() }); // UNCHANGED
+
+  const refRad = await pool.query(
+    `SELECT id FROM event_sources WHERE provider = $1 AND external_id = $2`,
+    [PROVIDER, 'ext-history-unchanged'],
+  );
+  const historikk = await pool.query(`SELECT * FROM event_source_changes WHERE event_source_id = $1`, [refRad.rows[0].id]);
+  assert.equal(historikk.rowCount, 0);
+});
+
+test('event_source_changes: CHANGED skriver ÉN historikkrad med riktig changed_fields — samme uløste endring logges IKKE på nytt, men en NY endring gir en ny rad', async () => {
+  const external1 = lagExternal({ title: 'Testhendelse HISTORIKK ENDRET', externalId: 'ext-history-changed', start: '2026-12-08T20:00:00+01:00' });
+  const paaby1 = normaliser(external1);
+  opprettedeLegacyIder.push(paaby1.id);
+  await behandleEvent(external1, paaby1, { avslåtteIder: new Set(), eksisterende: [], tellere: tomTellere() });
+
+  const external2 = lagExternal({ title: 'Testhendelse HISTORIKK ENDRET', externalId: 'ext-history-changed', start: '2026-12-09T21:00:00+01:00' });
+  const paaby2 = normaliser(external2);
+  opprettedeLegacyIder.push(paaby2.id);
+  await behandleEvent(external2, paaby2, { avslåtteIder: new Set(), eksisterende: [], tellere: tomTellere() }); // CHANGED #1
+
+  const refRad = await pool.query(
+    `SELECT id FROM event_sources WHERE provider = $1 AND external_id = $2`,
+    [PROVIDER, 'ext-history-changed'],
+  );
+  let historikk = await pool.query(`SELECT * FROM event_source_changes WHERE event_source_id = $1`, [refRad.rows[0].id]);
+  assert.equal(historikk.rowCount, 1);
+  assert.ok(historikk.rows[0].changed_fields.includes('start'));
+
+  // Samme (fortsatt uløste) endring observert på nytt (f.eks. neste dags
+  // kjøring, ingen har håndtert den) — skal IKKE logge en ny rad.
+  await behandleEvent(external2, paaby2, { avslåtteIder: new Set(), eksisterende: [], tellere: tomTellere() }); // CHANGED #2, samme hash
+  historikk = await pool.query(`SELECT * FROM event_source_changes WHERE event_source_id = $1`, [refRad.rows[0].id]);
+  assert.equal(historikk.rowCount, 1); // fortsatt bare én rad
+
+  // Kilden endrer seg IGJEN (ny hash) — nå skal det logges en ANDRE rad.
+  const external3 = lagExternal({ title: 'Testhendelse HISTORIKK ENDRET', externalId: 'ext-history-changed', start: '2026-12-10T22:00:00+01:00' });
+  const paaby3 = normaliser(external3);
+  opprettedeLegacyIder.push(paaby3.id);
+  await behandleEvent(external3, paaby3, { avslåtteIder: new Set(), eksisterende: [], tellere: tomTellere() });
+  historikk = await pool.query(
+    `SELECT * FROM event_source_changes WHERE event_source_id = $1 ORDER BY observed_at`,
+    [refRad.rows[0].id],
+  );
+  assert.equal(historikk.rowCount, 2);
+});

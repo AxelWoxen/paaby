@@ -77,6 +77,7 @@ function lagUtvalgKort(event) {
 
   const el = document.createElement('article');
   el.className = `utvalg-kort${utgattIDag ? ' utvalg-kort--utgatt' : ''}`;
+  el.dataset.id = event.id;
   el.dataset.kategori = event.kategori;
   el.setAttribute('role', 'button');
   el.setAttribute('tabindex', '0');

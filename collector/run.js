@@ -15,8 +15,8 @@ import { SOURCES }       from './config/sources.js';
 import { hentFraKilde }  from './adapters/index.js';
 import { normaliser }    from './normalize.js';
 import { dedupliser }    from './dedupe.js';
-import { contentHash }   from './core/hash.js';
-import { avgjorHandling, finnEksisterendeMatch } from './core/sync.js';
+import { contentHash, snapshotFelter } from './core/hash.js';
+import { avgjorHandling, finnEksisterendeMatch, diffSnapshots } from './core/sync.js';
 import {
   lesCandidates,
   leggTilCandidates,
@@ -26,6 +26,9 @@ import { lesPubliserte } from './store/published.js';
 import {
   finnRef,
   oppdaterSett,
+  oppdaterEndretObservasjon,
+  finnSisteLoggetHash,
+  loggKildeEndring,
   opprettRefTilEksisterende,
   opprettCandidateOgRef,
 } from './store/external-event-refs.js';
@@ -89,14 +92,33 @@ export async function behandleEvent(external, paaby, { avslåtteIder, eksisteren
 
   if (handling === 'CHANGED') {
     // Bevisst: content_hash på selve ref-raden oppdateres IKKE her — kun
-    // last_seen_at/source_status/source_updated_at. Hvis vi flyttet den
-    // lagrede hashen hit, ville neste kjøring tro eventet var UNCHANGED, og
-    // vi ville mistet kunnskapen om at kilde-data og Påby-data er ulike.
-    // Candidate/publisert event røres IKKE automatisk — kun logget, til vi
-    // ev. bygger en egen review-flyt for source-endringer.
-    await oppdaterSett(ref.id, {
+    // last_seen_at/source_status/source_updated_at/content_snapshot. Hvis vi
+    // flyttet den lagrede hashen hit, ville neste kjøring tro eventet var
+    // UNCHANGED, og vi ville mistet kunnskapen om at kilde-data og
+    // Påby-data er ulike. Candidate/publisert event røres IKKE automatisk —
+    // kun logget, til vi ev. bygger en egen review-flyt for source-endringer.
+    const nySnapshot = snapshotFelter(external);
+
+    // Dedupe mot SIST LOGGEDE hash (ikke mot den opprinnelig frosne
+    // content_hash) — en uløst CHANGED skal kun logges ÉN gang, ikke på
+    // nytt hver kjøring så lenge ingen har håndtert den (se
+    // external-event-refs.js:finnSisteLoggetHash).
+    const sisteLoggetHash = await finnSisteLoggetHash(ref.id);
+    if (sisteLoggetHash !== hash) {
+      const { changedFields, diff } = diffSnapshots(ref.content_snapshot, nySnapshot);
+      await loggKildeEndring({
+        eventSourceId: ref.id,
+        previousContentHash: sisteLoggetHash ?? ref.content_hash,
+        observedContentHash: hash,
+        changedFields,
+        diff,
+      });
+    }
+
+    await oppdaterEndretObservasjon(ref.id, {
       sourceStatus: external.sourceStatus,
       sourceUpdatedAt: external.sourceUpdatedAt,
+      contentSnapshot: nySnapshot,
     });
     console.log(`  [ENDRET] ${external.provider}:${external.externalId} — «${paaby.tittel}» har endret seg hos kilden`);
     tellere.endret++;
@@ -128,6 +150,7 @@ export async function behandleEvent(external, paaby, { avslåtteIder, eksisteren
       sourceStatus: external.sourceStatus,
       sourceUpdatedAt: external.sourceUpdatedAt,
       contentHash: hash,
+      contentSnapshot: snapshotFelter(external),
       candidateId: match.match._erCandidate ? match.match._dbId : null,
       publishedEventId: match.match._erCandidate ? null : match.match._dbId,
     });
@@ -162,6 +185,7 @@ export async function behandleEvent(external, paaby, { avslåtteIder, eksisteren
     sourceStatus: external.sourceStatus,
     sourceUpdatedAt: external.sourceUpdatedAt,
     contentHash: hash,
+    contentSnapshot: snapshotFelter(external),
   });
 
   if (lagtTil) {

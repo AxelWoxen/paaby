@@ -20,6 +20,7 @@ import { sendSesjon, sendHendelse, sendLagredeSync } from './network/analytics-a
 import { velgUtvalg, visForside, initSeAlt,
          visSkeletonUtvalg }                       from './presentation/forside.js';
 import { utvidGjentakende }                        from './application/gjentas.js';
+import { observerImpresjoner }                      from './application/impresjoner.js';
 import { visFølgerVisning }                        from './presentation/følger.js';
 import { ukeMandag, ukeVindu,
          filtrerTilUke, ukeLabel }                 from './application/uke.js';
@@ -70,6 +71,7 @@ function oppdaterFeed() {
   if (tilstand.visFølger) {
     const { mandag, ukensEventer } = hentUkensAktiveEventer();
     visFølgerVisning(ukensEventer, oppdaterFeed);
+    observerImpresjoner([...document.querySelectorAll('#feed .kort')], 'følger');
     oppdaterUkeNav(mandag);
     oppdaterTreffLinje(0);
     return;
@@ -131,6 +133,7 @@ function oppdaterFeed() {
   }
 
   visEventer(dagGrupper, tomMelding);
+  observerImpresjoner([...document.querySelectorAll('#feed .kort')], tilstand.visLagret ? 'lagret' : 'utforsk');
   oppdaterTreffLinje(sorterte.length);
 }
 
@@ -628,13 +631,22 @@ function analyseSink(navn, data) {
 
   if (!erGyldigAnalyticsEventNavn(navn)) return;
 
+  let properties = {};
+  if (navn === 'filter_valgt') {
+    properties = { type: data?.type, verdi: data?.verdi };
+  } else if (navn === 'event_impression') {
+    properties = { surface: data?.surface, position: data?.position };
+  } else if (navn === 'sted_fulgt' || navn === 'sted_avfulgt') {
+    properties = { sted: data?.sted, venueId: data?.venueId };
+  }
+
   sendHendelse({
     visitorId: analyseVisitorId,
     sessionId,
     eventName: navn,
     eventId: data?.id ?? null,
     category: data?.kategori ?? null,
-    properties: navn === 'filter_valgt' ? { type: data?.type, verdi: data?.verdi } : {},
+    properties,
   });
 }
 
@@ -660,21 +672,31 @@ function initAnalyse() {
 }
 
 function initSamtykke() {
-  if (localStorage.getItem('paaby-samtykke') === 'ja') {
+  const svarAlleredeGitt = localStorage.getItem('paaby-samtykke');
+
+  if (svarAlleredeGitt === 'ja') {
     aktiverSporing();
     initAnalyse();
     return;
   }
+  if (svarAlleredeGitt === 'nei') return; // allerede besvart "nei takk" — ingen stripe, ingen sporing
 
   const stripe = document.getElementById('samtykke-stripe');
   if (!stripe) return;
   stripe.classList.remove('skjult');
 
-  document.getElementById('samtykke-ok').addEventListener('click', () => {
+  document.getElementById('samtykke-ja').addEventListener('click', () => {
     localStorage.setItem('paaby-samtykke', 'ja');
     stripe.classList.add('skjult');
+    window.__paaby_lastUmami?.();
     aktiverSporing();
     initAnalyse();
+  }, { once: true });
+
+  document.getElementById('samtykke-nei').addEventListener('click', () => {
+    localStorage.setItem('paaby-samtykke', 'nei');
+    stripe.classList.add('skjult');
+    // Ingen Umami, ingen visitor_id, ingen first-party-sporing — se DEL 5.
   }, { once: true });
 }
 
@@ -722,6 +744,7 @@ async function lastInnEventer() {
   try {
     tilstand.alleEventer = utvidGjentakende(await hentEventer());
     visForside(velgUtvalg(tilstand.alleEventer));
+    observerImpresjoner([...document.querySelectorAll('#forside-utvalg .utvalg-kort')], 'forside');
     oppdaterFeed();
     håndterHash();
   } catch (feil) {

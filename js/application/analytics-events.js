@@ -19,12 +19,27 @@ export const ANALYTICS_EVENT_NAVN = [
   'filter_valgt',
   'uke_neste',
   'avstand_aktivert',
+  'event_impression',
+  'sted_fulgt',
+  'sted_avfulgt',
 ];
 
 const GYLDIGE_EVENT_NAVN = new Set(ANALYTICS_EVENT_NAVN);
 
 export function erGyldigAnalyticsEventNavn(navn) {
   return typeof navn === 'string' && GYLDIGE_EVENT_NAVN.has(navn);
+}
+
+/* Produktflater en event_impression kan måles i — se js/application/impresjoner.js.
+   Bevisst fast, lite sett (DEL 1 i oppgavebeskrivelsen): legg ALDRI til en
+   flate her som ikke allerede finnes i produktet (main.js sin bunnnav-logikk
+   har de samme fire navnene). */
+export const GYLDIGE_SURFACES = ['forside', 'utforsk', 'lagret', 'følger'];
+
+const SURFACE_SETT = new Set(GYLDIGE_SURFACES);
+
+export function erGyldigSurface(verdi) {
+  return typeof verdi === 'string' && SURFACE_SETT.has(verdi);
 }
 
 /* Gjentakende events får en occurrence-ID på formen "<base-id>__YYYY-MM-DD"

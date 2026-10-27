@@ -9,6 +9,7 @@ import { lagKort, leggTilKortLyttere }        from './feed.js';
 import { hentFulgteSteder, sluttÅFølge,
          normaliserSted }                      from '../application/fulgte-steder.js';
 import { sorterEventer }                       from '../application/sortering.js';
+import { trackEvent }                          from '../application/sporing.js';
 
 /**
  * Rendrer følger-visningen inn i #feed.
@@ -57,6 +58,13 @@ export function visFølgerVisning(ukensEventer, onAvfølg) {
     avfølgKnapp.className      = 'avfølg-knapp';
     avfølgKnapp.textContent    = 'slutt å følge';
     avfølgKnapp.dataset.sted   = stedsnavn;
+
+    /* Beste innsats: venue-UUID finnes kun hvis stedet har minst ett event
+       denne uka å slå opp mot — ellers faller sporingen tilbake til navnet
+       alene (se trackEvent-kallet under). */
+    const kampEvent = ukensEventer.find((e) => normaliserSted(e.sted || '') === normaliserSted(stedsnavn));
+    if (kampEvent?.stedId) avfølgKnapp.dataset.stedId = kampEvent.stedId;
+
     header.appendChild(avfølgKnapp);
 
     seksjon.appendChild(header);
@@ -93,6 +101,7 @@ export function visFølgerVisning(ukensEventer, onAvfølg) {
   feed.querySelectorAll('.avfølg-knapp').forEach((knapp) => {
     knapp.addEventListener('click', () => {
       sluttÅFølge(knapp.dataset.sted);
+      trackEvent('sted_avfulgt', { sted: knapp.dataset.sted, venueId: knapp.dataset.stedId || null });
       onAvfølg();
     });
   });

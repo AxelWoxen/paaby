@@ -83,6 +83,9 @@ async function hentSummaryTall(start, slutt) {
           WHERE started_at BETWEEN $1 AND $2) AS sessions,
 
         (SELECT COUNT(DISTINCT visitor_id) FROM analytics_events
+          WHERE event_name = 'event_impression' AND created_at BETWEEN $1 AND $2) AS impresjoner,
+
+        (SELECT COUNT(DISTINCT visitor_id) FROM analytics_events
           WHERE event_name = 'kort_åpnet' AND created_at BETWEEN $1 AND $2) AS eventaapnere,
 
         (SELECT COUNT(DISTINCT visitor_id) FROM analytics_events
@@ -103,6 +106,7 @@ async function hentSummaryTall(start, slutt) {
     nyeBrukere: Number(r.nye_brukere),
     tilbakevendende: Number(r.tilbakevendende),
     sessions: Number(r.sessions),
+    impresjoner: Number(r.impresjoner),
     eventaapnere: Number(r.eventaapnere),
     lagrere: Number(r.lagrere),
     videreklikk: Number(r.videreklikk),
@@ -135,6 +139,7 @@ async function hentSummary(perioder) {
     nyeBrukere: byggKpi('Nye brukere', naTall.nyeBrukere, f.nyeBrukere ?? null),
     tilbakevendende: byggKpi('Tilbakevendende brukere', naTall.tilbakevendende, f.tilbakevendende ?? null),
     sessions: byggKpi('Besøk / sessions', naTall.sessions, f.sessions ?? null),
+    impresjoner: byggKpi('Impresjoner (fikk vist minst ett event)', naTall.impresjoner, f.impresjoner ?? null),
     eventaapnere: byggKpi('Eventåpnere', naTall.eventaapnere, f.eventaapnere ?? null),
     lagrere: byggKpi('Lagrere', naTall.lagrere, f.lagrere ?? null),
     harLagretNa: { navn: 'Har lagret nå', verdi: harLagretNa, forrigeVerdi: null, endringPct: null },
@@ -148,6 +153,7 @@ async function hentSummary(perioder) {
 function byggFunnel(naTall) {
   const steg = [
     { navn: 'Besøk', antall: naTall.unikeBrukere },
+    { navn: 'Fikk vist minst ett event', antall: naTall.impresjoner },
     { navn: 'Åpnet minst ett event', antall: naTall.eventaapnere },
     { navn: 'Lagret minst ett event', antall: naTall.lagrere },
     { navn: 'Klikket videre til arrangør/billett', antall: naTall.videreklikk },
@@ -239,6 +245,7 @@ async function hentTopEvents(periodeStart, periodeSlutt) {
       WITH perioden AS (
         SELECT
           base_event_id,
+          COUNT(DISTINCT visitor_id) FILTER (WHERE event_name = 'event_impression') AS impresjoner,
           COUNT(DISTINCT visitor_id) FILTER (WHERE event_name = 'kort_åpnet') AS aapnere,
           COUNT(DISTINCT visitor_id) FILTER (WHERE event_name = 'event_lagret') AS lagrere,
           COUNT(DISTINCT visitor_id) FILTER (WHERE event_name = 'mer_info_klikket') AS videreklikk,
@@ -259,7 +266,7 @@ async function hentTopEvents(periodeStart, periodeSlutt) {
         e.title AS tittel,
         v.name AS sted,
         (SELECT category_slug FROM event_categories WHERE event_id = e.id LIMIT 1) AS kategori,
-        p.aapnere, p.lagrere, p.videreklikk, p.delinger,
+        p.impresjoner, p.aapnere, p.lagrere, p.videreklikk, p.delinger,
         COALESCE(a.aktive_lagringer, 0) AS aktive_lagringer_na
       FROM perioden p
       LEFT JOIN events e ON e.legacy_id = p.base_event_id
@@ -276,11 +283,13 @@ async function hentTopEvents(periodeStart, periodeSlutt) {
     tittel: r.tittel ?? '(ukjent — eventet er ikke i databasen)',
     sted: r.sted,
     kategori: r.kategori,
+    impresjoner: Number(r.impresjoner),
     aapnere: Number(r.aapnere),
     lagrere: Number(r.lagrere),
     videreklikk: Number(r.videreklikk),
     delinger: Number(r.delinger),
     aktiveLagringerNa: Number(r.aktive_lagringer_na),
+    impresjonTilAapningPct: rate(Number(r.aapnere), Number(r.impresjoner)),
     aapningTilLagringPct: rate(Number(r.lagrere), Number(r.aapnere)),
     aapningTilVidereklikkPct: rate(Number(r.videreklikk), Number(r.aapnere)),
   }));

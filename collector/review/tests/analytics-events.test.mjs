@@ -9,10 +9,11 @@ import assert from 'node:assert/strict';
 import {
   ANALYTICS_EVENT_NAVN,
   erGyldigAnalyticsEventNavn,
+  erGyldigSurface,
   utledBaseEventId,
 } from '../../../js/application/analytics-events.js';
 
-test('ANALYTICS_EVENT_NAVN har nøyaktig de 8 definerte hendelsene', () => {
+test('ANALYTICS_EVENT_NAVN har nøyaktig de 11 definerte hendelsene', () => {
   assert.deepEqual(ANALYTICS_EVENT_NAVN, [
     'kort_åpnet',
     'event_lagret',
@@ -22,7 +23,26 @@ test('ANALYTICS_EVENT_NAVN har nøyaktig de 8 definerte hendelsene', () => {
     'filter_valgt',
     'uke_neste',
     'avstand_aktivert',
+    'event_impression',
+    'sted_fulgt',
+    'sted_avfulgt',
   ]);
+});
+
+test('erGyldigAnalyticsEventNavn godtar event_impression/sted_fulgt/sted_avfulgt', () => {
+  assert.equal(erGyldigAnalyticsEventNavn('event_impression'), true);
+  assert.equal(erGyldigAnalyticsEventNavn('sted_fulgt'), true);
+  assert.equal(erGyldigAnalyticsEventNavn('sted_avfulgt'), true);
+});
+
+test('erGyldigSurface godtar kun de fire kjente produktflatene', () => {
+  assert.equal(erGyldigSurface('forside'), true);
+  assert.equal(erGyldigSurface('utforsk'), true);
+  assert.equal(erGyldigSurface('lagret'), true);
+  assert.equal(erGyldigSurface('følger'), true);
+  assert.equal(erGyldigSurface('ukjent-flate'), false);
+  assert.equal(erGyldigSurface(''), false);
+  assert.equal(erGyldigSurface(null), false);
 });
 
 test('erGyldigAnalyticsEventNavn godtar alle listede navn', () => {

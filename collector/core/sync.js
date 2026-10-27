@@ -48,6 +48,30 @@ export function avgjorHandling(nyHash, eksisterendeRef) {
 }
 
 /**
+ * Sammenligner to content-snapshots (se core/hash.js:snapshotFelter) og
+ * returnerer hvilke felt som faktisk endret seg — grunnlaget for
+ * event_source_changes (se 011_event_source_changes.sql). Rent/pure: ingen
+ * DB, ingen fetch.
+ *
+ * @param {Object|null} forrige  snapshot FØR (fra event_sources.content_snapshot), eller null hvis ingen er lagret ennå
+ * @param {Object}      ny       snapshot NÅ (snapshotFelter() av det ferske eventet)
+ * @returns {{ changedFields: string[], diff: Object<string, { fra: *, til: * }> }}
+ */
+export function diffSnapshots(forrige, ny) {
+  const changedFields = [];
+  const diff = {};
+
+  for (const [felt, nyVerdi] of Object.entries(ny ?? {})) {
+    const forrigeVerdi = forrige ? forrige[felt] : undefined;
+    if (forrigeVerdi === nyVerdi) continue;
+    changedFields.push(felt);
+    diff[felt] = { fra: forrigeVerdi ?? null, til: nyVerdi };
+  }
+
+  return { changedFields, diff };
+}
+
+/**
  * Finner en eksisterende candidate/publisert-rad som matcher et NYTT
  * source-event (ingen event_sources-ref ennå) — brukes KUN for å lære en
  * kobling, aldri for å auto-overskrive data.

@@ -9,6 +9,7 @@ export async function getAllEvents() {
       ec.category_slug AS kategori,
 
       v.name AS sted,
+      v.id AS "stedId",
       v.address AS adresse,
       v.latitude AS lat,
       v.longitude AS lng,

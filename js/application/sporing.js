@@ -45,6 +45,14 @@ export function aktiverSporing() {
   sporingsAktivert = true;
 }
 
+/** Kalles ved tilbaketrekking av samtykke (personvernsiden sin Statistikk
+    Av/På-kontroll) — stopper all videre sporing umiddelbart i denne
+    sidelasten. Reverserer kun selve flagget; sletting av lokal
+    visitor/session-identitet gjøres av analyse-identitet.js:fjernIdentitet(). */
+export function deaktiverSporing() {
+  sporingsAktivert = false;
+}
+
 /**
  * Registrerer en ekstra mottaker av alle trackEvent()-kall (i tillegg til
  * window.__paaby_track). Kalles av js/main.js ved oppstart.

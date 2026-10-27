@@ -140,7 +140,7 @@ function lagSorterbarTabell({ kolonner, rader, defaultKey, defaultDesc = true, t
    ======================== */
 
 const KPI_RENDER_ORDER = [
-  'unikeBrukere', 'nyeBrukere', 'tilbakevendende', 'sessions',
+  'unikeBrukere', 'nyeBrukere', 'tilbakevendende', 'sessions', 'impresjoner',
   'eventaapnere', 'lagrere', 'harLagretNa', 'videreklikk', 'delere',
 ];
 
@@ -331,11 +331,13 @@ function renderToppEvents(topEvents) {
       { key: 'tittel', label: 'Event', verdi: (r) => r.tittel ?? '' },
       { key: 'sted', label: 'Sted', verdi: (r) => r.sted ?? '–' },
       { key: 'kategori', label: 'Kategori', verdi: (r) => r.kategori ?? '–' },
+      { key: 'impresjoner', label: 'Impresjoner', numeric: true, verdi: (r) => r.impresjoner },
       { key: 'aapnere', label: 'Åpnere', numeric: true, verdi: (r) => r.aapnere },
       { key: 'lagrere', label: 'Lagrere', numeric: true, verdi: (r) => r.lagrere },
       { key: 'aktiveLagringerNa', label: 'Aktive lagringer nå', numeric: true, verdi: (r) => r.aktiveLagringerNa },
       { key: 'videreklikk', label: 'Videreklikk', numeric: true, verdi: (r) => r.videreklikk },
       { key: 'delinger', label: 'Delinger', numeric: true, verdi: (r) => r.delinger },
+      { key: 'impresjonTilAapningPct', label: 'Impresjon → åpning', numeric: true, verdi: (r) => r.impresjonTilAapningPct ?? -1, vis: (r) => fmtPct(r.impresjonTilAapningPct) },
       { key: 'aapningTilLagringPct', label: 'Åpning → lagring', numeric: true, verdi: (r) => r.aapningTilLagringPct ?? -1, vis: (r) => fmtPct(r.aapningTilLagringPct) },
       { key: 'aapningTilVidereklikkPct', label: 'Åpning → videreklikk', numeric: true, verdi: (r) => r.aapningTilVidereklikkPct ?? -1, vis: (r) => fmtPct(r.aapningTilVidereklikkPct) },
     ],
