@@ -96,4 +96,21 @@ export const SOURCES = [
     subregion:       'Oslo',
     defaultKategori: 'pafunn',
   },
+  {
+    id:              'tickster-oslo',
+    adapter:         'tickster',
+    tokenEnv:        'TICKSTER_API_KEY',
+    // languageCode "sv" er BEKREFTET (2026-10-27) som den eneste gyldige
+    // verdien for denne nøkkelen (no/nb/nn/da/fi/de/is gir alle 404) — den
+    // styrer IKKE hvilke land dumpen inneholder (dumpen har bl.a. 104 NO-
+    // venues), kun hvilken locale-sti nøkkelen er aktivert for. IKKE bytt
+    // til "no"/"nb" uten å bekrefte på nytt mot API-et, se adapters/tickster.js.
+    languageCode:    'sv',
+    apiVersion:      '1.0',
+    // Ingen server-side geo-/by-parameter finnes (Event Dump er en full
+    // dump, ikke et søk) — Oslo-filtrering skjer client-side i adapteren
+    // selv (erOsloVenue: NO + ~25km fra Oslo sentrum, fallback city=Oslo),
+    // samme Oslo-sentrum-punkt som ticketmaster-no sin geohash tilsvarer.
+    defaultKategori: 'pafunn',
+  },
 ];

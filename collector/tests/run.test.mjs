@@ -21,6 +21,7 @@ const opprettedeEventIder = [];
 
 after(async () => {
   await pool.query(`DELETE FROM event_sources WHERE provider = $1`, [PROVIDER]);
+  await pool.query(`DELETE FROM event_sources WHERE provider = 'tickster' AND external_id = 'tickster-ext-1'`);
   if (opprettedeLegacyIder.length) {
     await pool.query(`DELETE FROM event_candidates WHERE legacy_id = ANY($1)`, [opprettedeLegacyIder]);
   }
@@ -303,6 +304,31 @@ test('to events med samme tittel/dato/sted i SAMME kjøring (ingen forhåndslast
   assert.equal(refRader.rowCount, 2);
   const [ref1, ref2] = refRader.rows;
   assert.notEqual(ref1.candidate_id, ref2.candidate_id); // hver ref peker på SIN EGEN candidate
+});
+
+
+// ─── Tickster går gjennom eksisterende sync/dedupe uten spesiallogikk ──────
+// Tickster-adapteren (adapters/tickster.js) returnerer samme external-event-
+// form som alle andre kilder — behandleEvent() vet ingenting om at denne
+// kommer fra Tickster. Samme fixture-mønster som resten av filen, bare med
+// provider: 'tickster', for å bevise at ingen Tickster-spesifikk gren finnes
+// i run.js/sync.js/external-event-refs.js.
+
+test('tickster: NEW → ny candidate + event_sources-ref med provider=tickster, eksakt som andre kilder', async () => {
+  const external = lagExternal({ title: 'Testhendelse TICKSTER', provider: 'tickster', externalId: 'tickster-ext-1' });
+  const paaby = normaliser(external);
+  opprettedeLegacyIder.push(paaby.id);
+
+  const tellere = tomTellere();
+  await behandleEvent(external, paaby, { avslåtteIder: new Set(), eksisterende: [], tellere });
+  assert.equal(tellere.nye, 1);
+
+  const refRad = await pool.query(
+    `SELECT provider, external_id, content_hash FROM event_sources WHERE provider = $1 AND external_id = $2`,
+    ['tickster', 'tickster-ext-1'],
+  );
+  assert.equal(refRad.rowCount, 1);
+  assert.equal(refRad.rows[0].provider, 'tickster');
 });
 
 
