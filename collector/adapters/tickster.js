@@ -44,7 +44,7 @@ import { utcIsoTilOsloIso } from '../core/tid.js';
 import { stripHtml }        from '../core/html.js';
 
 const API_BASE   = 'https://api.tickster.com';
-const USER_AGENT = 'paaby-collector/0.1 (læringsprosjekt, kontakt: axwoxen@gmail.com)';
+
 
 // Oslo sentrum (59.9139, 10.7522) — samme punkt som Ticketmaster-adapterens
 // geohash 'u4xsudv' tilsvarer (se config/sources.js). Tickster sin Event
