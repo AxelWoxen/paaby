@@ -88,15 +88,14 @@ export function erOsloVenue(venue) {
 
 async function hentMetadata(languageCode, apiVersion, apiKey) {
   const url = `${API_BASE}/${languageCode}/api/${apiVersion}/events/dump/upcoming?key=${apiKey}`;
-  const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } });
+  const res = await fetch(url);
   if (!res.ok) throw new Error(`HTTP ${res.status} fra Tickster metadata-endepunkt`);
   return res.json();
 }
 
 async function hentDump(uri) {
-  const res = await fetch(uri, { headers: { 'User-Agent': USER_AGENT } });
+  const res = await fetch(uri);
   if (!res.ok) throw new Error(`HTTP ${res.status} fra Tickster dump-URI`);
-  // Content-Encoding: gzip — undici dekomprimerer automatisk, se filhodet.
   return res.json();
 }
 
