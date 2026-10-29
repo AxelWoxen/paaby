@@ -222,6 +222,13 @@
         <button id="vis-alle" class="tilbake-knapp skjult" aria-label="Tilbake til alle arrangementer">
           ← alle arrangementer
         </button>
+        <button id="vis-kart" class="kart-knapp" type="button" aria-haspopup="dialog" aria-controls="kart-visning">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="12" cy="9.5" r="2.5" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          utforsk på kart
+        </button>
         <div class="sortering-kontroll">
           <label for="sortering" class="sortering-label">Sorter</label>
           <select id="sortering" class="sortering-select" aria-label="Sorter arrangementer">
@@ -250,6 +257,30 @@
 
     </div>
 
+  </div>
+
+
+  <!-- ==============================
+       UTFORSK PÅ KART (fullskjerm)
+       Viser de samme eventene som feeden (uke + filtre), én pin per sted.
+       Modalen under ligger over denne (høyere z-index), så et event åpnet
+       fra kartet vises oppå, og kartet står igjen når modalen lukkes.
+       ============================== -->
+  <div
+    id="kart-visning"
+    class="kart-visning skjult"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="kart-visning-tittel"
+  >
+    <div class="kart-visning-topp">
+      <div>
+        <h2 id="kart-visning-tittel" class="kart-visning-tittel">Utforsk på kart</h2>
+        <p id="kart-visning-info" class="kart-visning-info" aria-live="polite"></p>
+      </div>
+      <button id="kart-visning-lukk" class="kart-visning-lukk" type="button" aria-label="Lukk kartet">×</button>
+    </div>
+    <div id="kart-visning-flate" class="kart-visning-flate"></div>
   </div>
 
 

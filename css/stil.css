@@ -1311,6 +1311,166 @@ body.modal-aapen {
   overflow: hidden;
 }
 
+/* === UTFORSK PÅ KART === */
+
+.kart-knapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.8rem;
+  border: 1.5px solid var(--flate-2);
+  border-radius: 100px;
+  font-size: 0.8rem;
+  color: var(--paper);
+  white-space: nowrap;
+  transition: border-color 0.15s;
+}
+
+.kart-knapp:hover {
+  border-color: var(--graa);
+}
+
+body.kart-aapen {
+  overflow: hidden;
+}
+
+/* Under modalen (z-index 100), over bunn-nav og topbar */
+.kart-visning {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  background: var(--hvit);
+}
+
+.kart-visning-topp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-m);
+  padding: var(--gap-m);
+  padding-top: calc(var(--gap-m) + env(safe-area-inset-top));
+  border-bottom: 1px solid var(--flate-2);
+}
+
+.kart-visning-tittel {
+  font-family: var(--font-tittel);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.kart-visning-info {
+  font-size: 0.8rem;
+  color: var(--graa);
+}
+
+.kart-visning-lukk {
+  font-size: 1.75rem;
+  line-height: 1;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: 100px;
+  color: var(--paper);
+}
+
+.kart-visning-lukk:hover {
+  background: var(--flate-2);
+}
+
+.kart-visning-flate {
+  flex: 1;
+  isolation: isolate;
+  background: var(--flate-2);
+}
+
+/* Stedspinne: sirkel i kategorifargen, antall eventer inni */
+.kart-pin {
+  background: none;
+  border: none;
+}
+
+.kart-pin-sirkel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--svart);
+  font-family: var(--font-tittel);
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Leaflet setter egen skrift og marg i popupen — bruk sidens */
+.kart-visning-flate.leaflet-container {
+  font-family: inherit;
+}
+
+.kart-visning-flate .leaflet-popup-content {
+  margin: 0.75rem;
+}
+
+/* Ekstra klasse slår Leaflets «.leaflet-popup-content p { margin: 17px 0 }» */
+.kart-popup .kart-popup-sted {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+}
+
+.kart-popup-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kart-popup-event {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.4rem 0.5rem 0.4rem 0.6rem;
+  border-left: 3px solid var(--kort-farge);
+  border-radius: var(--radius-s);
+  text-align: left;
+  font-family: inherit;
+}
+
+.kart-popup-event:hover {
+  background: var(--flate-2);
+}
+
+.kart-popup-event.kategori-musikk { --kort-farge: var(--musikk); }
+.kart-popup-event.kategori-klubb  { --kort-farge: var(--klubb); }
+.kart-popup-event.kategori-pafunn { --kort-farge: var(--pafunn); }
+
+.kart-popup-tittel {
+  font-size: 0.85rem;
+  color: var(--svart);
+}
+
+.kart-popup-tid {
+  font-size: 0.75rem;
+  color: var(--graa);
+}
+
+/* Kart i detaljvisningen — Leaflet tegner inn i denne */
+.modal-kart {
+  height: 200px;
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  background: var(--flate-2);
+  isolation: isolate; /* holder Leaflets z-index-er inne i kartet */
+}
+
 
 /* === MODAL DESKTOP === */
 
@@ -2363,5 +2523,19 @@ body.modal-aapen {
   .logo-hovedlogo {
     height: 40px;
     max-width: 135px;
+  }
+}
+/* «utforsk på kart» deler rad med Sorter på mobil (se display:contents-
+   oppsettet for .treff-linje over) — knappen til venstre, Sorter fyller resten. */
+@media (max-width: 899px) {
+  .kart-knapp {
+    order: 1;
+  }
+
+  /* Basis = raden minus plass til kartknappen, så telleren fortsatt
+     brytes ned til linja med «Denne uka». */
+  .sortering-kontroll {
+    flex: 1 0 calc(100% - 12rem);
+    width: auto;
   }
 }
