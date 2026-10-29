@@ -10,10 +10,12 @@ import {
   ANALYTICS_EVENT_NAVN,
   erGyldigAnalyticsEventNavn,
   erGyldigSurface,
+  erGyldigSortering,
+  RANGERINGS_VERSJON,
   utledBaseEventId,
 } from '../../../js/application/analytics-events.js';
 
-test('ANALYTICS_EVENT_NAVN har nøyaktig de 11 definerte hendelsene', () => {
+test('ANALYTICS_EVENT_NAVN har nøyaktig de 12 definerte hendelsene', () => {
   assert.deepEqual(ANALYTICS_EVENT_NAVN, [
     'kort_åpnet',
     'event_lagret',
@@ -26,6 +28,7 @@ test('ANALYTICS_EVENT_NAVN har nøyaktig de 11 definerte hendelsene', () => {
     'event_impression',
     'sted_fulgt',
     'sted_avfulgt',
+    'kort_lukket',
   ]);
 });
 
@@ -43,6 +46,18 @@ test('erGyldigSurface godtar kun de fire kjente produktflatene', () => {
   assert.equal(erGyldigSurface('ukjent-flate'), false);
   assert.equal(erGyldigSurface(''), false);
   assert.equal(erGyldigSurface(null), false);
+});
+
+test('erGyldigSortering godtar kun sorteringsvalgene sortering.js kjenner', () => {
+  assert.equal(erGyldigSortering('tid-stigende'), true);
+  assert.equal(erGyldigSortering('avstand-synkende'), true);
+  assert.equal(erGyldigSortering('popularitet'), false);
+  assert.equal(erGyldigSortering(''), false);
+  assert.equal(erGyldigSortering(null), false);
+});
+
+test('RANGERINGS_VERSJON er en kort slug backend-valideringen godtar', () => {
+  assert.match(RANGERINGS_VERSJON, /^[a-z0-9][a-z0-9.-]{0,39}$/);
 });
 
 test('erGyldigAnalyticsEventNavn godtar alle listede navn', () => {

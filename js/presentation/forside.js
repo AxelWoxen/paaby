@@ -8,6 +8,7 @@ import { hentEventbilde, KATEGORI_BILDER,
          KATEGORI_PIKTOGRAM_EVENT }                from '../application/kategori-bilder.js';
 import { bindBildeLasting, markerBildeLastet }    from '../application/bilde-lasting.js';
 import { åpneModal }                             from './modal.js';
+import { hentVisningsKontekst }                  from '../application/impresjoner.js';
 import { lagGjentasBadge }                       from './feed.js';
 
 const MAKS = 3;
@@ -151,7 +152,7 @@ meta.textContent = `${event.sted} · ${formaterTid(event.start)} · ${formaterPr
 
   el.appendChild(innhold);
 
-  const åpne = () => åpneModal(event);
+  const åpne = () => åpneModal(event, hentVisningsKontekst(el));
   el.addEventListener('click', åpne);
   el.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); åpne(); }

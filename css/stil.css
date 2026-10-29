@@ -344,6 +344,158 @@ textarea {
   opacity: 0.75;
 }
 
+
+/* === PRISFILTER: histogram + slider med to tommeler ===
+   To range-inputs ligger oppå hverandre. Selve sporene er usynlige og
+   slipper gjennom pekeren (pointer-events: none) — kun tommelene fanger
+   klikk/dra, slik at begge kan nås. Se js/presentation/prisfilter.js. */
+
+.pris-filter {
+  --pris-tommel: 20px;
+  display: flex;
+  flex-direction: column;
+  max-width: 320px;
+}
+
+.pris-histogram {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 48px;
+  /* Stolpene skal flukte med sporet, som starter/slutter ved tommelens midtpunkt */
+  padding: 0 calc(var(--pris-tommel) / 2);
+}
+
+.pris-stolpe {
+  flex: 1;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--flate-2);
+  transition: height 0.2s ease, background 0.15s;
+}
+
+.pris-stolpe.innenfor {
+  background: var(--aksent);
+}
+
+.pris-stolpe.tom {
+  height: 2px;
+}
+
+.pris-slider {
+  position: relative;
+  height: var(--pris-tommel);
+  margin-top: 2px;
+}
+
+.pris-spor {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--pris-tommel) / 2);
+  right: calc(var(--pris-tommel) / 2);
+  height: 3px;
+  transform: translateY(-50%);
+  border-radius: 3px;
+  background: var(--flate-2);
+}
+
+.pris-spor-fyll {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background: var(--paper);
+}
+
+.pris-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+}
+
+.pris-range.foran {
+  z-index: 1;
+}
+
+.pris-range::-webkit-slider-runnable-track {
+  background: none;
+  border: none;
+}
+
+.pris-range::-moz-range-track {
+  background: none;
+  border: none;
+}
+
+.pris-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--pris-tommel);
+  height: var(--pris-tommel);
+  border-radius: 50%;
+  background: var(--hvit);
+  border: 1.5px solid var(--graa);
+  box-shadow: 0 1px 4px rgba(30, 12, 20, 0.18);
+  cursor: grab;
+  pointer-events: auto;
+  transition: transform 0.1s;
+}
+
+.pris-range::-moz-range-thumb {
+  width: var(--pris-tommel);
+  height: var(--pris-tommel);
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--hvit);
+  border: 1.5px solid var(--graa);
+  box-shadow: 0 1px 4px rgba(30, 12, 20, 0.18);
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.pris-range:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.pris-range:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--aksent);
+  outline-offset: 2px;
+}
+
+.pris-range:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--aksent);
+  outline-offset: 2px;
+}
+
+.pris-akse {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--graa);
+  margin-top: 2px;
+}
+
+.pris-rad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-s);
+  margin-top: var(--gap-s);
+}
+
+.pris-verdi {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--paper);
+}
+
 /* Filter-knapp: skjult på desktop (filtrene vises alltid der).
    Vises og får funksjon kun på mobil, se @media (max-width: 899px) under. */
 .filter-toggle-knapp {
@@ -955,6 +1107,13 @@ textarea {
   min-width: 0;
 }
 
+.kort-meta-tekst {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .avstand::before {
   content: '· ';
 }
@@ -962,6 +1121,8 @@ textarea {
 .avstand {
   color: inherit;
   flex-shrink: 0;
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 /* Tid og pris er fakta på samme nivå og skal alltid ha samme grå farge. */

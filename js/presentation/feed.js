@@ -35,6 +35,7 @@ import { hentEventbilde, KATEGORI_BILDER,
 import { eventTilstand }                                         from '../application/oslo-tid.js';
 import { bindBildeLasting, markerBildeLastet }                   from '../application/bilde-lasting.js';
 import { åpneModal }                                             from './modal.js';
+import { hentVisningsKontekst }                                  from '../application/impresjoner.js';
 
 
 /* ========================
@@ -214,11 +215,20 @@ const info = [
   formaterPrisKort(event.pris, event.prisTekst)
 ];
 
+/* Infoteksten kuttes med «…» når den er for lang. Avstanden ligger i et eget
+   element som ikke krymper, slik at den alltid er synlig når «Vis avstand» er på. */
+const metaTekst = document.createElement('span');
+metaTekst.className   = 'kort-meta-tekst';
+metaTekst.textContent = info.join(' · ');
+meta.appendChild(metaTekst);
+
 if (event._avstand != null) {
-  info.push(formaterAvstand(event._avstand));
+  const avstand = document.createElement('span');
+  avstand.className   = 'avstand';
+  avstand.textContent = formaterAvstand(event._avstand);
+  meta.appendChild(avstand);
 }
 
-meta.textContent = info.join(' · ');
 innhold.appendChild(meta);
 
   artikkel.appendChild(innhold);
@@ -315,7 +325,7 @@ export function leggTilKortLyttere(feed, eventer) {
     kort.addEventListener('click', (hendelse) => {
       if (hendelse.target.closest('.hjerte-knapp')) return;
       const event = eventer.find((e) => e.id === kort.dataset.id);
-      if (event) åpneModal(event);
+      if (event) åpneModal(event, hentVisningsKontekst(kort));
     });
 
     kort.addEventListener('keydown', (hendelse) => {
@@ -346,7 +356,7 @@ export function leggTilKortLyttere(feed, eventer) {
 
       /* Informer resten av appen (main.js lytter for å oppdatere feed og modal) */
       document.dispatchEvent(new CustomEvent('paaby:lagret-endret', {
-        detail: { id, lagret: erNåLagret },
+        detail: { id, lagret: erNåLagret, kontekst: hentVisningsKontekst(knapp) },
       }));
     });
   });

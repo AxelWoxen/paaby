@@ -277,6 +277,107 @@ test('event_impression: filter_valgt sine nøkler (type/verdi) godtas ikke som i
 });
 
 
+// ─── Visningskontekst (feed_id/sort/algo_version) og kort_lukket ─────────────
+
+test('event_impression lagrer full visningskontekst (feed_id, sort, algo_version)', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+  const feedId = crypto.randomUUID();
+
+  await post('/api/analytics/event', {
+    visitor_id: visitorId,
+    session_id: sessionId,
+    event_name: 'event_impression',
+    event_id: `impresjon-test-${crypto.randomUUID()}`,
+    properties: { surface: 'utforsk', position: 2, feed_id: feedId, sort: 'tid-stigende', algo_version: 'regelbasert-v1' },
+  });
+
+  const { rows } = await pool.query(`SELECT properties FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.deepEqual(rows[0].properties, {
+    surface: 'utforsk', position: 2, feed_id: feedId, sort: 'tid-stigende', algo_version: 'regelbasert-v1',
+  });
+});
+
+test('kort_åpnet/event_lagret/mer_info_klikket/event_delt godtar visningskontekst', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+  const kontekst = { surface: 'forside', position: 1, feed_id: crypto.randomUUID(), algo_version: 'regelbasert-v1' };
+
+  for (const eventName of ['kort_åpnet', 'event_lagret', 'mer_info_klikket', 'event_delt']) {
+    const res = await post('/api/analytics/event', {
+      visitor_id: visitorId,
+      session_id: sessionId,
+      event_name: eventName,
+      event_id: `kontekst-test-${crypto.randomUUID()}`,
+      properties: { ...kontekst, ekstra_felt: 'skal-bort' },
+    });
+    assert.equal(res.status, 200);
+  }
+
+  const { rows } = await pool.query(`SELECT event_name, properties FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.equal(rows.length, 4);
+  for (const rad of rows) assert.deepEqual(rad.properties, kontekst, rad.event_name);
+});
+
+test('visningskontekst: ugyldig feed_id/sort/algo_version strippes', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+
+  await post('/api/analytics/event', {
+    visitor_id: visitorId,
+    session_id: sessionId,
+    event_name: 'kort_åpnet',
+    event_id: `kontekst-test-${crypto.randomUUID()}`,
+    properties: { feed_id: 'ikke-en-uuid', sort: 'popularitet', algo_version: 'Ugyldig Versjon!', position: 4 },
+  });
+
+  const { rows } = await pool.query(`SELECT properties FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.deepEqual(rows[0].properties, { position: 4 });
+});
+
+test('kort_lukket er et gyldig event og lagrer dwell_ms + kontekst', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+
+  const res = await post('/api/analytics/event', {
+    visitor_id: visitorId,
+    session_id: sessionId,
+    event_name: 'kort_lukket',
+    event_id: `lukket-test-${crypto.randomUUID()}`,
+    properties: { surface: 'utforsk', position: 5, dwell_ms: 12345 },
+  });
+  assert.equal(res.status, 200);
+
+  const { rows } = await pool.query(`SELECT event_name, properties FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.equal(rows[0].event_name, 'kort_lukket');
+  assert.deepEqual(rows[0].properties, { surface: 'utforsk', position: 5, dwell_ms: 12345 });
+});
+
+test('kort_lukket: negativ, ikke-heltall eller for lang dwell_ms strippes', async () => {
+  const visitorId = nyVisitorId();
+  const sessionId = crypto.randomUUID();
+  await registrerSesjon(visitorId, sessionId);
+
+  for (const dwell of [-1, 1.5, 31 * 60 * 1000, '500']) {
+    await post('/api/analytics/event', {
+      visitor_id: visitorId,
+      session_id: sessionId,
+      event_name: 'kort_lukket',
+      event_id: `lukket-test-${crypto.randomUUID()}`,
+      properties: { dwell_ms: dwell },
+    });
+  }
+
+  const { rows } = await pool.query(`SELECT properties FROM analytics_events WHERE visitor_id = $1`, [visitorId]);
+  assert.equal(rows.length, 4);
+  for (const rad of rows) assert.deepEqual(rad.properties, {});
+});
+
+
 // ─── sted_fulgt / sted_avfulgt ──────────────────────────────────────────────
 
 test('sted_fulgt og sted_avfulgt er gyldige first-party events, og lagres med sted+venueId', async () => {
