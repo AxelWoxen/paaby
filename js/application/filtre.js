@@ -4,17 +4,18 @@
    Filterlogikk:
    - Kategori:  ELLER innad i gruppen  (Musikk + Klubb → viser begge)
    - Tid:       enkeltvalg (i-kveld ELLER i-helga, ikke begge)
-   - Pris:      enkeltvalg
+   - Pris:      intervall { min, maks } fra prisslideren
    - Mellom grupper: OG  (Musikk OG Gratis → gratis musikkarrangementer)
    - Tom gruppe: vis alt */
 
 import { osloKomponenter, lagOsloDato } from './oslo-tid.js';
+import { prisIIntervall }                from './prisfilter.js';
 
 /**
  * Filtrerer en liste med arrangementer basert på aktive filtre.
  *
  * @param {Array}  eventer   - Alle arrangementer (ufiltrerte)
- * @param {Object} filtre    - { kategori: [], tid: string|null, pris: string|null, naerhet: false }
+ * @param {Object} filtre    - { kategori: [], tid: string|null, pris: {min,maks}|null, naerhet: false }
  * @param {Object} posisjon  - { lat, lng } eller null
  * @returns {Array}
  */
@@ -36,20 +37,12 @@ export function filtrerEventer(eventer, filtre, posisjon) {
     });
   }
 
-  /* --- PRIS (enkeltvalg) ---
-     Gratis:    pris === 0
-     Under 200: pris < 200 (inkluderer gratis)
-     200 kr+:   pris >= 200
+  /* --- PRIS (intervall fra prisslideren) ---
+     { min, maks } der maks === null betyr ingen øvre grense.
+     Gratis-chipen er { min: 0, maks: 0 }.
      null pris matcher ingen prisfiltre */
   if (filtre.pris) {
-    resultat = resultat.filter((e) => {
-      const pris = e.pris;
-      if (pris === null || pris === undefined) return false;
-      if (filtre.pris === 'gratis')    return pris === 0;
-      if (filtre.pris === 'under-200') return pris < 200;
-      if (filtre.pris === 'over-200')  return pris >= 200;
-      return false;
-    });
+    resultat = resultat.filter((e) => prisIIntervall(e.pris, filtre.pris));
   }
 
   return resultat;
