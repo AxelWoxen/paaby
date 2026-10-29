@@ -22,6 +22,7 @@ export const ANALYTICS_EVENT_NAVN = [
   'event_impression',
   'sted_fulgt',
   'sted_avfulgt',
+  'kort_lukket',
 ];
 
 const GYLDIGE_EVENT_NAVN = new Set(ANALYTICS_EVENT_NAVN);
@@ -41,6 +42,34 @@ const SURFACE_SETT = new Set(GYLDIGE_SURFACES);
 export function erGyldigSurface(verdi) {
   return typeof verdi === 'string' && SURFACE_SETT.has(verdi);
 }
+
+/* Rangeringskontekst — hvilken "algoritme" bygde lista et kort ble vist i.
+   Logges på impresjoner og på handlinger (åpne/lagre/klikk) slik at en
+   fremtidig personalisert rangering kan (1) korrigere for posisjons-bias og
+   (2) A/B-testes mot dagens regelbaserte baseline. Bump versjonen hver gang
+   rekkefølge-logikken (sortering.js / velgUtvalg) endres meningsfullt. */
+export const RANGERINGS_VERSJON = 'regelbasert-v1';
+
+/* Samme verdier som sortering.js:sorterEventer() godtar. */
+export const GYLDIGE_SORTERINGER = [
+  'tid-stigende',
+  'tid-synkende',
+  'pris-stigende',
+  'pris-synkende',
+  'avstand-stigende',
+  'avstand-synkende',
+];
+
+const SORTERING_SETT = new Set(GYLDIGE_SORTERINGER);
+
+export function erGyldigSortering(verdi) {
+  return typeof verdi === 'string' && SORTERING_SETT.has(verdi);
+}
+
+/* Øvre grense for kort_lukket.dwell_ms — en modal som står åpen lenger enn
+   dette er nesten alltid en glemt fane, ikke lesing. Klientsiden kapper,
+   serveren avviser verdier over. */
+export const MAKS_DWELL_MS = 30 * 60 * 1000;
 
 /* Gjentakende events får en occurrence-ID på formen "<base-id>__YYYY-MM-DD"
    (se js/application/gjentas.js:lagForekomst). Grunn-ID-er (fra
