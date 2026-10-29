@@ -2565,10 +2565,24 @@ body.modal-aapen {
 .utvalg-pil--forrige { left: var(--gap-s); }
 .utvalg-pil--neste   { right: var(--gap-s); }
 
+/* Desktop: de tre utvalgte deler bredden likt (en tredjedel hver), så alle
+   vises samtidig uten å scrolle. Karusellen (86% + titting) gjelder kun
+   under 900px. Gapet (16px) trekkes fra: 2 mellomrom delt på 3 kort. */
 @media (min-width: 900px) {
   .forside-utvalg > .utvalg-kort,
   .forside-utvalg > .utvalg-kort-skeleton {
-    flex-basis: 72%;
+    flex: 0 0 calc((100% - 2 * var(--gap-m)) / 3);
+  }
+
+  .forside-utvalg .utvalg-bilde-wrapper,
+  .forside-utvalg .kort-skeleton-bilde {
+    aspect-ratio: 4 / 3;
+  }
+
+  .forside-utvalg .utvalg-innhold {
+    width: 88%;
+    height: auto;
+    min-height: 60px;
   }
 }
 
