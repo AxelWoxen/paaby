@@ -11,6 +11,7 @@
    dedupe nullstilles ved sideoppfriskning (ny sidelast = ny "observasjon"). */
 
 import { trackEvent } from './sporing.js';
+import { RANGERINGS_VERSJON } from './analytics-events.js';
 
 const SYNLIGHETSANDEL = 0.5;
 const MINIMUM_SYNLIG_MS = 750;
@@ -32,9 +33,32 @@ function sendImpresjon(el, surface) {
   trackEvent('event_impression', {
     id: eventId,
     kategori: el.dataset.kategori || null,
+    ...hentVisningsKontekst(el),
     surface,
-    position: Number(el.dataset.impresjonsposisjon) || null,
   });
+}
+
+/**
+ * Leser visningskonteksten observerImpresjoner() stemplet på et kort-element
+ * (eller nærmeste forelder med den). Brukes når et kort åpnes/lagres, slik at
+ * handlingen kan kobles til nøyaktig den lista og posisjonen den skjedde i.
+ * Returnerer {} for elementer som aldri har vært i en observert liste
+ * (f.eks. en modal åpnet direkte via delt #event/-lenke).
+ *
+ * @param {HTMLElement|null} el
+ * @returns {{ surface?: string, position?: number, feed_id?: string, sort?: string, algo_version?: string }}
+ */
+export function hentVisningsKontekst(el) {
+  const kort = el?.closest?.('[data-feed-id]');
+  if (!kort) return {};
+  const { surface, feedId, impresjonsposisjon, sortering } = kort.dataset;
+  return {
+    surface,
+    position: Number(impresjonsposisjon) || null,
+    feed_id: feedId,
+    sort: sortering || null,
+    algo_version: RANGERINGS_VERSJON,
+  };
 }
 
 /**
@@ -43,10 +67,25 @@ function sendImpresjon(el, surface) {
  * fra manuelt — korte, utskiftede DOM-noder blir automatisk GC-et sammen
  * med sin IntersectionObserver-referanse).
  *
+ * Hver kall er én "visning" av lista: alle kortene får samme ferske feed_id,
+ * pluss surface, posisjon og sortering stemplet i dataset — også kort som
+ * allerede har sendt impresjon, siden et klikk må kunne kobles til den
+ * lista det faktisk skjedde i.
+ *
  * @param {HTMLElement[]} elementer  - kort-elementer, MÅ ha dataset.id
  * @param {string}        surface   - 'forside' | 'utforsk' | 'lagret' | 'følger'
+ * @param {{ sortering?: string }} [kontekst] - aktiv sortering, utelates der lista ikke er brukersortert (forsiden)
  */
-export function observerImpresjoner(elementer, surface) {
+export function observerImpresjoner(elementer, surface, { sortering = null } = {}) {
+  const feedId = crypto.randomUUID();
+  elementer.forEach((el, indeks) => {
+    el.dataset.surface            = surface;
+    el.dataset.feedId             = feedId;
+    el.dataset.impresjonsposisjon = String(indeks + 1);
+    if (sortering) el.dataset.sortering = sortering;
+    else delete el.dataset.sortering;
+  });
+
   if (typeof IntersectionObserver === 'undefined') return;
 
   const synlighetsTimere = new Map(); // element -> timeoutId
@@ -73,12 +112,11 @@ export function observerImpresjoner(elementer, surface) {
     }
   }, { threshold: SYNLIGHETSANDEL });
 
-  elementer.forEach((el, indeks) => {
+  elementer.forEach((el) => {
     const eventId = el.dataset.id;
     if (!eventId) return;
     if (alleredeSendt.has(lagNøkkel(surface, eventId))) return; // slipp å observere noe vi uansett ikke vil sende på nytt
 
-    el.dataset.impresjonsposisjon = String(indeks + 1);
     observer.observe(el);
   });
 }

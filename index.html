@@ -186,10 +186,22 @@
 
           <div class="filter-gruppe">
             <span class="filter-etikett" aria-hidden="true">Pris</span>
-            <div class="filter-chips" role="group" aria-label="Pris">
-              <button class="chip" data-filter="pris" data-verdi="gratis"    aria-pressed="false">Gra10s</button>
-              <button class="chip" data-filter="pris" data-verdi="under-200" aria-pressed="false">Under 200</button>
-              <button class="chip" data-filter="pris" data-verdi="over-200"  aria-pressed="false">200 kr+</button>
+            <!-- Prisslider med histogram — se js/presentation/prisfilter.js -->
+            <div id="pris-filter" class="pris-filter" role="group" aria-label="Pris">
+              <div id="pris-histogram" class="pris-histogram" aria-hidden="true"></div>
+              <div class="pris-slider">
+                <span class="pris-spor" aria-hidden="true"><span id="pris-spor-fyll" class="pris-spor-fyll"></span></span>
+                <input id="pris-min"  class="pris-range" type="range" min="0" max="500" step="10" value="0"   aria-label="Laveste pris">
+                <input id="pris-maks" class="pris-range" type="range" min="0" max="500" step="10" value="500" aria-label="Høyeste pris">
+              </div>
+              <div class="pris-akse" aria-hidden="true">
+                <span>0 kr</span>
+                <span id="pris-tak-tekst">500 kr+</span>
+              </div>
+              <div class="pris-rad">
+                <span id="pris-verdi" class="pris-verdi" aria-live="polite">Alle priser</span>
+                <button id="pris-gratis" class="chip" type="button" aria-pressed="false">Gratis</button>
+              </div>
             </div>
           </div>
 
@@ -222,6 +234,13 @@
         <button id="vis-alle" class="tilbake-knapp skjult" aria-label="Tilbake til alle arrangementer">
           ← alle arrangementer
         </button>
+        <button id="vis-kart" class="kart-knapp" type="button" aria-haspopup="dialog" aria-controls="kart-visning">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            <circle cx="12" cy="9.5" r="2.5" stroke="currentColor" stroke-width="2"/>
+          </svg>
+          utforsk på kart
+        </button>
         <div class="sortering-kontroll">
           <label for="sortering" class="sortering-label">Sorter</label>
           <select id="sortering" class="sortering-select" aria-label="Sorter arrangementer">
@@ -237,7 +256,7 @@
       <div id="uke-nav" class="uke-nav skjult">
         <button id="uke-forrige" class="uke-knapp skjult" aria-label="Forrige uke">← Forrige uke</button>
         <span id="uke-label" class="uke-label" aria-live="polite">Denne uka</span>
-        <button id="uke-neste" class="uke-knapp" aria-label="Neste uke">Neste uke →</button>
+        <button id="uke-neste" class="uke-knapp" aria-label="Neste uke">Neste uke · Uke 45 →</button>
       </div>
 
       <p id="lagret-info" class="lagret-info skjult" aria-live="polite">
@@ -250,6 +269,30 @@
 
     </div>
 
+  </div>
+
+
+  <!-- ==============================
+       UTFORSK PÅ KART (fullskjerm)
+       Viser de samme eventene som feeden (uke + filtre), én pin per sted.
+       Modalen under ligger over denne (høyere z-index), så et event åpnet
+       fra kartet vises oppå, og kartet står igjen når modalen lukkes.
+       ============================== -->
+  <div
+    id="kart-visning"
+    class="kart-visning skjult"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="kart-visning-tittel"
+  >
+    <div class="kart-visning-topp">
+      <div>
+        <h2 id="kart-visning-tittel" class="kart-visning-tittel">Utforsk på kart</h2>
+        <p id="kart-visning-info" class="kart-visning-info" aria-live="polite"></p>
+      </div>
+      <button id="kart-visning-lukk" class="kart-visning-lukk" type="button" aria-label="Lukk kartet">×</button>
+    </div>
+    <div id="kart-visning-flate" class="kart-visning-flate"></div>
   </div>
 
 

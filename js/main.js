@@ -3,6 +3,7 @@
 
 import { hentEventer }                             from './network/events-api.js';
 import { filtrerEventer }                          from './application/filtre.js';
+import { beregnPrisTak, formaterPrisIntervall }     from './application/prisfilter.js';
 import { skjulPasserte, grupperEtterDag }          from './application/gruppering.js';
 import { sorterEventer, erAvstandsSortering,
          erTidsSortering }                         from './application/sortering.js';
@@ -11,6 +12,7 @@ import { hentLagredeIder }                         from './application/lagret.js
 import { visEventer, visSkeletonKort }             from './presentation/feed.js';
 import { initModal, åpneModal, lukkModal,
          hentÅpenEvent }                           from './presentation/modal.js';
+import { visOversiktskart }                        from './presentation/kart.js';
 import { aktiverSporing, trackEvent,
          registrerAnalyseSink }                     from './application/sporing.js';
 import { erGyldigAnalyticsEventNavn }               from './application/analytics-events.js';
@@ -22,8 +24,10 @@ import { velgUtvalg, visForside, initSeAlt,
 import { utvidGjentakende }                        from './application/gjentas.js';
 import { observerImpresjoner }                      from './application/impresjoner.js';
 import { visFølgerVisning }                        from './presentation/følger.js';
+import { initPrisFilter, settPrisTak, nullstillPrisFilter,
+         oppdaterPrisHistogram }                   from './presentation/prisfilter.js';
 import { ukeMandag, ukeVindu,
-         filtrerTilUke, ukeLabel }                 from './application/uke.js';
+         filtrerTilUke, ukeLabel, ukeNummer }               from './application/uke.js';
 
 
 /* ========================
@@ -36,7 +40,7 @@ const tilstand = {
   aktivFiltre: {
     kategori: [],    /* Array — ELLER-logikk, multi-select */
     tid:      null,  /* string | null — enkeltvalg */
-    pris:     null,  /* string | null — enkeltvalg */
+    pris:     null,  /* { min, maks } | null — intervall fra prisslideren */
     naerhet:  false, /* ubrukt — ingen chip i HTML, men beholdes for bakoverkompatibilitet */
   },
 
@@ -48,6 +52,9 @@ const tilstand = {
   visFølger:      false,
 
   ukeOffset:      0,  /* 0 = denne uka, 1 = neste uke osv. — kun i standardvisning */
+
+  synligeEventer: [], /* det feeden viser nå — «utforsk på kart» tegner de samme */
+  visKart:        false,
 };
 
 
@@ -71,8 +78,9 @@ function oppdaterFeed() {
   if (tilstand.visFølger) {
     const { mandag, ukensEventer } = hentUkensAktiveEventer();
     visFølgerVisning(ukensEventer, oppdaterFeed);
-    observerImpresjoner([...document.querySelectorAll('#feed .kort')], 'følger');
+    observerImpresjoner([...document.querySelectorAll('#feed .kort')], 'følger', { sortering: 'tid-stigende' });
     oppdaterUkeNav(mandag);
+    tilstand.synligeEventer = [];
     oppdaterTreffLinje(0);
     return;
   }
@@ -89,6 +97,12 @@ function oppdaterFeed() {
 
     ukeTom  = ukensEventer.length === 0;
     eventer = filtrerEventer(ukensEventer, tilstand.aktivFiltre, tilstand.brukerPosisjon);
+
+    /* Histogrammet viser prisfordelingen for de ANDRE filtrene — ellers
+       ville stolpene utenfor valgt intervall alltid vært tomme. */
+    oppdaterPrisHistogram(
+      filtrerEventer(ukensEventer, { ...tilstand.aktivFiltre, pris: null }, tilstand.brukerPosisjon),
+    );
 
     oppdaterUkeNav(mandag);
   }
@@ -133,8 +147,14 @@ function oppdaterFeed() {
   }
 
   visEventer(dagGrupper, tomMelding);
-  observerImpresjoner([...document.querySelectorAll('#feed .kort')], tilstand.visLagret ? 'lagret' : 'utforsk');
+observerImpresjoner(
+  [...document.querySelectorAll('#feed .kort')],
+  tilstand.visLagret ? 'lagret' : 'utforsk',
+  { sortering: effektivSortering },
+);
+tilstand.synligeEventer = sorterte;
   oppdaterTreffLinje(sorterte.length);
+  if (tilstand.visKart) oppdaterKart();
 }
 
 function oppdaterTreffLinje(antall) {
@@ -144,6 +164,9 @@ function oppdaterTreffLinje(antall) {
   const sorteringDiv  = document.querySelector('.sortering-kontroll');
   const sidestolpe    = document.querySelector('.sidestolpe');
   const ukeNav        = document.getElementById('uke-nav');
+
+  /* Følger-visningen har sin egen gruppering per sted — ingen kartknapp der */
+  document.getElementById('vis-kart')?.classList.toggle('skjult', tilstand.visFølger);
 
   if (tilstand.visFølger) {
     teller.textContent = 'Steder du følger';
@@ -178,6 +201,8 @@ function oppdaterTreffLinje(antall) {
 function oppdaterUkeNav(mandagDenneUka) {
   document.getElementById('uke-label').textContent = ukeLabel(mandagDenneUka, tilstand.ukeOffset);
   document.getElementById('uke-forrige').classList.toggle('skjult', tilstand.ukeOffset === 0);
+  document.getElementById('uke-neste').textContent =
+    `Neste uke · Uke ${ukeNummer(mandagDenneUka, tilstand.ukeOffset + 1)} →`;
 }
 
 function initUkeNav() {
@@ -221,7 +246,7 @@ function initFiltre() {
           chip.classList.add('aktiv');
         }
 
-      } else if (type === 'tid' || type === 'pris') {
+      } else if (type === 'tid') {
         const erAktivNå = tilstand.aktivFiltre[type] === verdi;
 
         document.querySelectorAll(`[data-filter="${type}"]`).forEach((c) => {
@@ -249,6 +274,19 @@ function initFiltre() {
   });
 }
 
+function initPrisSlider() {
+  initPrisFilter((intervall, ferdig) => {
+    tilstand.aktivFiltre.pris = intervall;
+    oppdaterNullstillKnapp();
+    oppdaterFeed();
+
+    /* Sporing: kun når brukeren slipper slideren, og kun ved et aktivt filter */
+    if (ferdig && intervall) {
+      trackEvent('filter_valgt', { type: 'pris', verdi: formaterPrisIntervall(intervall) });
+    }
+  });
+}
+
 function oppdaterNullstillKnapp() {
   const harAktive =
     tilstand.aktivFiltre.kategori.length > 0 ||
@@ -264,10 +302,11 @@ function initNullstillKnapp() {
 
     document.querySelectorAll('.chip').forEach((c) => {
       c.classList.remove('aktiv');
-      if (c.dataset.filter === 'tid' || c.dataset.filter === 'pris') {
+      if (c.dataset.filter === 'tid') {
         c.setAttribute('aria-pressed', 'false');
       }
     });
+    nullstillPrisFilter();
 
     oppdaterNullstillKnapp();
     oppdaterFeed();
@@ -484,7 +523,7 @@ function initFølgerKnapp() {
 
 /* Lytter til lagret-endringer fra feed.js og modal.js */
 function initLagretSync() {
-  document.addEventListener('paaby:lagret-endret', ({ detail: { id, lagret } }) => {
+  document.addEventListener('paaby:lagret-endret', ({ detail: { id, lagret, kontekst = {} } }) => {
     /* Oppdater modal-hjertet dersom modalen er åpen og viser dette arrangementet */
     const modalHjerte = document.querySelector('.modal-hjerte[data-id]');
     if (modalHjerte?.dataset.id === id) {
@@ -495,12 +534,76 @@ function initLagretSync() {
     }
     const event = tilstand.alleEventer.find((e) => e.id === id);
     if (lagret) {
-      trackEvent('event_lagret', { id, kategori: event?.kategori });
+      trackEvent('event_lagret', { id, kategori: event?.kategori, ...kontekst });
     } else {
-      trackEvent('event_fjernet_lagret', { id, kategori: event?.kategori });
+      trackEvent('event_fjernet_lagret', { id, kategori: event?.kategori, ...kontekst });
     }
     if (tilstand.visLagret) oppdaterFeed();
   });
+}
+
+
+/* ========================
+   UTFORSK PÅ KART
+   Fullskjermkart med de samme eventene som feeden. Klikk på et event i
+   en pin-popup åpner den vanlige modalen oppå kartet.
+   ======================== */
+
+async function oppdaterKart() {
+  const info    = document.getElementById('kart-visning-info');
+  const eventer = tilstand.synligeEventer;
+
+  const antallSteder = await visOversiktskart(
+    document.getElementById('kart-visning-flate'),
+    eventer,
+    åpneModal,
+  );
+
+  if (antallSteder === null) {
+    info.textContent = 'Klarte ikke laste kartet. Prøv igjen senere.';
+    return;
+  }
+
+  const medSted  = eventer.filter((e) => e.lat != null && e.lng != null).length;
+  const utenSted = eventer.length - medSted;
+
+  let tekst = medSted === 0
+    ? 'Ingen forslag med kjent sted her.'
+    : `${medSted} forslag på ${antallSteder} ${antallSteder === 1 ? 'sted' : 'steder'}`;
+  if (utenSted > 0) tekst += ` · ${utenSted} uten kjent sted vises bare i lista`;
+  info.textContent = tekst;
+}
+
+let kartForrigeFokus = null;
+
+function åpneKartVisning() {
+  tilstand.visKart  = true;
+  kartForrigeFokus  = document.activeElement;
+  document.getElementById('kart-visning').classList.remove('skjult');
+  document.body.classList.add('kart-aapen');
+  document.getElementById('kart-visning-lukk').focus();
+  trackEvent('kart_åpnet');
+  oppdaterKart();
+}
+
+function lukkKartVisning() {
+  tilstand.visKart = false;
+  document.getElementById('kart-visning').classList.add('skjult');
+  document.body.classList.remove('kart-aapen');
+  kartForrigeFokus?.focus();
+  kartForrigeFokus = null;
+}
+
+function initKartVisning() {
+  document.getElementById('vis-kart')?.addEventListener('click', åpneKartVisning);
+  document.getElementById('kart-visning-lukk')?.addEventListener('click', lukkKartVisning);
+
+  /* Capture-fase: kjører før modalens Escape-lytter. Er modalen åpen,
+     skal Escape bare lukke den — kartet blir stående under. */
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !tilstand.visKart || hentÅpenEvent()) return;
+    lukkKartVisning();
+  }, true);
 }
 
 
@@ -610,6 +713,12 @@ function initBunnNav() {
    unngår å lese localStorage på nytt for hvert trackEvent()-kall. */
 let analyseVisitorId = null;
 
+/* Hendelser som bærer visningskontekst (se impresjoner.js:hentVisningsKontekst). */
+const KONTEKST_HENDELSER = new Set([
+  'event_impression', 'kort_åpnet', 'kort_lukket', 'event_lagret',
+  'event_fjernet_lagret', 'mer_info_klikket', 'event_delt',
+]);
+
 /* Videresender ALLE trackEvent()-kall til vårt eget analytics-API, i
    tillegg til Umami. sporing.js vet selv ingenting om dette — se
    registrerAnalyseSink() der. Kalles ALDRI før samtykke (registreres kun
@@ -634,8 +743,15 @@ function analyseSink(navn, data) {
   let properties = {};
   if (navn === 'filter_valgt') {
     properties = { type: data?.type, verdi: data?.verdi };
-  } else if (navn === 'event_impression') {
-    properties = { surface: data?.surface, position: data?.position };
+  } else if (KONTEKST_HENDELSER.has(navn)) {
+    properties = {
+      surface: data?.surface,
+      position: data?.position,
+      feed_id: data?.feed_id,
+      sort: data?.sort,
+      algo_version: data?.algo_version,
+    };
+    if (navn === 'kort_lukket') properties.dwell_ms = data?.dwell_ms;
   } else if (navn === 'sted_fulgt' || navn === 'sted_avfulgt') {
     properties = { sted: data?.sted, venueId: data?.venueId };
   }
@@ -743,6 +859,8 @@ function initHashRuting() {
 async function lastInnEventer() {
   try {
     tilstand.alleEventer = utvidGjentakende(await hentEventer());
+    settPrisTak(beregnPrisTak(tilstand.alleEventer));  /* nullstiller også slideren */
+    tilstand.aktivFiltre.pris = null;
     visForside(velgUtvalg(tilstand.alleEventer));
     observerImpresjoner([...document.querySelectorAll('#forside-utvalg .utvalg-kort')], 'forside');
     oppdaterFeed();
@@ -789,6 +907,7 @@ function visLastefeil() {
 async function startApp() {
   initModal();
   initFiltre();
+  initPrisSlider();
   initNullstillKnapp();
   initLagretKnapp();
   initLagretSync();
@@ -802,6 +921,7 @@ async function startApp() {
   initUkeNav();
   initBunnNav();
   initFilterToggle();
+  initKartVisning();
 
   visSkeletonKort();
   visSkeletonUtvalg();
