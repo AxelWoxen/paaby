@@ -243,13 +243,13 @@
                CSS-bytte på #feed (klassen feed--grid), se initVisning() i
                js/main.js. -->
           <div class="visning-bryter" role="group" aria-label="Visning">
-            <button type="button" id="visning-liste" class="visning-knapp aktiv" aria-pressed="true" aria-label="Listevisning">
+            <button type="button" id="visning-liste" class="visning-knapp" aria-pressed="false" aria-label="Listevisning">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
                 <rect x="3" y="4" width="18" height="6" rx="1.5" stroke="currentColor" stroke-width="2"/>
                 <rect x="3" y="14" width="18" height="6" rx="1.5" stroke="currentColor" stroke-width="2"/>
               </svg>
             </button>
-            <button type="button" id="visning-grid" class="visning-knapp" aria-pressed="false" aria-label="Rutenettvisning">
+            <button type="button" id="visning-grid" class="visning-knapp aktiv" aria-pressed="true" aria-label="Rutenettvisning">
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
                 <rect x="3" y="3" width="7.5" height="7.5" rx="1.5" stroke="currentColor" stroke-width="2"/>
                 <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" stroke="currentColor" stroke-width="2"/>
@@ -271,7 +271,7 @@
         Lagres på denne enheten – dukker ikke opp på andre.
       </p>
 
-      <main id="feed" class="feed" aria-label="Arrangement-feed">
+      <main id="feed" class="feed feed--grid" aria-label="Arrangement-feed">
         <p class="laster">henter hva som skjer...</p>
       </main>
 

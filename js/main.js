@@ -415,10 +415,11 @@ function initVisning() {
     gridKn.setAttribute('aria-pressed', String(erGrid));
   };
 
-  let lagret = 'liste';
+  /* Rutenett er standard; kun et eksplisitt valg av liste huskes. */
+  let lagret = 'grid';
   try {
-    if (localStorage.getItem('paaby-visning') === 'grid') lagret = 'grid';
-  } catch { /* fortsett med liste */ }
+    if (localStorage.getItem('paaby-visning') === 'liste') lagret = 'liste';
+  } catch { /* fortsett med rutenett */ }
   settVisning(lagret);
 
   [[listeKn, 'liste'], [gridKn, 'grid']].forEach(([knapp, visning]) => {
