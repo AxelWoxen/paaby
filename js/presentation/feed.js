@@ -215,11 +215,20 @@ const info = [
   formaterPrisKort(event.pris, event.prisTekst)
 ];
 
+/* Infoteksten kuttes med «…» når den er for lang. Avstanden ligger i et eget
+   element som ikke krymper, slik at den alltid er synlig når «Vis avstand» er på. */
+const metaTekst = document.createElement('span');
+metaTekst.className   = 'kort-meta-tekst';
+metaTekst.textContent = info.join(' · ');
+meta.appendChild(metaTekst);
+
 if (event._avstand != null) {
-  info.push(formaterAvstand(event._avstand));
+  const avstand = document.createElement('span');
+  avstand.className   = 'avstand';
+  avstand.textContent = formaterAvstand(event._avstand);
+  meta.appendChild(avstand);
 }
 
-meta.textContent = info.join(' · ');
 innhold.appendChild(meta);
 
   artikkel.appendChild(innhold);
