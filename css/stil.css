@@ -955,6 +955,13 @@ textarea {
   min-width: 0;
 }
 
+.kort-meta-tekst {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .avstand::before {
   content: '· ';
 }
@@ -962,6 +969,9 @@ textarea {
 .avstand {
   color: inherit;
   flex-shrink: 0;
+  margin-left: 0.3em;
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 /* Tid og pris er fakta på samme nivå og skal alltid ha samme grå farge. */
