@@ -14,6 +14,7 @@ import { erGyldigUrl }                                 from '../application/vali
 import { hentEventbilde, KATEGORI_BILDER }             from '../application/kategori-bilder.js';
 import { bindBildeLasting, markerBildeLastet }         from '../application/bilde-lasting.js';
 import { trackEvent }                                  from '../application/sporing.js';
+import { MAKS_DWELL_MS }                               from '../application/analytics-events.js';
 import { synkroniserKortHjerte }                       from './feed.js';
 
 /* Konfigurasjon — fyll inn produksjonsdomene og evt. feedback-URL. */
@@ -29,14 +30,24 @@ const KONFIG = {
 
 let åpenEvent              = null;
 let forrigeAktivtElement   = null; /* fokus returneres hit når modal lukkes */
+let åpenKontekst           = {};   /* visningskontekst (surface/position/feed_id …) modalen ble åpnet fra */
+let åpnetMs                = null; /* for kort_lukket.dwell_ms */
 
 
 /* ========================
    ÅPNE / LUKKE
    ======================== */
 
-export function åpneModal(event) {
-  trackEvent('kort_åpnet', { id: event.id, kategori: event.kategori });
+/**
+ * @param {Object} event
+ * @param {Object} [kontekst] - fra impresjoner.js:hentVisningsKontekst() for kortet
+ *                              som ble klikket; tom ved åpning via delt lenke.
+ */
+export function åpneModal(event, kontekst = {}) {
+  if (åpenEvent) sendKortLukket();
+  åpenKontekst = kontekst;
+  åpnetMs      = Date.now();
+  trackEvent('kort_åpnet', { id: event.id, kategori: event.kategori, ...kontekst });
   åpenEvent            = event;
   forrigeAktivtElement = document.activeElement;
 
@@ -61,7 +72,29 @@ export function åpneModal(event) {
   leggTilModalLyttere(event);
 }
 
+/* Sender kort_lukket med hvor lenge modalen var åpen — skiller et raskt
+   "nei takk" fra faktisk lesing. Kalles ved lukking, ved bytte direkte til
+   et annet event, og ved pagehide (fanen lukkes mens modalen er åpen). */
+function sendKortLukket() {
+  if (!åpenEvent || åpnetMs === null) return;
+  const dwellMs = Math.min(Math.max(Date.now() - åpnetMs, 0), MAKS_DWELL_MS);
+  trackEvent('kort_lukket', {
+    id: åpenEvent.id,
+    kategori: åpenEvent.kategori,
+    ...åpenKontekst,
+    dwell_ms: dwellMs,
+  });
+  åpnetMs = null;
+}
+
+/** Visningskonteksten den åpne modalen ble åpnet fra — {} hvis ingen. */
+export function hentÅpenKontekst() {
+  return åpenEvent ? åpenKontekst : {};
+}
+
 export function lukkModal() {
+  sendKortLukket();
+  åpenKontekst = {};
   const modal = document.getElementById('modal');
   modal.classList.remove('aktiv');
   modal.setAttribute('aria-hidden', 'true');
@@ -266,7 +299,7 @@ function byggHandlinger(event) {
     a.rel       = 'noopener noreferrer';
     a.className = 'knapp knapp-primaer';
     a.textContent = 'mer info / billett';
-    a.addEventListener('click', () => trackEvent('mer_info_klikket', { id: event.id, kategori: event.kategori }), { once: true });
+    a.addEventListener('click', () => trackEvent('mer_info_klikket', { id: event.id, kategori: event.kategori, ...åpenKontekst }), { once: true });
     div.appendChild(a);
   }
 
@@ -341,7 +374,7 @@ function leggTilModalLyttere(event) {
 
     /* Informer main.js (f.eks. for lagret-visning) */
     document.dispatchEvent(new CustomEvent('paaby:lagret-endret', {
-      detail: { id: event.id, lagret: erNåLagret },
+      detail: { id: event.id, lagret: erNåLagret, kontekst: åpenKontekst },
     }));
   });
 
@@ -385,7 +418,7 @@ async function delEvent(event, knapp) {
   if (navigator.share) {
     try {
       await navigator.share({ title: event.tittel, text: tekst, url: delUrl });
-      trackEvent('event_delt', { id: event.id, kategori: event.kategori });
+      trackEvent('event_delt', { id: event.id, kategori: event.kategori, ...åpenKontekst });
     } catch {
       /* Brukeren avbrøt — ikke vis feil, ikke track */
     }
@@ -396,7 +429,7 @@ async function delEvent(event, knapp) {
     await navigator.clipboard.writeText(delUrl);
     knapp.textContent = 'lenke kopiert!';
     setTimeout(() => { knapp.textContent = 'del'; }, 2000);
-    trackEvent('event_delt', { id: event.id, kategori: event.kategori });
+    trackEvent('event_delt', { id: event.id, kategori: event.kategori, ...åpenKontekst });
   } catch {
     window.prompt('Kopier denne lenken:', delUrl);
   }
@@ -553,4 +586,6 @@ export function initModal() {
   modal.addEventListener('keydown', håndterFokusFelle);
 
   initDraForÅLukke();
+
+  window.addEventListener('pagehide', sendKortLukket);
 }

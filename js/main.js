@@ -71,7 +71,7 @@ function oppdaterFeed() {
   if (tilstand.visFølger) {
     const { mandag, ukensEventer } = hentUkensAktiveEventer();
     visFølgerVisning(ukensEventer, oppdaterFeed);
-    observerImpresjoner([...document.querySelectorAll('#feed .kort')], 'følger');
+    observerImpresjoner([...document.querySelectorAll('#feed .kort')], 'følger', { sortering: 'tid-stigende' });
     oppdaterUkeNav(mandag);
     oppdaterTreffLinje(0);
     return;
@@ -133,7 +133,11 @@ function oppdaterFeed() {
   }
 
   visEventer(dagGrupper, tomMelding);
-  observerImpresjoner([...document.querySelectorAll('#feed .kort')], tilstand.visLagret ? 'lagret' : 'utforsk');
+  observerImpresjoner(
+    [...document.querySelectorAll('#feed .kort')],
+    tilstand.visLagret ? 'lagret' : 'utforsk',
+    { sortering: effektivSortering },
+  );
   oppdaterTreffLinje(sorterte.length);
 }
 
@@ -486,7 +490,7 @@ function initFølgerKnapp() {
 
 /* Lytter til lagret-endringer fra feed.js og modal.js */
 function initLagretSync() {
-  document.addEventListener('paaby:lagret-endret', ({ detail: { id, lagret } }) => {
+  document.addEventListener('paaby:lagret-endret', ({ detail: { id, lagret, kontekst = {} } }) => {
     /* Oppdater modal-hjertet dersom modalen er åpen og viser dette arrangementet */
     const modalHjerte = document.querySelector('.modal-hjerte[data-id]');
     if (modalHjerte?.dataset.id === id) {
@@ -497,9 +501,9 @@ function initLagretSync() {
     }
     const event = tilstand.alleEventer.find((e) => e.id === id);
     if (lagret) {
-      trackEvent('event_lagret', { id, kategori: event?.kategori });
+      trackEvent('event_lagret', { id, kategori: event?.kategori, ...kontekst });
     } else {
-      trackEvent('event_fjernet_lagret', { id, kategori: event?.kategori });
+      trackEvent('event_fjernet_lagret', { id, kategori: event?.kategori, ...kontekst });
     }
     if (tilstand.visLagret) oppdaterFeed();
   });
@@ -612,6 +616,12 @@ function initBunnNav() {
    unngår å lese localStorage på nytt for hvert trackEvent()-kall. */
 let analyseVisitorId = null;
 
+/* Hendelser som bærer visningskontekst (se impresjoner.js:hentVisningsKontekst). */
+const KONTEKST_HENDELSER = new Set([
+  'event_impression', 'kort_åpnet', 'kort_lukket', 'event_lagret',
+  'event_fjernet_lagret', 'mer_info_klikket', 'event_delt',
+]);
+
 /* Videresender ALLE trackEvent()-kall til vårt eget analytics-API, i
    tillegg til Umami. sporing.js vet selv ingenting om dette — se
    registrerAnalyseSink() der. Kalles ALDRI før samtykke (registreres kun
@@ -636,8 +646,15 @@ function analyseSink(navn, data) {
   let properties = {};
   if (navn === 'filter_valgt') {
     properties = { type: data?.type, verdi: data?.verdi };
-  } else if (navn === 'event_impression') {
-    properties = { surface: data?.surface, position: data?.position };
+  } else if (KONTEKST_HENDELSER.has(navn)) {
+    properties = {
+      surface: data?.surface,
+      position: data?.position,
+      feed_id: data?.feed_id,
+      sort: data?.sort,
+      algo_version: data?.algo_version,
+    };
+    if (navn === 'kort_lukket') properties.dwell_ms = data?.dwell_ms;
   } else if (navn === 'sted_fulgt' || navn === 'sted_avfulgt') {
     properties = { sted: data?.sted, venueId: data?.venueId };
   }

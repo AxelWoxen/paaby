@@ -14,6 +14,8 @@ import {
   ANALYTICS_EVENT_NAVN,
   erGyldigAnalyticsEventNavn,
   erGyldigSurface,
+  erGyldigSortering,
+  MAKS_DWELL_MS,
   utledBaseEventId,
 } from '../../js/application/analytics-events.js';
 
@@ -39,6 +41,26 @@ function erGyldigPosition(verdi) {
   return typeof verdi === 'number' && Number.isInteger(verdi) && verdi >= 1 && verdi <= MAKS_IMPRESSION_POSITION;
 }
 
+// algo_version er en fri, men stram slug (ikke en fast liste) slik at en ny
+// rangeringsversjon kan rulles ut i frontend uten samtidig backend-deploy.
+const ALGO_VERSJON_REGEX = /^[a-z0-9][a-z0-9.-]{0,39}$/;
+
+// Visningskontekst — hvilken liste/posisjon/rangering en handling skjedde i
+// (se js/application/impresjoner.js:hentVisningsKontekst). Delt av impresjoner
+// og alle handlinger på et kort, slik at klikk kan kobles mot impresjoner i
+// samme feed_id og korrigeres for posisjons-bias.
+const VISNINGSKONTEKST_VALIDATORER = {
+  surface: (v) => (erGyldigSurface(v) ? v : null),
+  position: (v) => (erGyldigPosition(v) ? v : null),
+  feed_id: (v) => (erGyldigUuid(v) ? v : null),
+  sort: (v) => (erGyldigSortering(v) ? v : null),
+  algo_version: (v) => (typeof v === 'string' && ALGO_VERSJON_REGEX.test(v) ? v : null),
+};
+
+function erGyldigDwell(verdi) {
+  return typeof verdi === 'number' && Number.isInteger(verdi) && verdi >= 0 && verdi <= MAKS_DWELL_MS;
+}
+
 // @returns {verdi: unknown} | null  — null betyr "dropp denne nøkkelen"
 const PROPERTY_VALIDATORER = {
   filter_valgt: {
@@ -46,9 +68,15 @@ const PROPERTY_VALIDATORER = {
     verdi: (v) => (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
       ? String(v).slice(0, MAKS_PROPERTY_VERDI_LENGDE) : null),
   },
-  event_impression: {
-    surface: (v) => (erGyldigSurface(v) ? v : null),
-    position: (v) => (erGyldigPosition(v) ? v : null),
+  event_impression: VISNINGSKONTEKST_VALIDATORER,
+  kort_åpnet: VISNINGSKONTEKST_VALIDATORER,
+  event_lagret: VISNINGSKONTEKST_VALIDATORER,
+  event_fjernet_lagret: VISNINGSKONTEKST_VALIDATORER,
+  mer_info_klikket: VISNINGSKONTEKST_VALIDATORER,
+  event_delt: VISNINGSKONTEKST_VALIDATORER,
+  kort_lukket: {
+    ...VISNINGSKONTEKST_VALIDATORER,
+    dwell_ms: (v) => (erGyldigDwell(v) ? v : null),
   },
   sted_fulgt: {
     sted: (v) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, MAKS_STED_LENGDE) : null),
