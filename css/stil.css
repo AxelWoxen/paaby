@@ -969,7 +969,6 @@ textarea {
 .avstand {
   color: inherit;
   flex-shrink: 0;
-  margin-left: 0.3em;
   white-space: nowrap;
   font-weight: 600;
 }
