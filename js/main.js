@@ -3,6 +3,7 @@
 
 import { hentEventer }                             from './network/events-api.js';
 import { filtrerEventer }                          from './application/filtre.js';
+import { beregnPrisTak, formaterPrisIntervall }     from './application/prisfilter.js';
 import { skjulPasserte, grupperEtterDag }          from './application/gruppering.js';
 import { sorterEventer, erAvstandsSortering,
          erTidsSortering }                         from './application/sortering.js';
@@ -22,6 +23,8 @@ import { velgUtvalg, visForside, initSeAlt,
 import { utvidGjentakende }                        from './application/gjentas.js';
 import { observerImpresjoner }                      from './application/impresjoner.js';
 import { visFølgerVisning }                        from './presentation/følger.js';
+import { initPrisFilter, settPrisTak, nullstillPrisFilter,
+         oppdaterPrisHistogram }                   from './presentation/prisfilter.js';
 import { ukeMandag, ukeVindu,
          filtrerTilUke, ukeLabel, ukeNummer }               from './application/uke.js';
 
@@ -36,7 +39,7 @@ const tilstand = {
   aktivFiltre: {
     kategori: [],    /* Array — ELLER-logikk, multi-select */
     tid:      null,  /* string | null — enkeltvalg */
-    pris:     null,  /* string | null — enkeltvalg */
+    pris:     null,  /* { min, maks } | null — intervall fra prisslideren */
     naerhet:  false, /* ubrukt — ingen chip i HTML, men beholdes for bakoverkompatibilitet */
   },
 
@@ -89,6 +92,12 @@ function oppdaterFeed() {
 
     ukeTom  = ukensEventer.length === 0;
     eventer = filtrerEventer(ukensEventer, tilstand.aktivFiltre, tilstand.brukerPosisjon);
+
+    /* Histogrammet viser prisfordelingen for de ANDRE filtrene — ellers
+       ville stolpene utenfor valgt intervall alltid vært tomme. */
+    oppdaterPrisHistogram(
+      filtrerEventer(ukensEventer, { ...tilstand.aktivFiltre, pris: null }, tilstand.brukerPosisjon),
+    );
 
     oppdaterUkeNav(mandag);
   }
@@ -227,7 +236,7 @@ function initFiltre() {
           chip.classList.add('aktiv');
         }
 
-      } else if (type === 'tid' || type === 'pris') {
+      } else if (type === 'tid') {
         const erAktivNå = tilstand.aktivFiltre[type] === verdi;
 
         document.querySelectorAll(`[data-filter="${type}"]`).forEach((c) => {
@@ -255,6 +264,19 @@ function initFiltre() {
   });
 }
 
+function initPrisSlider() {
+  initPrisFilter((intervall, ferdig) => {
+    tilstand.aktivFiltre.pris = intervall;
+    oppdaterNullstillKnapp();
+    oppdaterFeed();
+
+    /* Sporing: kun når brukeren slipper slideren, og kun ved et aktivt filter */
+    if (ferdig && intervall) {
+      trackEvent('filter_valgt', { type: 'pris', verdi: formaterPrisIntervall(intervall) });
+    }
+  });
+}
+
 function oppdaterNullstillKnapp() {
   const harAktive =
     tilstand.aktivFiltre.kategori.length > 0 ||
@@ -270,10 +292,11 @@ function initNullstillKnapp() {
 
     document.querySelectorAll('.chip').forEach((c) => {
       c.classList.remove('aktiv');
-      if (c.dataset.filter === 'tid' || c.dataset.filter === 'pris') {
+      if (c.dataset.filter === 'tid') {
         c.setAttribute('aria-pressed', 'false');
       }
     });
+    nullstillPrisFilter();
 
     oppdaterNullstillKnapp();
     oppdaterFeed();
@@ -762,6 +785,8 @@ function initHashRuting() {
 async function lastInnEventer() {
   try {
     tilstand.alleEventer = utvidGjentakende(await hentEventer());
+    settPrisTak(beregnPrisTak(tilstand.alleEventer));  /* nullstiller også slideren */
+    tilstand.aktivFiltre.pris = null;
     visForside(velgUtvalg(tilstand.alleEventer));
     observerImpresjoner([...document.querySelectorAll('#forside-utvalg .utvalg-kort')], 'forside');
     oppdaterFeed();
@@ -808,6 +833,7 @@ function visLastefeil() {
 async function startApp() {
   initModal();
   initFiltre();
+  initPrisSlider();
   initNullstillKnapp();
   initLagretKnapp();
   initLagretSync();
