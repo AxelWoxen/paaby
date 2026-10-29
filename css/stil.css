@@ -1143,7 +1143,11 @@ textarea {
 
 .pris-gratis {
   font-weight: 500;
-  width: 50%;
+}
+#pris-gratis {
+  align-self: flex-start;
+  width: fit-content;
+  padding: 0.3rem 0.8rem;
 }
 
 /* === UTGÅTT I DAG === */
