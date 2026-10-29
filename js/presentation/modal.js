@@ -16,6 +16,7 @@ import { bindBildeLasting, markerBildeLastet }         from '../application/bild
 import { trackEvent }                                  from '../application/sporing.js';
 import { MAKS_DWELL_MS }                               from '../application/analytics-events.js';
 import { synkroniserKortHjerte }                       from './feed.js';
+import { byggKartContainer, visKart, skjulKart }       from './kart.js';
 
 /* Konfigurasjon — fyll inn produksjonsdomene og evt. feedback-URL. */
 const KONFIG = {
@@ -55,6 +56,7 @@ export function åpneModal(event, kontekst = {}) {
   const innhold = document.getElementById('modal-innhold');
 
   /* Tøm og bygg innhold på nytt */
+  skjulKart();
   innhold.innerHTML = '';
   innhold.appendChild(byggModalInnhold(event));
 
@@ -70,6 +72,9 @@ export function åpneModal(event, kontekst = {}) {
   history.replaceState(null, '', `#event/${encodeURIComponent(event.id)}`);
 
   leggTilModalLyttere(event);
+
+  /* Kartet tegnes etter at innholdet er i DOM-en — Leaflet må kunne måle det */
+  visKart(innhold.querySelector('.modal-kart'), event);
 }
 
 /* Sender kort_lukket med hvor lenge modalen var åpen — skiller et raskt
@@ -99,6 +104,7 @@ export function lukkModal() {
   modal.classList.remove('aktiv');
   modal.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('modal-aapen');
+  skjulKart();
   åpenEvent = null;
 
   /* Fjern event-hash */
@@ -222,6 +228,10 @@ function byggModalInnhold(event) {
 
   /* Bunnlinje: lagre + del */
   body.appendChild(byggBunn(event));
+
+  /* Kart over hvor eventet er (kun når stedet har koordinater) */
+  const kart = byggKartContainer(event);
+  if (kart) body.appendChild(kart);
 
   /* Tillitssignaler */
   const tillit = byggTillit(event);
@@ -508,6 +518,7 @@ function initDraForÅLukke() {
     if (window.innerWidth > BUNNARK_MAKS_BREDDE) return;
     if (e.pointerType === 'mouse' && e.button !== 0) return;
     if (container.scrollTop > 0) return; /* kun ved toppen av innholdet */
+    if (e.target.closest('.modal-kart')) return; /* kartet har egne gester */
 
     startY   = e.clientY;
     startTid = performance.now();

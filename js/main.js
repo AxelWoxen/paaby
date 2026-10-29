@@ -12,6 +12,7 @@ import { hentLagredeIder }                         from './application/lagret.js
 import { visEventer, visSkeletonKort }             from './presentation/feed.js';
 import { initModal, åpneModal, lukkModal,
          hentÅpenEvent }                           from './presentation/modal.js';
+import { visOversiktskart }                        from './presentation/kart.js';
 import { aktiverSporing, trackEvent,
          registrerAnalyseSink }                     from './application/sporing.js';
 import { erGyldigAnalyticsEventNavn }               from './application/analytics-events.js';
@@ -51,6 +52,9 @@ const tilstand = {
   visFølger:      false,
 
   ukeOffset:      0,  /* 0 = denne uka, 1 = neste uke osv. — kun i standardvisning */
+
+  synligeEventer: [], /* det feeden viser nå — «utforsk på kart» tegner de samme */
+  visKart:        false,
 };
 
 
@@ -76,6 +80,7 @@ function oppdaterFeed() {
     visFølgerVisning(ukensEventer, oppdaterFeed);
     observerImpresjoner([...document.querySelectorAll('#feed .kort')], 'følger', { sortering: 'tid-stigende' });
     oppdaterUkeNav(mandag);
+    tilstand.synligeEventer = [];
     oppdaterTreffLinje(0);
     return;
   }
@@ -142,12 +147,14 @@ function oppdaterFeed() {
   }
 
   visEventer(dagGrupper, tomMelding);
-  observerImpresjoner(
-    [...document.querySelectorAll('#feed .kort')],
-    tilstand.visLagret ? 'lagret' : 'utforsk',
-    { sortering: effektivSortering },
-  );
+observerImpresjoner(
+  [...document.querySelectorAll('#feed .kort')],
+  tilstand.visLagret ? 'lagret' : 'utforsk',
+  { sortering: effektivSortering },
+);
+tilstand.synligeEventer = sorterte;
   oppdaterTreffLinje(sorterte.length);
+  if (tilstand.visKart) oppdaterKart();
 }
 
 function oppdaterTreffLinje(antall) {
@@ -157,6 +164,9 @@ function oppdaterTreffLinje(antall) {
   const sorteringDiv  = document.querySelector('.sortering-kontroll');
   const sidestolpe    = document.querySelector('.sidestolpe');
   const ukeNav        = document.getElementById('uke-nav');
+
+  /* Følger-visningen har sin egen gruppering per sted — ingen kartknapp der */
+  document.getElementById('vis-kart')?.classList.toggle('skjult', tilstand.visFølger);
 
   if (tilstand.visFølger) {
     teller.textContent = 'Steder du følger';
@@ -534,6 +544,70 @@ function initLagretSync() {
 
 
 /* ========================
+   UTFORSK PÅ KART
+   Fullskjermkart med de samme eventene som feeden. Klikk på et event i
+   en pin-popup åpner den vanlige modalen oppå kartet.
+   ======================== */
+
+async function oppdaterKart() {
+  const info    = document.getElementById('kart-visning-info');
+  const eventer = tilstand.synligeEventer;
+
+  const antallSteder = await visOversiktskart(
+    document.getElementById('kart-visning-flate'),
+    eventer,
+    åpneModal,
+  );
+
+  if (antallSteder === null) {
+    info.textContent = 'Klarte ikke laste kartet. Prøv igjen senere.';
+    return;
+  }
+
+  const medSted  = eventer.filter((e) => e.lat != null && e.lng != null).length;
+  const utenSted = eventer.length - medSted;
+
+  let tekst = medSted === 0
+    ? 'Ingen forslag med kjent sted her.'
+    : `${medSted} forslag på ${antallSteder} ${antallSteder === 1 ? 'sted' : 'steder'}`;
+  if (utenSted > 0) tekst += ` · ${utenSted} uten kjent sted vises bare i lista`;
+  info.textContent = tekst;
+}
+
+let kartForrigeFokus = null;
+
+function åpneKartVisning() {
+  tilstand.visKart  = true;
+  kartForrigeFokus  = document.activeElement;
+  document.getElementById('kart-visning').classList.remove('skjult');
+  document.body.classList.add('kart-aapen');
+  document.getElementById('kart-visning-lukk').focus();
+  trackEvent('kart_åpnet');
+  oppdaterKart();
+}
+
+function lukkKartVisning() {
+  tilstand.visKart = false;
+  document.getElementById('kart-visning').classList.add('skjult');
+  document.body.classList.remove('kart-aapen');
+  kartForrigeFokus?.focus();
+  kartForrigeFokus = null;
+}
+
+function initKartVisning() {
+  document.getElementById('vis-kart')?.addEventListener('click', åpneKartVisning);
+  document.getElementById('kart-visning-lukk')?.addEventListener('click', lukkKartVisning);
+
+  /* Capture-fase: kjører før modalens Escape-lytter. Er modalen åpen,
+     skal Escape bare lukke den — kartet blir stående under. */
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !tilstand.visKart || hentÅpenEvent()) return;
+    lukkKartVisning();
+  }, true);
+}
+
+
+/* ========================
    BUNN-NAV (mobil, < 900px)
    Speiler tilstand fra vis-følger/vis-lagret ved å gjenbruke
    deres klikk-handlere — unngår duplisert tilstandslogikk.
@@ -847,6 +921,7 @@ async function startApp() {
   initUkeNav();
   initBunnNav();
   initFilterToggle();
+  initKartVisning();
 
   visSkeletonKort();
   visSkeletonUtvalg();
