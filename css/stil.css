@@ -380,19 +380,20 @@ textarea {
        shorthand ville nullstilt .topptekst sin topp/bunn-padding igjen
        (samme bug som tidligere, se forklaringen ved .topptekst). Venstre/
        høyre dekkes fullt ut av de to linjene under. */
-    max-width: 1020px;
-    padding-left: max(var(--gap-xl), env(safe-area-inset-left));
-    padding-right: max(var(--gap-xl), env(safe-area-inset-right));
+    /* Full bredde: logo og meny dyttes helt ut mot kantene. */
+    max-width: none;
+    padding-left: max(var(--gap-l), env(safe-area-inset-left));
+    padding-right: max(var(--gap-l), env(safe-area-inset-right));
   }
 
   .hoveddel {
-    max-width: 1020px;
+    max-width: none;
     display: flex;
     align-items: flex-start;
     gap: var(--gap-xl);
-    padding: 0 var(--gap-xl);
-    padding-left: max(var(--gap-xl), env(safe-area-inset-left));
-    padding-right: max(var(--gap-xl), env(safe-area-inset-right));
+    padding: 0 var(--gap-l);
+    padding-left: max(var(--gap-l), env(safe-area-inset-left));
+    padding-right: max(var(--gap-l), env(safe-area-inset-right));
   }
 
   .sidestolpe {
@@ -1590,9 +1591,9 @@ body.modal-aapen {
   }
 
   .forside-innhold {
-    max-width: 1020px;
-    padding-left: max(var(--gap-xl), env(safe-area-inset-left));
-    padding-right: max(var(--gap-xl), env(safe-area-inset-right));
+    max-width: none;
+    padding-left: max(var(--gap-l), env(safe-area-inset-left));
+    padding-right: max(var(--gap-l), env(safe-area-inset-right));
   }
 
   .forside-tittel {
@@ -2363,5 +2364,220 @@ body.modal-aapen {
   .logo-hovedlogo {
     height: 40px;
     max-width: 135px;
+  }
+}
+
+
+/* === VISNINGSBRYTER (liste / rutenett) === */
+
+.treff-hoyre {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-s);
+  margin-left: auto;
+}
+
+.visning-bryter {
+  display: inline-flex;
+  border: 1.5px solid var(--flate-2);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+
+.visning-knapp {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 28px;
+  border: none;
+  background: none;
+  color: var(--graa);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.visning-knapp:hover {
+  color: var(--paper);
+}
+
+.visning-knapp.aktiv {
+  background: var(--aksent);
+  color: var(--aksent-kontrast);
+}
+
+.visning-knapp:focus-visible {
+  outline: 2px solid var(--aksent);
+  outline-offset: -2px;
+}
+
+@media (max-width: 520px) {
+  .treff-hoyre {
+    width: 100%;
+  }
+
+  .treff-hoyre .sortering-kontroll {
+    flex: 1;
+    width: auto;
+  }
+}
+
+
+/* === RUTENETT-VISNING ===
+   Aktiveres av .feed--grid på #feed. Kun layout — kortene er de samme.
+   Tekstflaten legges i bunnen av bildet over hele bredden, siden kortene
+   er smalere her enn i listen. */
+
+.feed--grid .dag-kort {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--gap-m);
+}
+
+.feed--grid .kort-bilde-wrapper,
+.feed--grid .kort-skeleton-bilde {
+  aspect-ratio: 4 / 3;
+}
+
+.feed--grid .kort-innhold {
+  width: 88%;
+  max-width: none;
+  height: auto;
+  min-height: 60px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 10px 0 0;
+}
+
+.feed--grid .kort-tittel {
+  font-size: 1rem;
+  line-height: 1.15;
+}
+
+.feed--grid .kort-meta {
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+@media (max-width: 520px) {
+  .feed--grid .dag-kort {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--gap-s);
+  }
+
+  .feed--grid .kort {
+    border-width: 5px;
+  }
+
+  .feed--grid .kort-innhold {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border-radius: 0 8px 0 0;
+  }
+
+  .feed--grid .kort-tittel {
+    font-size: 0.85rem;
+  }
+
+  /* Smale kort: høyere bilde, og meta-linjen får brytes i stedet for å
+     klippes ("22:0…"). */
+  .feed--grid .kort-bilde-wrapper,
+  .feed--grid .kort-skeleton-bilde {
+    aspect-ratio: 1 / 1;
+  }
+
+  .feed--grid .kort-meta {
+    font-size: 0.7rem;
+    white-space: normal;
+    display: block;
+    overflow: visible;
+  }
+}
+
+/* Touch-vennlige bryterknapper på mobil/nettbrett. */
+@media (max-width: 899px) {
+  .visning-knapp {
+    width: 42px;
+    height: 36px;
+  }
+}
+
+
+
+/* === UTVALG-KARUSELL (forsiden) ===
+   Horisontal scroll-snap-rad: første kort fyller det meste av bredden, så
+   neste titter frem i kanten og viser at man kan sveipe videre. */
+
+.forside-utvalg-ramme {
+  position: relative;
+}
+
+.forside-utvalg {
+  flex-direction: row;
+  gap: var(--gap-m);
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  /* Luft rundt kortene så hover-skaleringen ikke klippes. */
+  padding: 4px;
+  margin: -4px -4px var(--gap-s);
+}
+
+.forside-utvalg::-webkit-scrollbar {
+  display: none;
+}
+
+.forside-utvalg:focus-visible {
+  outline: 2px solid var(--aksent);
+  outline-offset: 2px;
+}
+
+.forside-utvalg > .utvalg-kort,
+.forside-utvalg > .utvalg-kort-skeleton {
+  flex: 0 0 86%;
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+.utvalg-pil {
+  display: none;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--hvit);
+  color: var(--paper);
+  font-size: 1.25rem;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+.utvalg-pil:hover {
+  background: var(--aksent);
+}
+
+.utvalg-pil--forrige { left: var(--gap-s); }
+.utvalg-pil--neste   { right: var(--gap-s); }
+
+@media (min-width: 900px) {
+  .forside-utvalg > .utvalg-kort,
+  .forside-utvalg > .utvalg-kort-skeleton {
+    flex-basis: 72%;
+  }
+}
+
+/* Piler kun der man har mus — på touch sveiper man. [hidden] styrer
+   når de faktisk vises (se oppdaterUtvalgPiler i forside.js). */
+@media (hover: hover) and (min-width: 900px) {
+  .utvalg-pil:not([hidden]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }

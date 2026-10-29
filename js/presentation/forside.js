@@ -213,6 +213,41 @@ export function visForside(utvalg) {
   utvalgEl.innerHTML = '';
   utvalgEl.removeAttribute('aria-hidden');
   utvalg.forEach(e => utvalgEl.appendChild(lagUtvalgKort(e)));
+  utvalgEl.scrollLeft = 0;
+  oppdaterUtvalgPiler();
+}
+
+/* ─── Karusell-piler ─────────────────────────────────────────────────────────── */
+
+/* Piler skjules når det ikke er mer å scrolle til i den retningen (og begge
+   skjules ved få kort). Kun synlige på desktop med mus, se css/stil.css. */
+function oppdaterUtvalgPiler() {
+  const rad    = document.getElementById('forside-utvalg');
+  const forrige = document.getElementById('utvalg-forrige');
+  const neste   = document.getElementById('utvalg-neste');
+  if (!rad || !forrige || !neste) return;
+
+  const maks = rad.scrollWidth - rad.clientWidth;
+  forrige.hidden = rad.scrollLeft <= 4;
+  neste.hidden   = maks <= 4 || rad.scrollLeft >= maks - 4;
+}
+
+export function initUtvalgKarusell() {
+  const rad     = document.getElementById('forside-utvalg');
+  const forrige = document.getElementById('utvalg-forrige');
+  const neste   = document.getElementById('utvalg-neste');
+  if (!rad || !forrige || !neste) return;
+
+  const blaTil = (retning) => {
+    const kort = rad.querySelector('.utvalg-kort');
+    const steg = kort ? kort.getBoundingClientRect().width + 16 : rad.clientWidth;
+    rad.scrollBy({ left: retning * steg, behavior: 'smooth' });
+  };
+
+  forrige.addEventListener('click', () => blaTil(-1));
+  neste.addEventListener('click',   () => blaTil(1));
+  rad.addEventListener('scroll', oppdaterUtvalgPiler, { passive: true });
+  window.addEventListener('resize', oppdaterUtvalgPiler);
 }
 
 export function initSeAlt() {
