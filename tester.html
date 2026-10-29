@@ -931,10 +931,9 @@ test(
   1,
 );
 
-test(
-  'ukeLabel for denne uka',
-  ukeLabel(mandagDenneUka, 0),
-  'Denne uka',
+testTrue(
+  'ukeLabel for denne uka inkluderer ukenummer',
+  /^Denne uka · Uke \d+$/.test(ukeLabel(mandagDenneUka, 0)),
 );
 
 testTrue(

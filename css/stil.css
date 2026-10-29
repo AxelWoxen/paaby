@@ -344,6 +344,158 @@ textarea {
   opacity: 0.75;
 }
 
+
+/* === PRISFILTER: histogram + slider med to tommeler ===
+   To range-inputs ligger oppå hverandre. Selve sporene er usynlige og
+   slipper gjennom pekeren (pointer-events: none) — kun tommelene fanger
+   klikk/dra, slik at begge kan nås. Se js/presentation/prisfilter.js. */
+
+.pris-filter {
+  --pris-tommel: 20px;
+  display: flex;
+  flex-direction: column;
+  max-width: 320px;
+}
+
+.pris-histogram {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  height: 48px;
+  /* Stolpene skal flukte med sporet, som starter/slutter ved tommelens midtpunkt */
+  padding: 0 calc(var(--pris-tommel) / 2);
+}
+
+.pris-stolpe {
+  flex: 1;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--flate-2);
+  transition: height 0.2s ease, background 0.15s;
+}
+
+.pris-stolpe.innenfor {
+  background: var(--aksent);
+}
+
+.pris-stolpe.tom {
+  height: 2px;
+}
+
+.pris-slider {
+  position: relative;
+  height: var(--pris-tommel);
+  margin-top: 2px;
+}
+
+.pris-spor {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--pris-tommel) / 2);
+  right: calc(var(--pris-tommel) / 2);
+  height: 3px;
+  transform: translateY(-50%);
+  border-radius: 3px;
+  background: var(--flate-2);
+}
+
+.pris-spor-fyll {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+  background: var(--paper);
+}
+
+.pris-range {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: none;
+}
+
+.pris-range.foran {
+  z-index: 1;
+}
+
+.pris-range::-webkit-slider-runnable-track {
+  background: none;
+  border: none;
+}
+
+.pris-range::-moz-range-track {
+  background: none;
+  border: none;
+}
+
+.pris-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--pris-tommel);
+  height: var(--pris-tommel);
+  border-radius: 50%;
+  background: var(--hvit);
+  border: 1.5px solid var(--graa);
+  box-shadow: 0 1px 4px rgba(30, 12, 20, 0.18);
+  cursor: grab;
+  pointer-events: auto;
+  transition: transform 0.1s;
+}
+
+.pris-range::-moz-range-thumb {
+  width: var(--pris-tommel);
+  height: var(--pris-tommel);
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--hvit);
+  border: 1.5px solid var(--graa);
+  box-shadow: 0 1px 4px rgba(30, 12, 20, 0.18);
+  cursor: grab;
+  pointer-events: auto;
+}
+
+.pris-range:active::-webkit-slider-thumb {
+  cursor: grabbing;
+  transform: scale(1.1);
+}
+
+.pris-range:focus-visible::-webkit-slider-thumb {
+  outline: 2px solid var(--aksent);
+  outline-offset: 2px;
+}
+
+.pris-range:focus-visible::-moz-range-thumb {
+  outline: 2px solid var(--aksent);
+  outline-offset: 2px;
+}
+
+.pris-akse {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--graa);
+  margin-top: 2px;
+}
+
+.pris-rad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-s);
+  margin-top: var(--gap-s);
+}
+
+.pris-verdi {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--paper);
+}
+
 /* Filter-knapp: skjult på desktop (filtrene vises alltid der).
    Vises og får funksjon kun på mobil, se @media (max-width: 899px) under. */
 .filter-toggle-knapp {
@@ -956,6 +1108,13 @@ textarea {
   min-width: 0;
 }
 
+.kort-meta-tekst {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .avstand::before {
   content: '· ';
 }
@@ -963,6 +1122,8 @@ textarea {
 .avstand {
   color: inherit;
   flex-shrink: 0;
+  white-space: nowrap;
+  font-weight: 600;
 }
 
 /* Tid og pris er fakta på samme nivå og skal alltid ha samme grå farge. */
@@ -1310,6 +1471,166 @@ p.modal-beskrivelse {
 
 body.modal-aapen {
   overflow: hidden;
+}
+
+/* === UTFORSK PÅ KART === */
+
+.kart-knapp {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.8rem;
+  border: 1.5px solid var(--flate-2);
+  border-radius: 100px;
+  font-size: 0.8rem;
+  color: var(--paper);
+  white-space: nowrap;
+  transition: border-color 0.15s;
+}
+
+.kart-knapp:hover {
+  border-color: var(--graa);
+}
+
+body.kart-aapen {
+  overflow: hidden;
+}
+
+/* Under modalen (z-index 100), over bunn-nav og topbar */
+.kart-visning {
+  position: fixed;
+  inset: 0;
+  z-index: 95;
+  display: flex;
+  flex-direction: column;
+  background: var(--hvit);
+}
+
+.kart-visning-topp {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-m);
+  padding: var(--gap-m);
+  padding-top: calc(var(--gap-m) + env(safe-area-inset-top));
+  border-bottom: 1px solid var(--flate-2);
+}
+
+.kart-visning-tittel {
+  font-family: var(--font-tittel);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.kart-visning-info {
+  font-size: 0.8rem;
+  color: var(--graa);
+}
+
+.kart-visning-lukk {
+  font-size: 1.75rem;
+  line-height: 1;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  border-radius: 100px;
+  color: var(--paper);
+}
+
+.kart-visning-lukk:hover {
+  background: var(--flate-2);
+}
+
+.kart-visning-flate {
+  flex: 1;
+  isolation: isolate;
+  background: var(--flate-2);
+}
+
+/* Stedspinne: sirkel i kategorifargen, antall eventer inni */
+.kart-pin {
+  background: none;
+  border: none;
+}
+
+.kart-pin-sirkel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--svart);
+  font-family: var(--font-tittel);
+  font-size: 0.75rem;
+  font-weight: 700;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Leaflet setter egen skrift og marg i popupen — bruk sidens */
+.kart-visning-flate.leaflet-container {
+  font-family: inherit;
+}
+
+.kart-visning-flate .leaflet-popup-content {
+  margin: 0.75rem;
+}
+
+/* Ekstra klasse slår Leaflets «.leaflet-popup-content p { margin: 17px 0 }» */
+.kart-popup .kart-popup-sted {
+  font-weight: 700;
+  font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+}
+
+.kart-popup-liste {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kart-popup-event {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  padding: 0.4rem 0.5rem 0.4rem 0.6rem;
+  border-left: 3px solid var(--kort-farge);
+  border-radius: var(--radius-s);
+  text-align: left;
+  font-family: inherit;
+}
+
+.kart-popup-event:hover {
+  background: var(--flate-2);
+}
+
+.kart-popup-event.kategori-musikk { --kort-farge: var(--musikk); }
+.kart-popup-event.kategori-klubb  { --kort-farge: var(--klubb); }
+.kart-popup-event.kategori-pafunn { --kort-farge: var(--pafunn); }
+
+.kart-popup-tittel {
+  font-size: 0.85rem;
+  color: var(--svart);
+}
+
+.kart-popup-tid {
+  font-size: 0.75rem;
+  color: var(--graa);
+}
+
+/* Kart i detaljvisningen — Leaflet tegner inn i denne */
+.modal-kart {
+  height: 200px;
+  border-radius: var(--radius-m);
+  overflow: hidden;
+  background: var(--flate-2);
+  isolation: isolate; /* holder Leaflets z-index-er inne i kartet */
 }
 
 
@@ -2366,6 +2687,31 @@ body.modal-aapen {
     max-width: 135px;
   }
 }
+/* «utforsk på kart» deler rad med Sorter på mobil (se display:contents-
+   oppsettet for .treff-linje over) — knappen til venstre, Sorter fyller resten. */
+@media (max-width: 899px) {
+  .kart-knapp {
+    order: 1;
+  }
+
+  /* Basis = raden minus plass til kartknappen, så telleren fortsatt
+     brytes ned til linja med «Denne uka». Sorter og visningsbryteren
+     ligger i .treff-hoyre og deler den plassen. */
+  .treff-hoyre {
+    order: 1;
+    flex: 1 0 calc(100% - 12rem);
+    width: auto;
+    min-width: 0;
+    margin-left: 0;
+  }
+
+  .treff-hoyre .sortering-kontroll {
+    order: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
 
 
 /* === VISNINGSBRYTER (liste / rutenett) === */
@@ -2412,7 +2758,10 @@ body.modal-aapen {
 }
 
 @media (max-width: 520px) {
+  /* Kartknapp + Sorter + bryter får ikke plass på én rad på telefon:
+     Sorter og bryteren får egen rad under kartknappen. */
   .treff-hoyre {
+    flex-basis: 100%;
     width: 100%;
   }
 
