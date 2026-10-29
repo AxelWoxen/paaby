@@ -23,7 +23,7 @@ import { utvidGjentakende }                        from './application/gjentas.j
 import { observerImpresjoner }                      from './application/impresjoner.js';
 import { visFølgerVisning }                        from './presentation/følger.js';
 import { ukeMandag, ukeVindu,
-         filtrerTilUke, ukeLabel }                 from './application/uke.js';
+         filtrerTilUke, ukeLabel, ukeNummer }               from './application/uke.js';
 
 
 /* ========================
@@ -178,6 +178,8 @@ function oppdaterTreffLinje(antall) {
 function oppdaterUkeNav(mandagDenneUka) {
   document.getElementById('uke-label').textContent = ukeLabel(mandagDenneUka, tilstand.ukeOffset);
   document.getElementById('uke-forrige').classList.toggle('skjult', tilstand.ukeOffset === 0);
+  document.getElementById('uke-neste').textContent =
+    `Neste uke · Uke ${ukeNummer(mandagDenneUka, tilstand.ukeOffset + 1)} →`;
 }
 
 function initUkeNav() {

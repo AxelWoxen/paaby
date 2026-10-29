@@ -58,15 +58,27 @@ function isoUkenummer(k) {
 }
 
 /**
+ * ISO-ukenummer for uka `ukeOffset` uker etter `mandagDenneUka`.
+ *
+ * @param {Date}   mandagDenneUka
+ * @param {number} ukeOffset
+ * @returns {number}
+ */
+export function ukeNummer(mandagDenneUka, ukeOffset) {
+  const { fra } = ukeVindu(mandagDenneUka, ukeOffset);
+  return isoUkenummer(osloKomponenter(fra));
+}
+
+/**
  * Klartekst-label for uke-navigasjonen.
- * "Denne uka" for inneværende uke, ellers "Uke 31 · 27. jul–2. aug".
+ * "Denne uka · Uke 44" for inneværende uke, ellers "Uke 31 · 27. jul–2. aug".
  *
  * @param {Date}   mandagDenneUka
  * @param {number} ukeOffset
  * @returns {string}
  */
 export function ukeLabel(mandagDenneUka, ukeOffset) {
-  if (ukeOffset === 0) return 'Denne uka';
+  if (ukeOffset === 0) return `Denne uka · Uke ${ukeNummer(mandagDenneUka, 0)}`;
 
   const { fra } = ukeVindu(mandagDenneUka, ukeOffset);
   const søndag  = new Date(fra.getTime() + 6 * 86_400_000);
