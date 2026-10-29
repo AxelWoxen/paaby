@@ -1159,6 +1159,28 @@ textarea {
   gap: var(--gap-m);
 }
 
+/* Gruppene fra byggModalInnhold. På mobil er .modal-side «usynlig»
+   (display: contents) så barna blir flex-elementer i .modal-body, og
+   order gir lesefølgen hode → fakta → tekst → handlinger → bunn → tillit.
+   På desktop (≥ 900px) blir .modal-side og .modal-tekst to kolonner. */
+.modal-side {
+  display: contents;
+}
+
+.modal-hode,
+.modal-tekst {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-m);
+}
+
+.modal-hode        { order: 1; }
+.modal-faktarad    { order: 2; }
+.modal-tekst       { order: 3; }
+.modal-handlinger  { order: 4; }
+.modal-bunn        { order: 5; }
+.modal-tillit      { order: 6; }
+
 .modal-kategori {
   display: inline-block;
   padding: 0.25rem 0.625rem;
@@ -1320,9 +1342,13 @@ body.modal-aapen {
   }
 
   .modal-container {
-    max-width: 520px;
+    max-width: 600px;
     border-radius: var(--radius-l);
     margin: auto;
+  }
+
+  .modal-kategori {
+    align-self: flex-start;
   }
 
   .modal-bilde-wrapper {
@@ -1335,6 +1361,88 @@ body.modal-aapen {
 
   .modal-lukk-flytende {
     display: none;
+  }
+}
+
+/* To kolonner på laptop: bildet og lesestoffet til venstre, alt man
+   handler på (tid, pris, billett, lagre) i en sidekolonne til høyre.
+   Bildet beholder 16:9 så plakattekst ikke kuttes, og sidekolonnen er
+   sticky slik at billettknappen blir stående når en lang beskrivelse
+   scrolles. */
+@media (min-width: 900px) {
+  .modal-container {
+    width: calc(100% - 2 * var(--gap-xl));
+    max-width: 1000px;
+    max-height: 88dvh;
+  }
+
+  .modal-innhold {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      "bilde side"
+      "tekst side";
+  }
+
+  .modal-innhold > .modal-bilde-wrapper {
+    grid-area: bilde;
+  }
+
+  /* Barna (.modal-side og .modal-tekst) blir grid-elementer direkte. */
+  .modal-innhold > .modal-body {
+    display: contents;
+  }
+
+  .modal-side {
+    grid-area: side;
+    align-self: start;
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap-l);
+    padding: var(--gap-xl) var(--gap-xl) var(--gap-l);
+  }
+
+  .modal-hode {
+    gap: var(--gap-s);
+    /* Plass til lukkeknappen øverst til høyre. */
+    padding-right: var(--gap-xl);
+  }
+
+  .modal-hode .modal-tittel {
+    font-size: 1.85rem;
+    line-height: 1.15;
+    margin-top: var(--gap-s);
+  }
+
+  .modal-side .modal-faktarad {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .modal-side .modal-handlinger {
+    flex-direction: column;
+  }
+
+  .modal-side .modal-handlinger .knapp-primaer {
+    order: -1;
+    padding-block: 0.9rem;
+  }
+
+  .modal-side .modal-bunn {
+    padding-bottom: 0;
+  }
+
+  .modal-tekst {
+    grid-area: tekst;
+    padding: var(--gap-l) var(--gap-xl) var(--gap-xl);
+    max-width: 68ch;
+  }
+
+  .modal-tekst .modal-beskrivelse {
+    font-size: 1.05rem;
   }
 }
 
