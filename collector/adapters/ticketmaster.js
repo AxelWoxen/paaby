@@ -27,7 +27,9 @@ function tilApiTidspunkt(dato) {
 
 async function hentSide(source, apiKey, side) {
   const nå  = new Date();
-  const til = new Date(nå.getTime() + MAX_DAGER_FREM * 24 * 60 * 60 * 1000);
+  // run.js sender med sin horisont (dagerFrem) — be bare om det vinduet.
+  const dager = source.dagerFrem ?? MAX_DAGER_FREM;
+  const til = new Date(nå.getTime() + dager * 24 * 60 * 60 * 1000);
 
   const params = new URLSearchParams({
     apikey: apiKey,

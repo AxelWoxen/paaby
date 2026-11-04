@@ -51,6 +51,12 @@
 
   <!-- ─── FRA API ────────────────────────────────────────────────────────── -->
   <section id="panel-fra-api" class="panel">
+    <div class="kategori-filtre agent-utvalg" id="fra-api-utvalg" role="group" aria-label="Agentens vurdering">
+      <button type="button" class="kategori-filter-chip aktiv" data-utvalg="valgt">Agentens utvalg <span class="utvalg-antall"></span></button>
+      <button type="button" class="kategori-filter-chip" data-utvalg="usikker">Usikre <span class="utvalg-antall"></span></button>
+      <button type="button" class="kategori-filter-chip" data-utvalg="ikke-valgt">Ikke valgt <span class="utvalg-antall"></span></button>
+    </div>
+    <p class="utvalg-forklaring" id="fra-api-utvalg-forklaring"></p>
     <div class="verktoylinje">
       <input type="search" id="fra-api-sok" class="sok-input" placeholder="Søk på tittel eller sted…" aria-label="Søk blant events fra API" />
       <div class="kategori-filtre" id="fra-api-filtre" role="group" aria-label="Filtrer på kategori">

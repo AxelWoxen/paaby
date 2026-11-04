@@ -1,5 +1,6 @@
 import pool from '../../backend/db/pool.mjs';
 import { utledTags } from '../../js/application/tags.js';
+import { agentensValg, merkUtfall } from '../core/interesse.js';
 
 function tilLegacyStatus(status) {
   if (status === 'approved') return 'godkjent';
@@ -25,10 +26,31 @@ export async function lesCandidates() {
       submitter_note,
       possible_duplicate,
       duplicate_hint,
-      created_at
-    FROM event_candidates
-    ORDER BY created_at ASC
+      interest_score,
+      interest_reasons,
+      missing_fields,
+      kept_out_reason,
+      included_manually,
+      reject_reason,
+      reviewed_at,
+      (
+        SELECT COALESCE(array_agg(DISTINCT s.provider), ARRAY[]::text[])
+        FROM event_sources s
+        WHERE s.candidate_id = c.id
+      ) AS providers,
+      c.created_at
+    FROM event_candidates c
+    ORDER BY c.created_at ASC
   `);
+
+  // Ekte avslag som lærer agenten noe (samme regel som merkUtfall): avgjør
+  // om lav score kan legge et funn i «Ikke valgt» (MIN_AVSLAG_FOR_BORTVALG).
+  const antallAvslag = result.rows.filter((row) => merkUtfall({
+    status: row.status,
+    rejectReason: row.reject_reason,
+    reviewedAt: row.reviewed_at,
+    start: row.payload?.start,
+  }) === 'negativ').length;
 
   return result.rows.map((row) => ({
     ...row.payload,
@@ -42,10 +64,51 @@ export async function lesCandidates() {
     _innsenderNotat: row.submitter_note,
     _muligDuplikat: row.possible_duplicate,
     _duplikatHint: row.duplicate_hint,
+    _interesse: row.interest_score,
+    _interesseGrunner: row.interest_reasons ?? [],
+    _mangler: row.missing_fields ?? [],
+    _holdtUte: row.kept_out_reason,
+    _inkludertManuelt: row.included_manually,
+    // Agentens gruppe i Fra API (valgt / usikker / ikke-valgt) — regnet ut
+    // her, så admin-UI og kjøringsloggen alltid bruker samme grenser.
+    _agentValg: agentensValg({
+      score: row.interest_score,
+      holdtUte: row.kept_out_reason,
+      inkludertManuelt: row.included_manually,
+      antallAvslag,
+    }),
+    _providere: row.providers,
     // Når kandidaten kom inn i systemet — adminlistene sorterer «nyeste
     // lagt til» på denne.
     _lagtTil: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
   }));
+}
+
+// Interne _-felt (status, kilde, innsenderdata, duplikat-varsel, agentens
+// vurdering) hører hjemme i egne kolonner, ikke i payload — fjernes før
+// lagring. Én implementasjon, slik at et nytt _-felt aldri lekker inn i
+// payload bare fordi én av destruktureringene glemte det.
+export function utenInterneFelt(event) {
+  return Object.fromEntries(
+    Object.entries(event ?? {}).filter(([nøkkel]) => !nøkkel.startsWith('_')),
+  );
+}
+
+// Append-only logg (candidate_decisions, se 012_collector_laering.sql).
+// Tar med agentens score og evt. holdt-ute-grunn slik de stod da personen
+// bestemte seg — grunnlaget for å måle om agenten faktisk blir bedre.
+async function loggBeslutning(client, candidateId, decision, { grunn = null, brukerId = null } = {}) {
+  await client.query(
+    `
+      INSERT INTO candidate_decisions (
+        candidate_id, decision, reason, interest_score, kept_out_reason, decided_by
+      )
+      SELECT id, $2, $3, interest_score, kept_out_reason, $4
+      FROM event_candidates
+      WHERE id = $1
+    `,
+    [candidateId, decision, grunn, brukerId],
+  );
 }
 
 // Legg nye candidates i databasen.
@@ -143,6 +206,7 @@ export async function oppdaterCandidatePayload(legacyId, payload) {
 export async function markerGodkjent(
   legacyId,
   publishedEventId,
+  { brukerId = null } = {},
 ) {
   const client = await pool.connect();
 
@@ -170,6 +234,7 @@ export async function markerGodkjent(
         `UPDATE event_sources SET event_id = $2 WHERE candidate_id = $1`,
         [result.rows[0].id, publishedEventId],
       );
+      await loggBeslutning(client, result.rows[0].id, 'approved', { brukerId });
     }
 
     await client.query('COMMIT');
@@ -190,24 +255,34 @@ export async function markerGodkjent(
 export async function leggTilEnCandidateMedClient(
   client,
   event,
-  { source = 'collector', muligDuplikat = false, duplikatHint = null } = {},
+  { source = 'collector', muligDuplikat = false, duplikatHint = null, vurdering = null } = {},
 ) {
-  const { _status, _dbId, _lagtTil, ...payload } = event;
+  const payload = utenInterneFelt(event);
   payload.tags = utledTags(payload.tags, {
     pris: payload.pris,
     start: payload.start,
   });
 
+  // vurdering = agentens syn på eventet da det ble funnet (run.js) — null
+  // for alt som ikke kommer fra en collector-kjøring.
   const result = await client.query(
     `
       INSERT INTO event_candidates (
-        legacy_id, payload, status, source, possible_duplicate, duplicate_hint
+        legacy_id, payload, status, source, possible_duplicate, duplicate_hint,
+        collector_run_id, interest_score, interest_reasons, missing_fields, kept_out_reason
       )
-      VALUES ($1, $2::jsonb, 'pending', $3, $4, $5)
+      VALUES ($1, $2::jsonb, 'pending', $3, $4, $5, $6, $7, $8::jsonb, $9, $10)
       ON CONFLICT (legacy_id) DO NOTHING
       RETURNING id
     `,
-    [event.id, JSON.stringify(payload), source, muligDuplikat, duplikatHint],
+    [
+      event.id, JSON.stringify(payload), source, muligDuplikat, duplikatHint,
+      vurdering?.runId ?? null,
+      vurdering?.score ?? null,
+      JSON.stringify(vurdering?.grunner ?? []),
+      vurdering?.mangler ?? [],
+      vurdering?.holdtUte ?? null,
+    ],
   );
 
   if (result.rowCount > 0) {
@@ -227,24 +302,85 @@ export async function leggTilEnCandidateMedClient(
 // Marker candidate som triagert — sendt fra "Fra API" til "Til vurdering".
 // IKKE publisering: samme som avslå/godkjenn er dette et statusskifte, ikke
 // et nytt sett med sideeffekter.
-export async function markerTriagert(legacyId) {
-  const result = await pool.query(
-    `
-      UPDATE event_candidates
-      SET status = 'triaged'
-      WHERE legacy_id = $1 AND status = 'pending'
-      RETURNING id
-    `,
-    [legacyId],
-  );
+// Legg et ventende collector-funn i agentens utvalg manuelt (fra «Usikre»
+// eller «Ikke valgt»). Fjerner evt. holdt-ute-grunn, og included_manually
+// gjør at senere kjøringer aldri holder det ute igjen. Logges, så vi kan
+// se hvor ofte agenten tok feil.
+export async function markerInkludert(legacyId, { brukerId = null } = {}) {
+  const client = await pool.connect();
 
-  return result.rowCount > 0;
+  try {
+    await client.query('BEGIN');
+
+    // Beslutningen logges FØR raden endres, så loggen viser agentens
+    // vurdering slik den var da personen overstyrte den.
+    const { rows } = await client.query(
+      `SELECT id FROM event_candidates WHERE legacy_id = $1 AND status = 'pending'`,
+      [legacyId],
+    );
+    if (rows.length === 0) {
+      await client.query('ROLLBACK');
+      return false;
+    }
+
+    await loggBeslutning(client, rows[0].id, 'included', { brukerId });
+    await client.query(
+      `
+        UPDATE event_candidates
+        SET included_manually = TRUE, kept_out_reason = NULL
+        WHERE id = $1
+      `,
+      [rows[0].id],
+    );
+
+    await client.query('COMMIT');
+    return true;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function markerTriagert(legacyId, { brukerId = null } = {}) {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const result = await client.query(
+      `
+        UPDATE event_candidates
+        SET status = 'triaged'
+        WHERE legacy_id = $1 AND status = 'pending'
+        RETURNING id
+      `,
+      [legacyId],
+    );
+
+    if (result.rowCount > 0) {
+      await loggBeslutning(client, result.rows[0].id, 'triaged', { brukerId });
+    }
+
+    await client.query('COMMIT');
+    return result.rowCount > 0;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 }
 
 // Marker candidate som avslått. Sletter samtidig et evt. opplastet bilde
 // (candidate_images) — avslåtte innsendinger skal ikke fortsette å ligge
 // tilgjengelig på /api/bilder/:id.
-export async function markerAvslatt(legacyId) {
+//
+// grunn (se AVSLAGSGRUNNER i core/interesse.js) lagres både på raden og i
+// candidate_decisions — «duplikat»/«passert» skal ikke lære agenten at
+// eventet var uinteressant.
+export async function markerAvslatt(legacyId, { grunn = null, brukerId = null } = {}) {
   const client = await pool.connect();
 
   try {
@@ -255,11 +391,12 @@ export async function markerAvslatt(legacyId) {
         UPDATE event_candidates
         SET
           status = 'rejected',
-          reviewed_at = NOW()
+          reviewed_at = NOW(),
+          reject_reason = $2
         WHERE legacy_id = $1
         RETURNING id
       `,
-      [legacyId],
+      [legacyId, grunn],
     );
 
     if (result.rowCount > 0) {
@@ -267,6 +404,7 @@ export async function markerAvslatt(legacyId) {
         `DELETE FROM candidate_images WHERE candidate_id = $1`,
         [result.rows[0].id],
       );
+      await loggBeslutning(client, result.rows[0].id, 'rejected', { grunn, brukerId });
     }
 
     await client.query('COMMIT');

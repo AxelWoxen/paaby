@@ -6,6 +6,33 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "3456"],
       "port": 3456
+    },
+    {
+      "name": "review-lokal",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "DATABASE_URL=postgresql://localhost/paaby_dev SESSION_SECRET=kun-lokal-utvikling exec node --experimental-detect-module collector/review/server.js"
+      ],
+      "port": 3001
+    },
+    {
+      "name": "review-sortering",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd ../paaby-admin-sortering && PORT=3002 DATABASE_URL=postgresql://localhost/paaby_dev SESSION_SECRET=kun-lokal-utvikling exec node --experimental-detect-module collector/review/server.js"
+      ],
+      "port": 3002
+    },
+    {
+      "name": "review-ytelse",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": [
+        "-c",
+        "cd ../paaby-admin-ytelse && PORT=3003 DATABASE_URL=postgresql://localhost/paaby_dev SESSION_SECRET=kun-lokal-utvikling exec node --experimental-detect-module collector/review/server.js"
+      ],
+      "port": 3003
     }
   ]
 }

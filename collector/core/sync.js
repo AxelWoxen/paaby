@@ -34,6 +34,7 @@
 // til dagens rene innholds-hash-dedupe (dedupe.js), uten kilde-sporing.
 
 import { lagHash } from '../dedupe.js';
+import { sammenlign } from './likhet.js';
 
 /**
  * Avgjør NEW / UNCHANGED / CHANGED for ett source-event med kjent identitet.
@@ -78,23 +79,45 @@ export function diffSnapshots(forrige, ny) {
  *
  * Prioritet:
  *   1. samme lenke (sterkt signal — definitivt samme event)
- *   2. dagens tittel+dato+sted-hash (svakt signal — mulig duplikat)
+ *   2. «kryss»: samme event hos en ANNEN kilde — samme dag, starttid innen
+ *      30 min, nesten lik tittel og samme sted (core/likhet.js). Like
+ *      sterkt som samme lenke: samme konsert solgt via Ticketmaster OG
+ *      Tickster. Gjelder aldri to rader fra SAMME kilde — det er per
+ *      definisjon to ulike kilde-eventer (f.eks. to visninger samme kveld).
+ *   3. dagens tittel+dato+sted-hash (svakt signal — mulig duplikat)
+ *   4. «lignende»: lik tittel samme dag, men ikke sikkert nok (svakt
+ *      signal — mulig duplikat)
  *
  * @param {Object}   paabyEvent   output fra normalize.js sin normaliser()
  * @param {Object[]} eksisterende candidates+publiserte, hver med _erCandidate
- *                                (bool) og _dbId (UUID) i tillegg til de
- *                                vanlige påby-feltene (se store/*.js)
- * @returns {{ type: 'url'|'fuzzy', match: Object }|null}
+ *                                (bool), _dbId (UUID) og _providere
+ *                                (string[]) i tillegg til de vanlige
+ *                                påby-feltene (se store/*.js)
+ * @param {{ provider?: string|null }} [valg]  kilden det NYE eventet kommer fra
+ * @returns {{ type: 'url'|'kryss'|'fuzzy'|'lignende', match: Object }|null}
  */
-export function finnEksisterendeMatch(paabyEvent, eksisterende) {
+export function finnEksisterendeMatch(paabyEvent, eksisterende, { provider = null } = {}) {
   if (paabyEvent.lenke) {
     const urlTreff = eksisterende.find((e) => e.lenke && e.lenke === paabyEvent.lenke);
     if (urlTreff) return { type: 'url', match: urlTreff };
   }
 
+  let lignende = null;
+  for (const e of eksisterende) {
+    const { nivå } = sammenlign(paabyEvent, e);
+    if (!nivå) continue;
+    // Uten kjent kilde for det nye eventet kan vi ikke vite at det er en
+    // ANNEN kilde — da blir det aldri mer enn et mulig duplikat.
+    const annenKilde = Boolean(provider) && !(e._providere ?? []).includes(provider);
+    if (nivå === 'sikker' && annenKilde) return { type: 'kryss', match: e };
+    lignende ??= e;
+  }
+
   const nyHash = lagHash(paabyEvent);
   const fuzzyTreff = eksisterende.find((e) => lagHash(e) === nyHash);
   if (fuzzyTreff) return { type: 'fuzzy', match: fuzzyTreff };
+
+  if (lignende) return { type: 'lignende', match: lignende };
 
   return null;
 }

@@ -227,10 +227,13 @@ test('usikkert (fuzzy) treff mot eksisterende candidate → NY candidate med pos
     lenke: eksisterendePaaby.lenke,
     _erCandidate: true,
     _dbId: candidateRad.rows[0].id,
+    _providere: [PROVIDER], // slik lesCandidates() leverer den
   };
 
-  // Samme tittel/dato/sted (derav samme legacy_id!), men FRA EN ANNEN KILDE
-  // og ANNEN lenke — kun et fuzzy-treff, ikke et sikkert url-treff.
+  // Samme tittel/dato/sted (derav samme legacy_id!), men et ANNET kilde-
+  // event (annen externalId) og ANNEN lenke hos SAMME kilde — kun et
+  // fuzzy-treff, ikke et sikkert url-treff. (Samme event hos en ANNEN
+  // kilde kobles derimot, se kryss-testen under.)
   const nyExternal = lagExternal({ title: 'Testhendelse FUZZY', externalId: 'ext-fuzzy-duplicate', sourceUrl: 'https://en-annen-kilde.no/samme-event' });
   const nyPaaby = normaliser(nyExternal);
   // Siden legacy_id kolliderer med det eksisterende treffet, disambiguerer
@@ -257,6 +260,59 @@ test('usikkert (fuzzy) treff mot eksisterende candidate → NY candidate med pos
   assert.equal(nyCandidateRad.rowCount, 1);
   assert.equal(nyCandidateRad.rows[0].possible_duplicate, true);
   assert.ok(nyCandidateRad.rows[0].duplicate_hint);
+});
+
+test('kryss-kilde: samme event (dag/tid/sted, nesten lik tittel) hos en ANNEN kilde → kobles, ingen ny candidate', async () => {
+  const original = lagExternal({
+    title: 'Testhendelse KRYSS', externalId: 'ext-kryss-original',
+    sourceUrl: 'https://eksempel.no/kryss', start: '2026-12-12T20:00:00+01:00',
+  });
+  const originalPaaby = normaliser(original);
+  opprettedeLegacyIder.push(originalPaaby.id);
+  const opprettetIDenneKjøringen = new Map();
+  await behandleEvent(original, originalPaaby, { avslåtteIder: new Set(), eksisterende: [], opprettetIDenneKjøringen, tellere: tomTellere() });
+
+  // Samme konsert solgt via en annen plattform: annen lenke, litt annen
+  // tittel og stedsnavn, 15 min annet oppgitt klokkeslett.
+  const annenKilde = `${PROVIDER}-annen`;
+  const duplikat = lagExternal({
+    provider: annenKilde, externalId: 'ext-kryss-duplikat',
+    title: 'TESTHENDELSE KRYSS – Utsolgt!', sourceUrl: 'https://annen-plattform.no/kryss',
+    start: '2026-12-12T20:15:00+01:00',
+    venue: { name: 'Testlokale Oslo', address: null, latitude: null, longitude: null },
+  });
+  const duplikatPaaby = normaliser(duplikat);
+  opprettedeLegacyIder.push(duplikatPaaby.id);
+
+  const tellere = tomTellere();
+  await behandleEvent(duplikat, duplikatPaaby, { avslåtteIder: new Set(), eksisterende: [], opprettetIDenneKjøringen, tellere });
+
+  assert.equal(tellere.nye, 0);
+  assert.equal(tellere.koblet, 1);
+
+  const ref = await pool.query(
+    `SELECT s.candidate_id, c.legacy_id FROM event_sources s JOIN event_candidates c ON c.id = s.candidate_id
+     WHERE s.provider = $1 AND s.external_id = 'ext-kryss-duplikat'`,
+    [annenKilde],
+  );
+  assert.equal(ref.rowCount, 1);
+  assert.equal(ref.rows[0].legacy_id, originalPaaby.id); // peker på originalens candidate
+  await pool.query(`DELETE FROM event_sources WHERE provider = $1`, [annenKilde]);
+});
+
+test('vurdering lagres på nye candidates: mangler-felt og kjøring, og score null uten modell', async () => {
+  const ext = lagExternal({ title: 'Testhendelse VURDERING', externalId: 'ext-vurdering', imageUrl: null });
+  const paaby = normaliser(ext);
+  opprettedeLegacyIder.push(paaby.id);
+  await behandleEvent(ext, paaby, { avslåtteIder: new Set(), eksisterende: [], tellere: tomTellere() });
+
+  const rad = await pool.query(
+    `SELECT interest_score, missing_fields, kept_out_reason FROM event_candidates WHERE legacy_id = $1`,
+    [paaby.id],
+  );
+  assert.equal(rad.rows[0].interest_score, null);
+  assert.ok(rad.rows[0].missing_fields.includes('bilde'));
+  assert.equal(rad.rows[0].kept_out_reason, null);
 });
 
 test('to events med samme tittel/dato/sted i SAMME kjøring (ingen forhåndslastet treff) → begge blir egne candidates, ingen forsvinner stille', async () => {

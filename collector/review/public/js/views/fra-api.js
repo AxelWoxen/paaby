@@ -20,6 +20,7 @@ let alle = [];
 let sokTekst = '';
 let aktivKategori = 'alle';
 let skjulPasserte = true;
+let aktivtUtvalg = 'valgt';
 
 const el = {
   feed: document.getElementById('fra-api-feed'),
@@ -29,11 +30,22 @@ const el = {
   skjulPasserte: document.getElementById('fra-api-skjul-passerte'),
   kategoriChips: document.querySelectorAll('#fra-api-filtre .kategori-filter-chip'),
   avslaaPasserte: document.getElementById('fra-api-avslaa-passerte'),
+  utvalgChips: document.querySelectorAll('#fra-api-utvalg .kategori-filter-chip'),
+  utvalgForklaring: document.getElementById('fra-api-utvalg-forklaring'),
 };
+
+// Mest relevant: agentens score først (uten score sist) — liste-kontroller
+// faller tilbake på dato ved lik score.
+function etterRelevans(a, b) {
+  const sa = typeof a._interesse === 'number' ? a._interesse : -1;
+  const sb = typeof b._interesse === 'number' ? b._interesse : -1;
+  return sb - sa;
+}
 
 const kontroller = lagListeKontroller(el.sok.closest('.verktoylinje'), {
   lagtTil: (e) => e._lagtTil,
   onEndring: () => render(true),
+  ekstraSorteringer: [['relevans', 'Mest relevant', etterRelevans]],
 });
 
 function grunnlisten() {
@@ -47,10 +59,25 @@ function matcherSok(event) {
     || (event.sted ?? '').toLowerCase().includes(s);
 }
 
+// Agenten (collector/run.js) deler funnene i tre grupper (_agentValg, se
+// core/interesse.js:agentensValg): utvalget, usikre og ikke valgt. Alle
+// ligger fortsatt her som pending — «Usikre»/«Ikke valgt» viser det
+// agenten la til side, og «Legg i utvalget» flytter det tilbake.
+const UTVALG_FORKLARING = {
+  'valgt': 'Det agenten tror er verdt å se på (relevans 40+), det du har lagt til selv, og alt uten score ennå.',
+  'usikker': 'Agenten heller ingen vei (relevans 25–39). Før du har avslått 5 events selv, havner også lav relevans her i stedet for under «Ikke valgt». «Legg i utvalget» flytter eventet til agentens utvalg.',
+  'ikke-valgt': 'Lav relevans (under 25) eller holdt ute av en regel. «Legg i utvalget» flytter eventet tilbake, og agenten holder det ikke ute igjen.',
+};
+
+function iUtvalg(e) {
+  return (e._agentValg ?? 'valgt') === aktivtUtvalg;
+}
+
 function synlige() {
   return kontroller.filtrer(grunnlisten()).filter((e) =>
     (aktivKategori === 'alle' || e.kategori === aktivKategori)
     && (!skjulPasserte || !erPassert(e))
+    && iUtvalg(e)
     && matcherSok(e),
   );
 }
@@ -70,6 +97,14 @@ function oppdaterTeller(liste) {
   }
 
   if (el.avslaaPasserte) el.avslaaPasserte.hidden = passerteTotalt === 0;
+
+  if (el.utvalgForklaring) el.utvalgForklaring.textContent = UTVALG_FORKLARING[aktivtUtvalg];
+
+  const kommende = totalt.filter((e) => !skjulPasserte || !erPassert(e));
+  el.utvalgChips?.forEach((chip) => {
+    const antall = kommende.filter((e) => (e._agentValg ?? 'valgt') === chip.dataset.utvalg).length;
+    chip.querySelector('.utvalg-antall').textContent = `(${antall})`;
+  });
 }
 
 function render(nullstill = false) {
@@ -79,7 +114,11 @@ function render(nullstill = false) {
   oppdaterTeller(liste);
 
   visIBolker(el.feed, kontroller.sorter(liste), (event) => {
-    el.feed.appendChild(lagKandidatKort(event, { visInnsender: false, modus: 'fra-api' }).el);
+    el.feed.appendChild(lagKandidatKort(event, {
+      visInnsender: false,
+      modus: 'fra-api',
+      onInkludert: () => render(),
+    }).el);
   }, { nullstill });
 }
 
@@ -100,6 +139,15 @@ el.sok?.addEventListener('input', () => {
 el.skjulPasserte?.addEventListener('change', () => {
   skjulPasserte = el.skjulPasserte.checked;
   render(true);
+});
+
+el.utvalgChips?.forEach((chip) => {
+  chip.addEventListener('click', () => {
+    el.utvalgChips.forEach((c) => c.classList.remove('aktiv'));
+    chip.classList.add('aktiv');
+    aktivtUtvalg = chip.dataset.utvalg;
+    render(true);
+  });
 });
 
 el.kategoriChips?.forEach((chip) => {
@@ -131,7 +179,7 @@ el.avslaaPasserte?.addEventListener('click', async () => {
 
   for (let i = 0; i < passerte.length; i++) {
     el.avslaaPasserte.textContent = `Avslår ${i + 1} av ${passerte.length} …`;
-    const data = await api.avslaa(passerte[i].id);
+    const data = await api.avslaa(passerte[i].id, 'passert');
     if (data.ok) {
       passerte[i]._status = 'avslatt';
       lyktes++;
