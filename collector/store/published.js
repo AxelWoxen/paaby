@@ -29,6 +29,7 @@ export async function lesPubliserte() {
       e.last_verified_at AS "sistVerifisert",
       e.recurrence_rule_raw AS gjentas,
       e.featured AS fremhevet,
+      e.created_at AS "lagtTil",
 
       (e.status = 'inactive') AS deaktivert,
 
@@ -71,6 +72,11 @@ export async function lesPubliserte() {
     event.sistVerifisert instanceof Date
       ? event.sistVerifisert.toISOString()
       : event.sistVerifisert,
+
+  lagtTil:
+    event.lagtTil instanceof Date
+      ? event.lagtTil.toISOString()
+      : event.lagtTil,
 }));
 }
 

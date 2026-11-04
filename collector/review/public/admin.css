@@ -665,3 +665,57 @@ a { color: var(--aksent-tekst); }
   .knapp-godkjenn, .knapp-avslaa, .knapp-detaljer { flex: none; width: 100%; }
   .knapp-fremhev, .knapp-stjerne { align-self: center; }
 }
+
+/* ─── Sortering / datofilter (js/liste-kontroller.js) ────────────────── */
+.liste-kontroller { display: flex; gap: var(--gap-s); flex-wrap: wrap; }
+.liste-select { width: auto; min-height: 36px; padding: 0.35rem 0.6rem; font-size: 0.82rem; color: var(--paper); }
+@media (max-width: 640px) {
+  .liste-kontroller { width: 100%; }
+  .liste-select { flex: 1 1 calc(50% - var(--gap-s)); min-width: 0; }
+}
+.liste-kontroller { position: relative; }
+
+/* Periodekalender (js/periode-kalender.js) */
+.periode[hidden] { display: none; }
+.periode-knapp { width: auto; min-height: 36px; padding: 0.35rem 0.75rem; font-size: 0.82rem; color: var(--graa); text-align: left; }
+.periode-knapp.har-verdi { color: var(--paper); border-color: var(--aksent-tekst); }
+.periode-popover {
+  position: absolute; top: calc(100% + 0.4rem); left: 0; z-index: 20;
+  width: max-content; max-width: calc(100vw - 32px);
+  background: var(--hvit); border: 1.5px solid var(--flate-2); border-radius: var(--radius-s);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.14); padding: var(--gap-m);
+}
+.periode-popover[hidden] { display: none; }
+.periode-nav { position: relative; height: 0; }
+.periode-pil {
+  position: absolute; top: -0.2rem; width: 32px; height: 32px; border-radius: 50%;
+  font-size: 1.3rem; line-height: 1; color: var(--paper);
+}
+.periode-pil:first-child { left: 0; }
+.periode-pil:last-child { right: 0; }
+.periode-pil:hover { background: var(--flate-2); }
+.periode-maneder { display: flex; gap: var(--gap-l); }
+.periode-maned-tittel { text-align: center; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.6rem; line-height: 28px; text-transform: capitalize; }
+.periode-grid { display: grid; grid-template-columns: repeat(7, 38px); row-gap: 2px; }
+.periode-ukedag { text-align: center; font-size: 0.72rem; color: var(--graa); padding-bottom: 0.3rem; }
+.periode-dag {
+  height: 38px; font-size: 0.85rem; color: var(--paper); border-radius: 50%;
+  position: relative;
+}
+.periode-dag:hover { outline: 1.5px solid var(--paper); outline-offset: -1.5px; }
+.periode-dag.er-i-dag { font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
+.periode-dag.i-periode { background: color-mix(in srgb, var(--blaa) 30%, transparent); border-radius: 0; }
+.periode-dag.er-start:not(.er-slutt) { border-radius: 50% 0 0 50%; }
+.periode-dag.er-slutt:not(.er-start) { border-radius: 0 50% 50% 0; }
+.periode-dag.er-start, .periode-dag.er-slutt { background: var(--aksent); color: var(--aksent-kontrast); font-weight: 700; }
+.periode-dag.er-forhandsvisning.i-periode { background: color-mix(in srgb, var(--blaa) 12%, transparent); }
+.periode-dag.er-forhandsvisning.er-slutt:not(.er-start) { background: color-mix(in srgb, var(--blaa) 45%, transparent); }
+.periode-bunn { display: flex; align-items: center; gap: var(--gap-s); margin-top: var(--gap-m); }
+.periode-hint { flex: 1; font-size: 0.82rem; color: var(--graa); }
+@media (max-width: 640px) {
+  .periode { flex: 1 1 100%; }
+  .periode-knapp { width: 100%; }
+  .periode-popover { width: 100%; max-width: none; padding: var(--gap-s); }
+  .periode-grid { grid-template-columns: repeat(7, 1fr); }
+  .periode-maned { flex: 1; }
+}

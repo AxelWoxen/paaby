@@ -13,6 +13,7 @@ import { visSuksess, visFeil } from '../toast.js';
 import { bekreft } from '../confirm.js';
 import { erPassert } from '../oslo-tid.js';
 import { lagKandidatKort } from './candidate-kort.js';
+import { lagListeKontroller } from '../liste-kontroller.js';
 
 let alle = [];
 let sokTekst = '';
@@ -29,6 +30,11 @@ const el = {
   avslaaPasserte: document.getElementById('fra-api-avslaa-passerte'),
 };
 
+const kontroller = lagListeKontroller(el.sok.closest('.verktoylinje'), {
+  lagtTil: (e) => e._lagtTil,
+  onEndring: () => render(),
+});
+
 function grunnlisten() {
   return alle.filter((e) => e._status === 'pending' && e._kilde === 'collector');
 }
@@ -41,7 +47,7 @@ function matcherSok(event) {
 }
 
 function synlige() {
-  return grunnlisten().filter((e) =>
+  return kontroller.filtrer(grunnlisten()).filter((e) =>
     (aktivKategori === 'alle' || e.kategori === aktivKategori)
     && (!skjulPasserte || !erPassert(e))
     && matcherSok(e),
@@ -52,7 +58,7 @@ function oppdaterTeller(liste) {
   const totalt = grunnlisten();
   const passerteTotalt = totalt.filter(erPassert).length;
   const kommendeTotalt = totalt.length - passerteTotalt;
-  const harFilter = aktivKategori !== 'alle' || sokTekst !== '';
+  const harFilter = aktivKategori !== 'alle' || sokTekst !== '' || kontroller.erFiltrert();
 
   if (!harFilter) {
     el.teller.textContent = skjulPasserte
@@ -71,9 +77,8 @@ function render() {
   el.tom.hidden = liste.length > 0;
   oppdaterTeller(liste);
 
-  liste
-    .slice()
-    .sort((a, b) => new Date(a.start) - new Date(b.start))
+  kontroller
+    .sorter(liste)
     .forEach((event) => {
       const { el: kortEl, lastInnBilde } = lagKandidatKort(event, { visInnsender: false, modus: 'fra-api' });
       el.feed.appendChild(kortEl);

@@ -19,6 +19,7 @@ import {
 } from '../oslo-tid.js';
 import { lagGjentasKontroll, formaterGjentasStatus } from '../gjentas-ui.js';
 import { lagRedigeringsFelter } from '../ui-helpers.js';
+import { lagListeKontroller } from '../liste-kontroller.js';
 
 let alle = [];
 let lastet = false;
@@ -36,9 +37,14 @@ const el = {
   visDeaktiverte: document.getElementById('publiserte-vis-deaktiverte'),
 };
 
+const kontroller = lagListeKontroller(el.sok.closest('.verktoylinje'), {
+  lagtTil: (e) => e.lagtTil,
+  onEndring: () => render(),
+});
+
 function synlige() {
   const s = sokTekst.toLowerCase();
-  return alle.filter((e) => {
+  return kontroller.filtrer(alle).filter((e) => {
     if (eventTilstand(e.start) === 'ferdig') return false;
     if (!visDeaktiverte && e.deaktivert) return false;
     if (kunFremhevet && !e.fremhevet) return false;
@@ -48,11 +54,21 @@ function synlige() {
 }
 
 function render() {
-  const liste = synlige().sort((a, b) => new Date(a.start) - new Date(b.start));
+  const liste = kontroller.sorter(synlige());
   el.feed.innerHTML = '';
   el.tom.hidden = liste.length > 0;
   el.teller.textContent = `${liste.length} av ${alle.length} kommende publiserte`;
   oppdaterFremhevetUka();
+
+  // Dagsoverskrifter gir bare mening når lista går i datorekkefølge —
+  // sortert på «lagt til» vises den flatt.
+  if (!kontroller.sortererPaaDato()) {
+    const flat = document.createElement('div');
+    flat.className = 'feed';
+    for (const event of liste) flat.appendChild(lagPubKort(event));
+    el.feed.appendChild(flat);
+    return;
+  }
 
   let gjeldendeDag = null;
   let dagFeed = null;

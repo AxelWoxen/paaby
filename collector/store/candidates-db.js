@@ -24,7 +24,8 @@ export async function lesCandidates() {
       submitter_contact,
       submitter_note,
       possible_duplicate,
-      duplicate_hint
+      duplicate_hint,
+      created_at
     FROM event_candidates
     ORDER BY created_at ASC
   `);
@@ -41,6 +42,9 @@ export async function lesCandidates() {
     _innsenderNotat: row.submitter_note,
     _muligDuplikat: row.possible_duplicate,
     _duplikatHint: row.duplicate_hint,
+    // Når kandidaten kom inn i systemet — adminlistene sorterer «nyeste
+    // lagt til» på denne.
+    _lagtTil: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
   }));
 }
 
@@ -57,7 +61,7 @@ export async function leggTilCandidates(eventer, { source = 'collector' } = {}) 
     let antallLagtTil = 0;
 
     for (const event of eventer) {
-      const { _status, ...payload } = event;
+      const { _status, _lagtTil, ...payload } = event;
 
       // Automatiske tags (daytime/evening/late-evening fra starttid, "free"
       // fra pris når den er entydig) settes allerede her, slik at nye
@@ -188,7 +192,7 @@ export async function leggTilEnCandidateMedClient(
   event,
   { source = 'collector', muligDuplikat = false, duplikatHint = null } = {},
 ) {
-  const { _status, _dbId, ...payload } = event;
+  const { _status, _dbId, _lagtTil, ...payload } = event;
   payload.tags = utledTags(payload.tags, {
     pris: payload.pris,
     start: payload.start,
