@@ -19,5 +19,5 @@ Hver visuelle endring skal verifiseres i **begge** visninger. Ikke si at noe er 
 ## Rapportering
 
 - Si eksplisitt at du har testet både laptop og mobil, og nevn hva du fant.
-- Skjermbildene fra begge visninger kan gjenbrukes som bilder i PR-en (se `pr-krav`).
+- Lagre skjermbildene fra begge visninger som filer mens du tester, med før/etter hvis noe eksisterende er endret (se `pr-skjermbilder`). Da kan de brukes rett i PR-en (se `pr-krav`).
 - Kan du ikke teste en av visningene, si det tydelig i stedet for å anta at det fungerer.

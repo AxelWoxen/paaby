@@ -380,3 +380,45 @@ export function lagRedigeringsFelter(event) {
 
   return { el, hentVerdier, bildeCrop, felter: { fTittel, fStart, tKur, tagVelger } };
 }
+
+// ─── Lister i bolker ────────────────────────────────────────────────────────
+// Viser de første BOLK elementene og en «Vis flere»-knapp under lista, i
+// stedet for å bygge hundrevis av kort på én gang. Antallet som vises huskes
+// per feed, slik at en ny render etter f.eks. godkjenning ikke hopper tilbake
+// til toppen — send nullstill: true når søk eller filter endres.
+export const BOLK = 30;
+
+export function visIBolker(feed, liste, leggTil, { nullstill = false } = {}) {
+  if (nullstill || !feed._vistAntall) feed._vistAntall = BOLK;
+  // Ny knapp per render — den gamle peker på forrige liste.
+  feed._visFlereKnapp?.remove();
+  feed._visFlereKnapp = null;
+
+  let vist = 0;
+  function visNeste() {
+    const til = Math.min(feed._vistAntall, liste.length);
+    for (; vist < til; vist++) leggTil(liste[vist]);
+
+    const igjen = liste.length - vist;
+    if (igjen <= 0) {
+      feed._visFlereKnapp?.remove();
+      feed._visFlereKnapp = null;
+      return;
+    }
+    if (!feed._visFlereKnapp) {
+      const knapp = document.createElement('button');
+      knapp.type = 'button';
+      knapp.className = 'knapp knapp-sekundaer vis-flere';
+      knapp.onclick = () => {
+        feed._vistAntall += BOLK;
+        visNeste();
+      };
+      feed.after(knapp);
+      feed._visFlereKnapp = knapp;
+    }
+    feed._visFlereKnapp.textContent =
+      `Vis ${Math.min(BOLK, igjen)} til (${vist} av ${liste.length} vises)`;
+  }
+
+  visNeste();
+}

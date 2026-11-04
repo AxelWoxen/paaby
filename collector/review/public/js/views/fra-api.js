@@ -14,6 +14,7 @@ import { bekreft } from '../confirm.js';
 import { erPassert } from '../oslo-tid.js';
 import { lagKandidatKort } from './candidate-kort.js';
 import { lagListeKontroller } from '../liste-kontroller.js';
+import { visIBolker } from '../ui-helpers.js';
 
 let alle = [];
 let sokTekst = '';
@@ -32,7 +33,7 @@ const el = {
 
 const kontroller = lagListeKontroller(el.sok.closest('.verktoylinje'), {
   lagtTil: (e) => e._lagtTil,
-  onEndring: () => render(),
+  onEndring: () => render(true),
 });
 
 function grunnlisten() {
@@ -71,19 +72,15 @@ function oppdaterTeller(liste) {
   if (el.avslaaPasserte) el.avslaaPasserte.hidden = passerteTotalt === 0;
 }
 
-function render() {
+function render(nullstill = false) {
   const liste = synlige();
   el.feed.innerHTML = '';
   el.tom.hidden = liste.length > 0;
   oppdaterTeller(liste);
 
-  kontroller
-    .sorter(liste)
-    .forEach((event) => {
-      const { el: kortEl, lastInnBilde } = lagKandidatKort(event, { visInnsender: false, modus: 'fra-api' });
-      el.feed.appendChild(kortEl);
-      void lastInnBilde;
-    });
+  visIBolker(el.feed, kontroller.sorter(liste), (event) => {
+    el.feed.appendChild(lagKandidatKort(event, { visInnsender: false, modus: 'fra-api' }).el);
+  }, { nullstill });
 }
 
 export function settCandidates(candidates) {
@@ -97,12 +94,12 @@ export function fraApiAntall() {
 
 el.sok?.addEventListener('input', () => {
   sokTekst = el.sok.value.trim();
-  render();
+  render(true);
 });
 
 el.skjulPasserte?.addEventListener('change', () => {
   skjulPasserte = el.skjulPasserte.checked;
-  render();
+  render(true);
 });
 
 el.kategoriChips?.forEach((chip) => {
@@ -110,7 +107,7 @@ el.kategoriChips?.forEach((chip) => {
     el.kategoriChips.forEach((c) => c.classList.remove('aktiv'));
     chip.classList.add('aktiv');
     aktivKategori = chip.dataset.filter;
-    render();
+    render(true);
   });
 });
 

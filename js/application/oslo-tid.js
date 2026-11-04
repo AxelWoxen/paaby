@@ -2,6 +2,21 @@
    Delt av filtre.js, formatering.js og gruppering.js.
    Ingen DOM, ingen fetch, ingen side-effekter. */
 
+/* Én delt formatter: en ny Intl.DateTimeFormat per kall er ~10× tregere, og
+   gjentas.js kaller osloKomponenter hundrevis av ganger per gjentakende event. */
+const OSLO_FMT = new Intl.DateTimeFormat('en-US', {
+  timeZone:  'Europe/Oslo',
+  year:      'numeric',
+  month:     '2-digit',
+  day:       '2-digit',
+  weekday:   'short',
+  hour:      '2-digit',
+  minute:    '2-digit',
+  hourCycle: 'h23',
+});
+
+const UKEDAG_NR = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+
 /**
  * Returnerer dato- og tidskomponenter for en Date i Europe/Oslo-tidssone.
  * Bruker Intl.DateTimeFormat for korrekt DST-håndtering hele året.
@@ -11,23 +26,10 @@
  *   ukedag: 0=søndag, 1=mandag … 5=fredag, 6=lørdag
  */
 export function osloKomponenter(dato) {
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone:  'Europe/Oslo',
-    year:      'numeric',
-    month:     '2-digit',
-    day:       '2-digit',
-    weekday:   'short',
-    hour:      '2-digit',
-    minute:    '2-digit',
-    hourCycle: 'h23',
-  });
-
-  const deler = fmt.formatToParts(dato).reduce((obj, d) => {
+  const deler = OSLO_FMT.formatToParts(dato).reduce((obj, d) => {
     if (d.type !== 'literal') obj[d.type] = d.value;
     return obj;
   }, {});
-
-  const UKEDAG_NR = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
   return {
     år:     Number(deler.year),

@@ -4,6 +4,7 @@
 
 import { lagKandidatKort } from './candidate-kort.js';
 import { lagListeKontroller } from '../liste-kontroller.js';
+import { visIBolker } from '../ui-helpers.js';
 
 let alle = [];
 let sokTekst = '';
@@ -18,7 +19,7 @@ const el = {
 
 const kontroller = lagListeKontroller(el.sok.closest('.verktoylinje'), {
   lagtTil: (e) => e._lagtTil,
-  onEndring: () => render(),
+  onEndring: () => render(true),
 });
 
 function synlige() {
@@ -30,7 +31,7 @@ function synlige() {
   );
 }
 
-function render() {
+function render(nullstill = false) {
   const liste = synlige();
   el.feed.innerHTML = '';
   el.tom.hidden = liste.length > 0;
@@ -41,13 +42,9 @@ function render() {
     : `${liste.length} av ${totalt} ventende innsendinger`;
   if (el.fanetTeller) el.fanetTeller.textContent = String(totalt);
 
-  kontroller
-    .sorter(liste)
-    .forEach((event) => {
-      const { el: kortEl, lastInnBilde } = lagKandidatKort(event, { visInnsender: true });
-      el.feed.appendChild(kortEl);
-      void lastInnBilde;
-    });
+  visIBolker(el.feed, kontroller.sorter(liste), (event) => {
+    el.feed.appendChild(lagKandidatKort(event, { visInnsender: true }).el);
+  }, { nullstill });
 }
 
 export function settCandidates(candidates) {
@@ -61,5 +58,5 @@ export function innsendteAntall() {
 
 el.sok?.addEventListener('input', () => {
   sokTekst = el.sok.value.trim();
-  render();
+  render(true);
 });
