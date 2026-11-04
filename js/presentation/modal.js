@@ -164,22 +164,34 @@ function byggModalInnhold(event) {
     fragment.appendChild(bildeWrapper);
   }
 
-  /* Hoveddel */
+  /* Hoveddel — delt i to grupper: .modal-side (hode, fakta, handlinger)
+     og .modal-tekst (beskrivelse, kuratortekst). På mobil er begge
+     display: contents og rekkefølgen styres med order i CSS; på desktop
+     blir de to kolonner (se «MODAL DESKTOP»). */
   const body = document.createElement('div');
   body.className = 'modal-body';
+
+  const side = document.createElement('div');
+  side.className = 'modal-side';
+
+  const hode = document.createElement('div');
+  hode.className = 'modal-hode';
+
+  const tekst = document.createElement('div');
+  tekst.className = 'modal-tekst';
 
   /* Kategori */
   const kategoriSpan = document.createElement('span');
   kategoriSpan.className   = `modal-kategori kategori-${event.kategori}`;
   kategoriSpan.textContent = kategoriVisningsnavn(event.kategori);
-  body.appendChild(kategoriSpan);
+  hode.appendChild(kategoriSpan);
 
   /* Tittel */
   const tittel = document.createElement('h2');
   tittel.className   = 'modal-tittel';
   tittel.id          = 'modal-overskrift';
   tittel.textContent = event.tittel;
-  body.appendChild(tittel);
+  hode.appendChild(tittel);
 
   /* Sted + følg-knapp */
   const stedRad = document.createElement('div');
@@ -201,17 +213,18 @@ function byggModalInnhold(event) {
     stedRad.appendChild(følgKnapp);
   }
 
-  body.appendChild(stedRad);
+  hode.appendChild(stedRad);
+  side.appendChild(hode);
 
   /* Faktarad */
-  body.appendChild(byggFaktarad(event));
+  side.appendChild(byggFaktarad(event));
 
   /* Beskrivelse */
   if (event.beskrivelse) {
     const besk = document.createElement('p');
     besk.className   = 'modal-beskrivelse';
     besk.textContent = event.beskrivelse;
-    body.appendChild(besk);
+    tekst.appendChild(besk);
   }
 
   /* Kuratortekst */
@@ -219,15 +232,15 @@ function byggModalInnhold(event) {
     const kur = document.createElement('p');
     kur.className   = 'modal-kuratortekst';
     kur.textContent = event.kuratortekst;
-    body.appendChild(kur);
+    tekst.appendChild(kur);
   }
 
   /* Handlingsknapper */
   const handlinger = byggHandlinger(event);
-  if (handlinger) body.appendChild(handlinger);
+  if (handlinger) side.appendChild(handlinger);
 
   /* Bunnlinje: lagre + del */
-  body.appendChild(byggBunn(event));
+  side.appendChild(byggBunn(event));
 
   /* Kart over hvor eventet er (kun når stedet har koordinater) */
   const kart = byggKartContainer(event);
@@ -235,7 +248,10 @@ function byggModalInnhold(event) {
 
   /* Tillitssignaler */
   const tillit = byggTillit(event);
-  if (tillit) body.appendChild(tillit);
+  if (tillit) side.appendChild(tillit);
+
+  body.appendChild(side);
+  if (tekst.childElementCount) body.appendChild(tekst);
 
   fragment.appendChild(body);
   return fragment;
