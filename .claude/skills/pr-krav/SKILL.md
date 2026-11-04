@@ -9,6 +9,7 @@ Det er påbudt at hver PR har både **bilder** og en **testoppskrift**. Ikke opp
 
 ## 1. Bilder av det nye
 
+- Se først i `.pr-bilder/<branch>/`: bildene skal allerede være tatt under testingen (se `pr-skjermbilder`), med bildetekster i `bilder.md`. Bruk dem, og ta bare nye bilder for det som mangler eller er endret siden.
 - Ta skjermbilder som viser det som er nytt eller endret (UI, kart, modal osv.). Bruk gjerne før/etter når noe er endret.
 - Er endringen ikke visuell (f.eks. backend eller collector), vis i stedet utskrift fra kjøring, loggutdrag eller et skjermbilde av resultatet i appen.
 - Legg bildene i PR-beskrivelsen under overskriften `## Bilder`, med en kort bildetekst på hvert. Bildefilene må være tilgjengelige for den som leser PR-en (f.eks. lastet opp til PR-en), ikke bare lokale stier.

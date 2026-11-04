@@ -11,3 +11,5 @@ node_modules/
 data/candidates.json
 data/rejected.json
 collector/.cache/
+# Skjermbilder til PR-er (se .claude/skills/pr-skjermbilder)
+.pr-bilder/
