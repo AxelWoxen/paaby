@@ -3,6 +3,7 @@
    (se collector/store/candidates-db.js — _kilde speiler kolonnen source). */
 
 import { lagKandidatKort } from './candidate-kort.js';
+import { visIBolker } from '../ui-helpers.js';
 
 let alle = [];
 let sokTekst = '';
@@ -24,7 +25,7 @@ function synlige() {
   );
 }
 
-function render() {
+function render(nullstill = false) {
   const liste = synlige();
   el.feed.innerHTML = '';
   el.tom.hidden = liste.length > 0;
@@ -35,14 +36,10 @@ function render() {
     : `${liste.length} av ${totalt} ventende innsendinger`;
   if (el.fanetTeller) el.fanetTeller.textContent = String(totalt);
 
-  liste
-    .slice()
-    .sort((a, b) => new Date(a.start) - new Date(b.start))
-    .forEach((event) => {
-      const { el: kortEl, lastInnBilde } = lagKandidatKort(event, { visInnsender: true });
-      el.feed.appendChild(kortEl);
-      void lastInnBilde;
-    });
+  const sortert = liste.slice().sort((a, b) => new Date(a.start) - new Date(b.start));
+  visIBolker(el.feed, sortert, (event) => {
+    el.feed.appendChild(lagKandidatKort(event, { visInnsender: true }).el);
+  }, { nullstill });
 }
 
 export function settCandidates(candidates) {
@@ -56,5 +53,5 @@ export function innsendteAntall() {
 
 el.sok?.addEventListener('input', () => {
   sokTekst = el.sok.value.trim();
-  render();
+  render(true);
 });

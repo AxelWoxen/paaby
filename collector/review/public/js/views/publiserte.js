@@ -18,7 +18,7 @@ import {
   eventTilstand, datetimeLocalTilOsloISO, osloKomponenter, lagOsloDato,
 } from '../oslo-tid.js';
 import { lagGjentasKontroll, formaterGjentasStatus } from '../gjentas-ui.js';
-import { lagRedigeringsFelter } from '../ui-helpers.js';
+import { lagRedigeringsFelter, visIBolker } from '../ui-helpers.js';
 
 let alle = [];
 let lastet = false;
@@ -47,7 +47,7 @@ function synlige() {
   });
 }
 
-function render() {
+function render(nullstill = false) {
   const liste = synlige().sort((a, b) => new Date(a.start) - new Date(b.start));
   el.feed.innerHTML = '';
   el.tom.hidden = liste.length > 0;
@@ -57,7 +57,9 @@ function render() {
   let gjeldendeDag = null;
   let dagFeed = null;
 
-  for (const event of liste) {
+  // Dagsgruppene fortsetter på tvers av bolker: neste bolk legger kort i
+  // samme dagFeed hvis dagen ikke er ferdig.
+  visIBolker(el.feed, liste, (event) => {
     const dagNokkel = osloDagNokkel(event.start);
     if (dagNokkel !== gjeldendeDag) {
       gjeldendeDag = dagNokkel;
@@ -73,7 +75,7 @@ function render() {
       el.feed.appendChild(gruppe);
     }
     dagFeed.appendChild(lagPubKort(event));
-  }
+  }, { nullstill });
 }
 
 function lagMiniatyrbilde(event) {
@@ -412,13 +414,13 @@ function oppdaterFremhevetUka() {
 
 el.sok?.addEventListener('input', () => {
   sokTekst = el.sok.value.trim();
-  render();
+  render(true);
 });
 el.kunFremhevet?.addEventListener('change', () => {
   kunFremhevet = el.kunFremhevet.checked;
-  render();
+  render(true);
 });
 el.visDeaktiverte?.addEventListener('change', () => {
   visDeaktiverte = el.visDeaktiverte.checked;
-  render();
+  render(true);
 });
