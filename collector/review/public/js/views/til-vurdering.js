@@ -13,6 +13,7 @@ import { visSuksess, visFeil } from '../toast.js';
 import { bekreft } from '../confirm.js';
 import { erPassert } from '../oslo-tid.js';
 import { lagKandidatKort } from './candidate-kort.js';
+import { visIBolker } from '../ui-helpers.js';
 
 let alle = [];
 let sokTekst = '';
@@ -68,20 +69,16 @@ function oppdaterTeller(liste) {
   if (el.avslaaPasserte) el.avslaaPasserte.hidden = passerteTotalt === 0;
 }
 
-function render() {
+function render(nullstill = false) {
   const liste = synlige();
   el.feed.innerHTML = '';
   el.tom.hidden = liste.length > 0;
   oppdaterTeller(liste);
 
-  liste
-    .slice()
-    .sort((a, b) => new Date(a.start) - new Date(b.start))
-    .forEach((event) => {
-      const { el: kortEl, lastInnBilde } = lagKandidatKort(event, { visInnsender: false });
-      el.feed.appendChild(kortEl);
-      void lastInnBilde;
-    });
+  const sortert = liste.slice().sort((a, b) => new Date(a.start) - new Date(b.start));
+  visIBolker(el.feed, sortert, (event) => {
+    el.feed.appendChild(lagKandidatKort(event, { visInnsender: false }).el);
+  }, { nullstill });
 }
 
 export function settCandidates(candidates) {
@@ -95,12 +92,12 @@ export function tilVurderingAntall() {
 
 el.sok?.addEventListener('input', () => {
   sokTekst = el.sok.value.trim();
-  render();
+  render(true);
 });
 
 el.skjulPasserte?.addEventListener('change', () => {
   skjulPasserte = el.skjulPasserte.checked;
-  render();
+  render(true);
 });
 
 el.kategoriChips?.forEach((chip) => {
@@ -108,7 +105,7 @@ el.kategoriChips?.forEach((chip) => {
     el.kategoriChips.forEach((c) => c.classList.remove('aktiv'));
     chip.classList.add('aktiv');
     aktivKategori = chip.dataset.filter;
-    render();
+    render(true);
   });
 });
 
