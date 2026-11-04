@@ -7,6 +7,8 @@ description: Bruk alltid når brukeren vil lage en pull request (PR) i paaby. Hv
 
 Det er påbudt at hver PR har både **bilder** og en **testoppskrift**. Ikke opprett PR-en før begge deler er med.
 
+**Unntak:** PR-er som bare endrer skill-filer (`.claude/skills/`) trenger ikke bilder. Dropp `## Bilder`, eller legg ved bilder bare hvis det er nyttig. Testoppskriften kreves fortsatt.
+
 ## 1. Bilder av det nye
 
 - Se først i `.pr-bilder/<branch>/`: bildene skal allerede være tatt under testingen (se `pr-skjermbilder`), med bildetekster i `bilder.md`. Bruk dem, og ta bare nye bilder for det som mangler eller er endret siden.
