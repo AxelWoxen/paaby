@@ -127,7 +127,12 @@
     <div class="forside-innhold">
       <h1 id="forside-tittel" class="forside-tittel">…</h1>
       <p  id="forside-undertittel" class="forside-undertittel"></p>
-      <div id="forside-utvalg" class="forside-utvalg"></div>
+      <!-- Horisontal karusell: første kort vises tydelig, neste titter frem. -->
+      <div class="forside-utvalg-ramme">
+        <div id="forside-utvalg" class="forside-utvalg" tabindex="0" role="region" aria-label="Utvalgte arrangementer"></div>
+        <button type="button" id="utvalg-forrige" class="utvalg-pil utvalg-pil--forrige" aria-label="Forrige utvalgte arrangement" hidden>←</button>
+        <button type="button" id="utvalg-neste" class="utvalg-pil utvalg-pil--neste" aria-label="Neste utvalgte arrangement" hidden>→</button>
+      </div>
     </div>
   </div>
 
@@ -241,15 +246,37 @@
           </svg>
           utforsk på kart
         </button>
-        <div class="sortering-kontroll">
-          <label for="sortering" class="sortering-label">Sorter</label>
-          <select id="sortering" class="sortering-select" aria-label="Sorter arrangementer">
-            <option value="tid-stigende">Dato: tidlig-senere</option>
-            <option value="tid-synkende">Dato: senere-tidlig</option>
-            <option value="pris-stigende">Pris: lav til høy</option>
-            <option value="pris-synkende">Pris: høy til lav</option>
-            <option value="avstand-stigende">Nærmest</option>
-          </select>
+        <div class="treff-hoyre">
+          <div class="sortering-kontroll">
+            <label for="sortering" class="sortering-label">Sorter</label>
+            <select id="sortering" class="sortering-select" aria-label="Sorter arrangementer">
+              <option value="tid-stigende">Dato: tidlig-senere</option>
+              <option value="tid-synkende">Dato: senere-tidlig</option>
+              <option value="pris-stigende">Pris: lav til høy</option>
+              <option value="pris-synkende">Pris: høy til lav</option>
+              <option value="avstand-stigende">Nærmest</option>
+            </select>
+          </div>
+
+          <!-- Bytter mellom liste (ett kort per rad) og rutenett. Ren
+               CSS-bytte på #feed (klassen feed--grid), se initVisning() i
+               js/main.js. -->
+          <div class="visning-bryter" role="group" aria-label="Visning">
+            <button type="button" id="visning-liste" class="visning-knapp" aria-pressed="false" aria-label="Listevisning">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="6" rx="1.5" stroke="currentColor" stroke-width="2"/>
+                <rect x="3" y="14" width="18" height="6" rx="1.5" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+            <button type="button" id="visning-grid" class="visning-knapp aktiv" aria-pressed="true" aria-label="Rutenettvisning">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
+                <rect x="3" y="3" width="7.5" height="7.5" rx="1.5" stroke="currentColor" stroke-width="2"/>
+                <rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" stroke="currentColor" stroke-width="2"/>
+                <rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" stroke="currentColor" stroke-width="2"/>
+                <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" stroke="currentColor" stroke-width="2"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -263,7 +290,7 @@
         Lagres på denne enheten – dukker ikke opp på andre.
       </p>
 
-      <main id="feed" class="feed" aria-label="Arrangement-feed">
+      <main id="feed" class="feed feed--grid" aria-label="Arrangement-feed">
         <p class="laster">henter hva som skjer...</p>
       </main>
 

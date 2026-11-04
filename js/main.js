@@ -19,7 +19,7 @@ import { erGyldigAnalyticsEventNavn }               from './application/analytic
 import { hentEllerLagVisitorId, hentEllerLagSesjon,
          utledSesjonKontekst }                       from './application/analyse-identitet.js';
 import { sendSesjon, sendHendelse, sendLagredeSync } from './network/analytics-api.js';
-import { velgUtvalg, visForside, initSeAlt,
+import { velgUtvalg, visForside, initSeAlt, initUtvalgKarusell,
          visSkeletonUtvalg }                       from './presentation/forside.js';
 import { utvidGjentakende }                        from './application/gjentas.js';
 import { observerImpresjoner }                      from './application/impresjoner.js';
@@ -433,6 +433,39 @@ function initSortering() {
 
     tilstand.sortering = nyVerdi;
     oppdaterFeed();
+  });
+}
+
+/* Liste/rutenett. Kun en CSS-klasse på #feed — ingen re-rendring nødvendig.
+   Valget huskes per enhet; localStorage kan kaste (privat modus), så alt
+   rundt det er pakket i try/catch. */
+function initVisning() {
+  const feed      = document.getElementById('feed');
+  const listeKn   = document.getElementById('visning-liste');
+  const gridKn    = document.getElementById('visning-grid');
+  if (!feed || !listeKn || !gridKn) return;
+
+  const settVisning = (visning) => {
+    const erGrid = visning === 'grid';
+    feed.classList.toggle('feed--grid', erGrid);
+    listeKn.classList.toggle('aktiv', !erGrid);
+    gridKn.classList.toggle('aktiv', erGrid);
+    listeKn.setAttribute('aria-pressed', String(!erGrid));
+    gridKn.setAttribute('aria-pressed', String(erGrid));
+  };
+
+  /* Rutenett er standard; kun et eksplisitt valg av liste huskes. */
+  let lagret = 'grid';
+  try {
+    if (localStorage.getItem('paaby-visning') === 'liste') lagret = 'liste';
+  } catch { /* fortsett med rutenett */ }
+  settVisning(lagret);
+
+  [[listeKn, 'liste'], [gridKn, 'grid']].forEach(([knapp, visning]) => {
+    knapp.addEventListener('click', () => {
+      settVisning(visning);
+      try { localStorage.setItem('paaby-visning', visning); } catch { /* ignorer */ }
+    });
   });
 }
 
@@ -914,10 +947,12 @@ async function startApp() {
   initHashRuting();
   initVisAvstandKnapp();
   initSortering();
+  initVisning();
   initSamtykke();
 
   initFølgerKnapp();
   initSeAlt();
+  initUtvalgKarusell();
   initUkeNav();
   initBunnNav();
   initFilterToggle();
