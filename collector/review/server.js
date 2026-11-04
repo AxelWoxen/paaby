@@ -110,7 +110,7 @@ function byggRedigertPayload(event, body) {
   const {
     _status, _kilde,
     _innsenderNavn, _innsenderOrg, _innsenderKontakt, _innsenderNotat,
-    _muligDuplikat, _duplikatHint,
+    _muligDuplikat, _duplikatHint, _lagtTil,
     ...basisPayload
   } = event;
 
@@ -546,7 +546,7 @@ app.post('/api/triager/:id', async (req, res) => {
     const {
       _status, _kilde,
       _innsenderNavn, _innsenderOrg, _innsenderKontakt, _innsenderNotat,
-      _muligDuplikat, _duplikatHint,
+      _muligDuplikat, _duplikatHint, _lagtTil,
       ...basisPayload
     } = event;
 

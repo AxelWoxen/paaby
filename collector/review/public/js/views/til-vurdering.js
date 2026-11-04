@@ -13,6 +13,7 @@ import { visSuksess, visFeil } from '../toast.js';
 import { bekreft } from '../confirm.js';
 import { erPassert } from '../oslo-tid.js';
 import { lagKandidatKort } from './candidate-kort.js';
+import { lagListeKontroller } from '../liste-kontroller.js';
 import { visIBolker } from '../ui-helpers.js';
 
 let alle = [];
@@ -30,6 +31,11 @@ const el = {
   avslaaPasserte: document.getElementById('vurdering-avslaa-passerte'),
 };
 
+const kontroller = lagListeKontroller(el.sok.closest('.verktoylinje'), {
+  lagtTil: (e) => e._lagtTil,
+  onEndring: () => render(true),
+});
+
 function grunnlisten() {
   return alle.filter((e) =>
     e._status === 'triaged'
@@ -45,7 +51,7 @@ function matcherSok(event) {
 }
 
 function synlige() {
-  return grunnlisten().filter((e) =>
+  return kontroller.filtrer(grunnlisten()).filter((e) =>
     (aktivKategori === 'alle' || e.kategori === aktivKategori)
     && (!skjulPasserte || !erPassert(e))
     && matcherSok(e),
@@ -56,7 +62,7 @@ function oppdaterTeller(liste) {
   const totalt = grunnlisten();
   const passerteTotalt = totalt.filter(erPassert).length;
   const kommendeTotalt = totalt.length - passerteTotalt;
-  const harFilter = aktivKategori !== 'alle' || sokTekst !== '';
+  const harFilter = aktivKategori !== 'alle' || sokTekst !== '' || kontroller.erFiltrert();
 
   if (!harFilter) {
     el.teller.textContent = skjulPasserte
@@ -75,8 +81,7 @@ function render(nullstill = false) {
   el.tom.hidden = liste.length > 0;
   oppdaterTeller(liste);
 
-  const sortert = liste.slice().sort((a, b) => new Date(a.start) - new Date(b.start));
-  visIBolker(el.feed, sortert, (event) => {
+  visIBolker(el.feed, kontroller.sorter(liste), (event) => {
     el.feed.appendChild(lagKandidatKort(event, { visInnsender: false }).el);
   }, { nullstill });
 }

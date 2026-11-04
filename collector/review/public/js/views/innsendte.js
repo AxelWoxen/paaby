@@ -3,6 +3,7 @@
    (se collector/store/candidates-db.js — _kilde speiler kolonnen source). */
 
 import { lagKandidatKort } from './candidate-kort.js';
+import { lagListeKontroller } from '../liste-kontroller.js';
 import { visIBolker } from '../ui-helpers.js';
 
 let alle = [];
@@ -16,9 +17,14 @@ const el = {
   sok: document.getElementById('innsendte-sok'),
 };
 
+const kontroller = lagListeKontroller(el.sok.closest('.verktoylinje'), {
+  lagtTil: (e) => e._lagtTil,
+  onEndring: () => render(true),
+});
+
 function synlige() {
   const s = sokTekst.toLowerCase();
-  return alle.filter((e) =>
+  return kontroller.filtrer(alle).filter((e) =>
     e._status === 'pending'
     && e._kilde === 'innsending'
     && (!s || (e.tittel ?? '').toLowerCase().includes(s) || (e.sted ?? '').toLowerCase().includes(s)),
@@ -36,8 +42,7 @@ function render(nullstill = false) {
     : `${liste.length} av ${totalt} ventende innsendinger`;
   if (el.fanetTeller) el.fanetTeller.textContent = String(totalt);
 
-  const sortert = liste.slice().sort((a, b) => new Date(a.start) - new Date(b.start));
-  visIBolker(el.feed, sortert, (event) => {
+  visIBolker(el.feed, kontroller.sorter(liste), (event) => {
     el.feed.appendChild(lagKandidatKort(event, { visInnsender: true }).el);
   }, { nullstill });
 }
