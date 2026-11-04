@@ -665,3 +665,6 @@ a { color: var(--aksent-tekst); }
   .knapp-godkjenn, .knapp-avslaa, .knapp-detaljer { flex: none; width: 100%; }
   .knapp-fremhev, .knapp-stjerne { align-self: center; }
 }
+
+/* «Vis flere» under lister som vises i bolker (ui-helpers.js visIBolker) */
+.vis-flere { display: block; margin: var(--gap-l) auto 0; }
