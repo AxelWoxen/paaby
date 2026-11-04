@@ -232,103 +232,114 @@ function lagPubKort(event) {
   kort.appendChild(handlingRad);
 
   // ─── Redigeringspanel (skjult til «Rediger» trykkes) ───────────────────
+  // Bygges først ved første «Rediger» — skjulte skjemaer for hvert kort
+  // gjorde ellers lista tung.
   const redigerPanel = document.createElement('div');
   redigerPanel.className = 'pub-rediger-panel';
   redigerPanel.hidden = true;
-
-  const redigering = lagRedigeringsFelter(event);
-  redigerPanel.appendChild(redigering.el);
-
-  const gjKontroll = lagGjentasKontroll(event.gjentas ?? null);
-  const gjStatus = document.createElement('span');
-  gjStatus.className = 'gjentas-status';
-  gjKontroll.el.appendChild(gjStatus);
-  redigerPanel.appendChild(gjKontroll.el);
-
-  gjKontroll.el.querySelectorAll('select').forEach((select) => {
-    select.addEventListener('change', async () => {
-      gjStatus.textContent = '…';
-      const data = await api.oppdaterGjentas(event.id, gjKontroll.hentVerdi());
-      if (data.ok) {
-        event.gjentas = data.gjentas;
-        gjStatus.textContent = 'Lagret';
-        visSuksess('Gjentakelse oppdatert.');
-        const nyTekst = formaterGjentasStatus(event.gjentas);
-        if (nyTekst) {
-          if (!gjentasBadgeEl) {
-            gjentasBadgeEl = document.createElement('span');
-            gjentasBadgeEl.className = 'gjentas-badge';
-            badger.appendChild(gjentasBadgeEl);
-          }
-          gjentasBadgeEl.textContent = nyTekst;
-        } else if (gjentasBadgeEl) {
-          gjentasBadgeEl.remove();
-          gjentasBadgeEl = null;
-        }
-      } else {
-        gjStatus.textContent = 'Feilet';
-        visFeil(data.feil ?? 'Kunne ikke oppdatere gjentakelse.');
-      }
-      setTimeout(() => { gjStatus.textContent = ''; }, 1800);
-    });
-  });
-
-  const lagreStatus = document.createElement('div');
-  lagreStatus.className = 'lagre-status';
-
-  const lagreKnapp = document.createElement('button');
-  lagreKnapp.type = 'button';
-  lagreKnapp.className = 'knapp knapp-primaer';
-  lagreKnapp.textContent = 'Lagre endringer';
-
-  lagreKnapp.onclick = async () => {
-    const verdier = redigering.hentVerdier();
-    if (!verdier.tittel || !verdier.start) {
-      lagreStatus.className = 'lagre-status feil';
-      lagreStatus.textContent = 'Tittel og starttidspunkt er påkrevd.';
-      return;
-    }
-    lagreKnapp.disabled = true;
-    lagreKnapp.textContent = '…';
-    const data = await api.oppdaterPublisert(event.id, {
-      ...verdier,
-      start: datetimeLocalTilOsloISO(verdier.start),
-      slutt: datetimeLocalTilOsloISO(verdier.slutt),
-    });
-    lagreKnapp.disabled = false;
-    lagreKnapp.textContent = 'Lagre endringer';
-    if (data.ok) {
-      Object.assign(event, {
-        tittel: verdier.tittel,
-        kategori: verdier.kategori,
-        sted: verdier.sted,
-        pris: verdier.pris === '' ? null : Number(verdier.pris),
-        prisTekst: verdier.prisTekst || null,
-        tags: data.tags,
-      });
-      badge.dataset.kategori = event.kategori;
-      badge.textContent = event.kategori === 'pafunn' ? 'påfunn' : event.kategori;
-      kort.dataset.kategori = event.kategori;
-      tittel.textContent = event.tittel;
-      stedInfo.textContent = event.sted ?? '—';
-      redigering.felter.tagVelger.settVerdier(data.tags);
-      lagreStatus.className = 'lagre-status';
-      lagreStatus.textContent = '';
-      visSuksess('Endringer lagret.');
-    } else {
-      lagreStatus.className = 'lagre-status feil';
-      lagreStatus.textContent = data.feil ?? 'Kunne ikke lagre endringene.';
-      visFeil(data.feil ?? 'Kunne ikke lagre endringene.');
-    }
-  };
-  redigerPanel.appendChild(lagreStatus);
-  redigerPanel.appendChild(lagreKnapp);
   kort.appendChild(redigerPanel);
+
+  let redigering = null;
+
+  function byggRedigerPanel() {
+    if (redigering) return;
+
+    redigering = lagRedigeringsFelter(event);
+    redigerPanel.appendChild(redigering.el);
+
+    const gjKontroll = lagGjentasKontroll(event.gjentas ?? null);
+    const gjStatus = document.createElement('span');
+    gjStatus.className = 'gjentas-status';
+    gjKontroll.el.appendChild(gjStatus);
+    redigerPanel.appendChild(gjKontroll.el);
+
+    gjKontroll.el.querySelectorAll('select').forEach((select) => {
+      select.addEventListener('change', async () => {
+        gjStatus.textContent = '…';
+        const data = await api.oppdaterGjentas(event.id, gjKontroll.hentVerdi());
+        if (data.ok) {
+          event.gjentas = data.gjentas;
+          gjStatus.textContent = 'Lagret';
+          visSuksess('Gjentakelse oppdatert.');
+          const nyTekst = formaterGjentasStatus(event.gjentas);
+          if (nyTekst) {
+            if (!gjentasBadgeEl) {
+              gjentasBadgeEl = document.createElement('span');
+              gjentasBadgeEl.className = 'gjentas-badge';
+              badger.appendChild(gjentasBadgeEl);
+            }
+            gjentasBadgeEl.textContent = nyTekst;
+          } else if (gjentasBadgeEl) {
+            gjentasBadgeEl.remove();
+            gjentasBadgeEl = null;
+          }
+        } else {
+          gjStatus.textContent = 'Feilet';
+          visFeil(data.feil ?? 'Kunne ikke oppdatere gjentakelse.');
+        }
+        setTimeout(() => { gjStatus.textContent = ''; }, 1800);
+      });
+    });
+
+    const lagreStatus = document.createElement('div');
+    lagreStatus.className = 'lagre-status';
+
+    const lagreKnapp = document.createElement('button');
+    lagreKnapp.type = 'button';
+    lagreKnapp.className = 'knapp knapp-primaer';
+    lagreKnapp.textContent = 'Lagre endringer';
+
+    lagreKnapp.onclick = async () => {
+      const verdier = redigering.hentVerdier();
+      if (!verdier.tittel || !verdier.start) {
+        lagreStatus.className = 'lagre-status feil';
+        lagreStatus.textContent = 'Tittel og starttidspunkt er påkrevd.';
+        return;
+      }
+      lagreKnapp.disabled = true;
+      lagreKnapp.textContent = '…';
+      const data = await api.oppdaterPublisert(event.id, {
+        ...verdier,
+        start: datetimeLocalTilOsloISO(verdier.start),
+        slutt: datetimeLocalTilOsloISO(verdier.slutt),
+      });
+      lagreKnapp.disabled = false;
+      lagreKnapp.textContent = 'Lagre endringer';
+      if (data.ok) {
+        Object.assign(event, {
+          tittel: verdier.tittel,
+          kategori: verdier.kategori,
+          sted: verdier.sted,
+          pris: verdier.pris === '' ? null : Number(verdier.pris),
+          prisTekst: verdier.prisTekst || null,
+          tags: data.tags,
+        });
+        badge.dataset.kategori = event.kategori;
+        badge.textContent = event.kategori === 'pafunn' ? 'påfunn' : event.kategori;
+        kort.dataset.kategori = event.kategori;
+        tittel.textContent = event.tittel;
+        stedInfo.textContent = event.sted ?? '—';
+        redigering.felter.tagVelger.settVerdier(data.tags);
+        lagreStatus.className = 'lagre-status';
+        lagreStatus.textContent = '';
+        visSuksess('Endringer lagret.');
+      } else {
+        lagreStatus.className = 'lagre-status feil';
+        lagreStatus.textContent = data.feil ?? 'Kunne ikke lagre endringene.';
+        visFeil(data.feil ?? 'Kunne ikke lagre endringene.');
+      }
+    };
+    redigerPanel.appendChild(lagreStatus);
+    redigerPanel.appendChild(lagreKnapp);
+  }
 
   redigerKnapp.onclick = () => {
     redigerPanel.hidden = !redigerPanel.hidden;
     redigerKnapp.textContent = redigerPanel.hidden ? 'Rediger' : 'Skjul redigering';
-    if (!redigerPanel.hidden) redigering.bildeCrop.lastInnVedVisning();
+    if (!redigerPanel.hidden) {
+      byggRedigerPanel();
+      redigering.bildeCrop.lastInnVedVisning();
+    }
   };
 
   dKnapp.onclick = async () => {

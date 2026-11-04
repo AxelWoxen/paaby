@@ -7,12 +7,14 @@
 
 const OSLO_UKEDAG_NR = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
 
+// Én delt formatter — en ny Intl.DateTimeFormat per kall er ~10× tregere.
+const OSLO_FMT = new Intl.DateTimeFormat('en-US', {
+  timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit',
+  weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+});
+
 export function osloKomponenter(dato) {
-  const fmt = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'Europe/Oslo', year: 'numeric', month: '2-digit', day: '2-digit',
-    weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
-  });
-  const deler = fmt.formatToParts(dato).reduce((o, d) => {
+  const deler = OSLO_FMT.formatToParts(dato).reduce((o, d) => {
     if (d.type !== 'literal') o[d.type] = d.value;
     return o;
   }, {});
