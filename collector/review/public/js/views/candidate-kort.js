@@ -241,29 +241,23 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
 
   // ─── Detaljpanel (skjult til «Vis detaljer» trykkes): innsenderboks,
   // full redigering, kuratortekst og gjentas — alt som ikke trengs for å
-  // scanne listen raskt. ──────────────────────────────────────────────────
+  // scanne listen raskt. Bygges først når det trengs (byggPanel): med 100+
+  // kort i lista ble skjulte skjemaer ellers mesteparten av siden. ─────────
   const panel = document.createElement('div');
   panel.className = 'kandidat-panel';
   panel.hidden = true;
+  kort.appendChild(panel);
 
-  if (visInnsender) {
-    panel.appendChild(lagInnsenderBoks(event));
-    if (event._muligDuplikat && event._duplikatHint) {
-      const varsel = document.createElement('div');
-      varsel.className = 'duplikat-varsel';
-      varsel.textContent = event._duplikatHint;
-      panel.appendChild(varsel);
-    }
-  }
-
-  const redigering = lagRedigeringsFelter(event);
-  panel.appendChild(redigering.el);
+  let redigering = null;
+  let gjentasKontroll = null;
 
   // Henter NÅVÆRENDE skjemaverdier (konvertert til Oslo-ISO), uansett om
   // «Lagre endringer» noensinne er trykket. Brukes av Lagre endringer,
   // Godkjenn og Send til vurdering — slik publiserer/lagrer alle tre
-  // nøyaktig det som faktisk står i skjemaet akkurat nå.
+  // nøyaktig det som faktisk står i skjemaet akkurat nå. Bygger panelet
+  // ved behov, så Godkjenn virker også uten at detaljene er åpnet.
   function hentOgValiderRedigering() {
+    byggPanel();
     const verdier = redigering.hentVerdier();
     if (!verdier.tittel || !verdier.start) {
       return { feil: 'Tittel og starttidspunkt er påkrevd.' };
@@ -277,57 +271,77 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
     };
   }
 
-  const lagreStatus = document.createElement('div');
-  lagreStatus.className = 'lagre-status';
+  function byggPanel() {
+    if (redigering) return;
 
-  const lagreKnapp = document.createElement('button');
-  lagreKnapp.type = 'button';
-  lagreKnapp.className = 'knapp knapp-sekundaer';
-  lagreKnapp.textContent = 'Lagre endringer';
-
-  lagreKnapp.onclick = async () => {
-    const { redigering: redigeringData, feil } = hentOgValiderRedigering();
-    if (feil) {
-      lagreStatus.className = 'lagre-status feil';
-      lagreStatus.textContent = feil;
-      return;
+    if (visInnsender) {
+      panel.appendChild(lagInnsenderBoks(event));
+      if (event._muligDuplikat && event._duplikatHint) {
+        const varsel = document.createElement('div');
+        varsel.className = 'duplikat-varsel';
+        varsel.textContent = event._duplikatHint;
+        panel.appendChild(varsel);
+      }
     }
-    lagreKnapp.disabled = true;
-    lagreKnapp.textContent = '…';
-    const data = await api.oppdaterKandidat(event.id, redigeringData);
-    lagreKnapp.disabled = false;
+
+    redigering = lagRedigeringsFelter(event);
+    panel.appendChild(redigering.el);
+
+    const lagreStatus = document.createElement('div');
+    lagreStatus.className = 'lagre-status';
+
+    const lagreKnapp = document.createElement('button');
+    lagreKnapp.type = 'button';
+    lagreKnapp.className = 'knapp knapp-sekundaer';
     lagreKnapp.textContent = 'Lagre endringer';
-    if (data.ok) {
-      event.tittel = redigeringData.tittel;
-      event.kategori = redigeringData.kategori;
-      event.sted = redigeringData.sted;
-      event.adresse = redigeringData.adresse;
-      event.tags = data.tags;
-      tittelEl.textContent = redigeringData.tittel;
-      badge.dataset.kategori = redigeringData.kategori;
-      badge.textContent = redigeringData.kategori === 'pafunn' ? 'påfunn' : redigeringData.kategori;
-      kort.dataset.kategori = redigeringData.kategori;
-      stedInfo.textContent = redigeringData.sted || '—';
-      oppdaterKartLenke(redigeringData.adresse);
-      redigering.felter.tagVelger.settVerdier(data.tags);
-      visSuksess('Endringer lagret.');
-    } else {
-      lagreStatus.className = 'lagre-status feil';
-      lagreStatus.textContent = data.feil ?? 'Kunne ikke lagre endringene.';
-      visFeil(data.feil ?? 'Kunne ikke lagre endringene.');
-    }
-  };
-  panel.appendChild(lagreStatus);
-  panel.appendChild(lagreKnapp);
 
-  const gjentasKontroll = lagGjentasKontroll(event.gjentas ?? null);
+    lagreKnapp.onclick = async () => {
+      const { redigering: redigeringData, feil } = hentOgValiderRedigering();
+      if (feil) {
+        lagreStatus.className = 'lagre-status feil';
+        lagreStatus.textContent = feil;
+        return;
+      }
+      lagreKnapp.disabled = true;
+      lagreKnapp.textContent = '…';
+      const data = await api.oppdaterKandidat(event.id, redigeringData);
+      lagreKnapp.disabled = false;
+      lagreKnapp.textContent = 'Lagre endringer';
+      if (data.ok) {
+        event.tittel = redigeringData.tittel;
+        event.kategori = redigeringData.kategori;
+        event.sted = redigeringData.sted;
+        event.adresse = redigeringData.adresse;
+        event.tags = data.tags;
+        tittelEl.textContent = redigeringData.tittel;
+        badge.dataset.kategori = redigeringData.kategori;
+        badge.textContent = redigeringData.kategori === 'pafunn' ? 'påfunn' : redigeringData.kategori;
+        kort.dataset.kategori = redigeringData.kategori;
+        stedInfo.textContent = redigeringData.sted || '—';
+        oppdaterKartLenke(redigeringData.adresse);
+        redigering.felter.tagVelger.settVerdier(data.tags);
+        visSuksess('Endringer lagret.');
+      } else {
+        lagreStatus.className = 'lagre-status feil';
+        lagreStatus.textContent = data.feil ?? 'Kunne ikke lagre endringene.';
+        visFeil(data.feil ?? 'Kunne ikke lagre endringene.');
+      }
+    };
+    panel.appendChild(lagreStatus);
+    panel.appendChild(lagreKnapp);
 
-  const beslutningRad = document.createElement('div');
-  beslutningRad.className = 'beslutning-rad';
-  beslutningRad.appendChild(gjentasKontroll.el);
-  panel.appendChild(beslutningRad);
+    gjentasKontroll = lagGjentasKontroll(event.gjentas ?? null);
 
-  kort.appendChild(panel);
+    const beslutningRad = document.createElement('div');
+    beslutningRad.className = 'beslutning-rad';
+    beslutningRad.appendChild(gjentasKontroll.el);
+    panel.appendChild(beslutningRad);
+  }
+
+  function lastInnBilde() {
+    byggPanel();
+    redigering.bildeCrop.lastInnVedVisning();
+  }
 
   const detaljerKnapp = document.createElement('button');
   detaljerKnapp.type = 'button';
@@ -336,7 +350,7 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
   detaljerKnapp.onclick = () => {
     panel.hidden = !panel.hidden;
     detaljerKnapp.textContent = panel.hidden ? 'Vis detaljer' : 'Skjul detaljer';
-    if (!panel.hidden) redigering.bildeCrop.lastInnVedVisning();
+    if (!panel.hidden) lastInnBilde();
   };
 
   // ─── Handlingsrad (alltid synlig): primær / sekundær / destruktiv, med
@@ -454,5 +468,5 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
 
   kort.appendChild(handlingRad);
 
-  return { el: kort, lastInnBilde: redigering.bildeCrop.lastInnVedVisning };
+  return { el: kort, lastInnBilde };
 }
