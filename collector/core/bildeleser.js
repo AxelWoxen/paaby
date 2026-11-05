@@ -1,6 +1,8 @@
 // bildeleser.js — leser eventbildet (plakat/flyer) med en bildemodell i
 // Azure AI Foundry (OpenAI Responses API) og fyller inn
-// informasjonen kilden ikke oppga: starttid, sted, adresse, pris, beskrivelse.
+// informasjonen kilden ikke oppga: starttid, sted, adresse og pris.
+// Beskrivelse leses bevisst IKKE: i test gjentok modellen bare dato og
+// tittel fra plakaten, ofte på engelsk — det gir ikke et bedre kort.
 //
 // Koster penger per bilde, derfor strenge regler for HVEM som leses
 // (skalLeseBilde) og at hvert event leses høyst én gang (se
@@ -18,7 +20,7 @@ export function harBildeleser(env = process.env) {
 
 // Felt fra core/kvalitet.js:manglendeFeltnavn som et bilde realistisk kan
 // inneholde. Koordinater, lenke og bilde kan ikke leses av en plakat.
-const FELT_FRA_BILDE = ['start', 'sted', 'adresse', 'pris', 'beskrivelse'];
+const FELT_FRA_BILDE = ['start', 'sted', 'adresse', 'pris'];
 
 const HAR_TIDSSONE = /Z$|[+-]\d{2}:\d{2}$/;
 
@@ -58,9 +60,8 @@ const SVAR_SKJEMA = {
     adresse: { type: ['string', 'null'], description: 'Gateadresse, gjerne med postnummer og by' },
     pris: { type: ['number', 'null'], description: 'Laveste ordinære billettpris i NOK' },
     prisTekst: { type: ['string', 'null'], description: 'Pris som tekst når den ikke er ett tall, f.eks. «Gratis» eller «150–250 kr»' },
-    beskrivelse: { type: ['string', 'null'], description: 'Maks to setninger, på norsk, kun det bildet sier' },
   },
-  required: ['start', 'sted', 'adresse', 'pris', 'prisTekst', 'beskrivelse'],
+  required: ['start', 'sted', 'adresse', 'pris', 'prisTekst'],
   additionalProperties: false,
 };
 
@@ -112,8 +113,6 @@ export function flettInnFraBilde(event, funn) {
     }
   }
 
-  const beskrivelse = tekst(funn.beskrivelse, 600);
-  if (tom(ut.beskrivelse) && beskrivelse) { ut.beskrivelse = beskrivelse; fylt.push('beskrivelse'); }
 
   return { event: ut, fylt };
 }

@@ -27,7 +27,7 @@ function funn(overrides = {}) {
   };
 }
 
-const SVAR = { start: null, sted: 'BLÅ', adresse: 'Brenneriveien 9c', pris: 350, prisTekst: null, beskrivelse: null };
+const SVAR = { start: null, sted: 'BLÅ', adresse: 'Brenneriveien 9c', pris: 350, prisTekst: null };
 
 test('skalLeseBilde: bare nye, anbefalte funn med bilde og noe å lese', () => {
   const nye = new Set(['uuid-1']);
@@ -40,14 +40,24 @@ test('skalLeseBilde: bare nye, anbefalte funn med bilde og noe å lese', () => {
   assert.equal(skalLeseBilde(funn({ mangler: ['koordinater', 'lenke'] }), nye), false);
 });
 
-test('feltSomKanLesesFraBilde: koordinater/lenke/bilde kan ikke leses av en plakat', () => {
-  assert.deepEqual(feltSomKanLesesFraBilde(['koordinater', 'pris', 'lenke', 'sted']), ['sted', 'pris']);
+test('feltSomKanLesesFraBilde: koordinater/lenke/bilde/beskrivelse leses ikke fra plakaten', () => {
+  assert.deepEqual(feltSomKanLesesFraBilde(['koordinater', 'pris', 'lenke', 'sted', 'beskrivelse']), ['sted', 'pris']);
+});
+
+test('skalLeseBilde: mangler bare beskrivelse → ingen lesing (ingen kostnad)', () => {
+  assert.equal(skalLeseBilde(funn({ sted: 'BLÅ', pris: 350, mangler: ['beskrivelse'] }), new Set(['uuid-1'])), false);
+});
+
+test('flettInnFraBilde: fyller aldri beskrivelse, selv om modellen sender en', () => {
+  const { event, fylt } = flettInnFraBilde({ beskrivelse: null, sted: 'BLÅ' }, { beskrivelse: 'Fra bildet' });
+  assert.equal(event.beskrivelse, null);
+  assert.deepEqual(fylt, []);
 });
 
 test('flettInnFraBilde: fyller bare tomme felt, overskriver aldri kilden', () => {
   const { event, fylt } = flettInnFraBilde(
     { sted: 'Rockefeller', adresse: null, pris: null, prisTekst: null, beskrivelse: 'Fra kilden', start: '2026-11-12T20:00:00+01:00' },
-    { ...SVAR, beskrivelse: 'Fra bildet', start: '2026-11-13T21:00:00+01:00' },
+    { ...SVAR, beskrivelse: 'Fra bildet', start: '2026-11-13T21:00:00+01:00' }, // beskrivelse skal ignoreres
   );
   assert.equal(event.sted, 'Rockefeller');
   assert.equal(event.beskrivelse, 'Fra kilden');
@@ -60,7 +70,7 @@ test('flettInnFraBilde: fyller bare tomme felt, overskriver aldri kilden', () =>
 test('flettInnFraBilde: avviser ugyldige verdier fra modellen', () => {
   const { fylt } = flettInnFraBilde(
     { sted: null, pris: null, prisTekst: null, start: null },
-    { start: '12. november', sted: '   ', pris: -5, prisTekst: null, adresse: null, beskrivelse: null },
+    { start: '12. november', sted: '   ', pris: -5, prisTekst: null, adresse: null },
   );
   assert.deepEqual(fylt, []);
   assert.deepEqual(flettInnFraBilde({ a: 1 }, null), { event: { a: 1 }, fylt: [] });
