@@ -1,0 +1,8 @@
+Ekte kall: gpt-5.4-mini i Azure AI Foundry, 16 ventende events i paaby_dev (2026-11-04). Ingenting lagret.
+
+Manglet adresse/sted (8 events): 0 fylt inn. Modellen leste "HOBO" som sted for COFFEE RAVE OSLO x OKRA
+  og 2026-11-08T12:00+01:00 som tid, men eventet hadde allerede begge. Ett bilde ga 404 hos kilden.
+Manglet pris (8 events): 0 fylt inn. Prisen sto ikke på noen av plakatene. Modellen leste stedet riktig
+  på 3 av dem (Kulturkirken Jakob, Sentralen), men det fantes fra før.
+
+Konklusjon: lesingen fungerer og finner ikke på noe, men på dagens data står det som mangler sjelden på plakaten.
