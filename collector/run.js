@@ -32,6 +32,8 @@ import {
 } from './store/candidates-db.js';
 import { lesPubliserte } from './store/published.js';
 import { manglendeFeltnavn, berikFraKjentSted } from './core/kvalitet.js';
+import { skalLeseBilde, feltSomKanLesesFraBilde, flettInnFraBilde, lesBilde, harBildeleser } from './core/bildeleser.js';
+import { reserverBildelesing, lagreBildelesing } from './store/bildelesing.js';
 import {
   trekkUtEgenskaper, merkUtfall, trenModell, scorEvent, finnHoldUteGrunn, agentensValg,
 } from './core/interesse.js';
@@ -363,9 +365,66 @@ export async function scorVentendePåNytt({ modell, regler }) {
     await oppdaterVurdering(rad.id, v);
     const valg = agentensValg({ score: v.score, holdtUte: v.holdtUte, inkludertManuelt: rad.included_manually, antallAvslag });
     // id = candidate-UUID (ikke payloadens legacy id) — matcher nyeFunn.
-    ut.push({ ...rad.payload, id: rad.id, kilde: rad.provider, ...v, valg });
+    ut.push({ ...rad.payload, id: rad.id, kilde: rad.provider, ...v, valg, _payload: rad.payload });
   }
   return ut;
+}
+
+/**
+ * Leser bildet til NYE funn som agenten anbefaler (gruppen «valgt») og
+ * fyller inn det kilden manglet. Hvert event leses høyst én gang: lesingen
+ * reserveres i databasen før API-kallet, så en ny kjøring (eller to
+ * samtidige) aldri betaler for samme bilde to ganger. Feiler kallet,
+ * prøves det ikke igjen.
+ *
+ * Avhengighetene kan byttes ut i tester (ingen DB eller API nødvendig).
+ */
+export async function lesBilderForNyeAnbefalte(ventende, {
+  nyeIder, kjenteSteder = new Map(), env = process.env,
+  les = lesBilde, reserver = reserverBildelesing, lagre = lagreBildelesing,
+} = {}) {
+  const tellere = { lest: 0, beriket: 0, feil: 0 };
+  const aktuelle = ventende.filter((e) => skalLeseBilde(e, nyeIder));
+  if (!aktuelle.length) return tellere;
+  if (!harBildeleser(env)) {
+    console.log(`[bildelesing] hopper over ${aktuelle.length} bilde(r) – mangler AIFOUNDRY_API_KEY/FOUNDRY_ENDPOINT`);
+    return tellere;
+  }
+
+  for (const e of aktuelle) {
+    if (!(await reserver(e.id))) continue;
+    tellere.lest++;
+    const felt = feltSomKanLesesFraBilde(e.mangler);
+    const original = e._payload ?? e;
+
+    let funn;
+    try {
+      funn = await les(original, felt);
+    } catch (err) {
+      tellere.feil++;
+      console.error(`  [bildelesing] FEIL for «${e.tittel}»: ${err.message}`);
+      await lagre(e.id, { resultat: { funn: null, feil: err.message } });
+      continue;
+    }
+
+    const { event: medBilde, fylt } = flettInnFraBilde(original, funn);
+    // Ga bildet oss et sted, kan et kjent sted gi adresse/koordinater også.
+    const { event: ny, fylt: fraSted } = fylt.length
+      ? berikFraKjentSted(medBilde, kjenteSteder)
+      : { event: medBilde, fylt: [] };
+    const mangler = manglendeFeltnavn(ny);
+
+    await lagre(e.id, { payload: ny, fylt: [...fylt, ...fraSted], mangler, resultat: { funn, feil: null } });
+
+    if (fylt.length) {
+      tellere.beriket++;
+      Object.assign(e, ny, { id: e.id, mangler, _payload: ny });
+      console.log(`  [bildelesing] «${e.tittel}»: fylte ${[...fylt, ...fraSted].join(', ')}`);
+    } else {
+      console.log(`  [bildelesing] «${e.tittel}»: fant ingenting nytt i bildet`);
+    }
+  }
+  return tellere;
 }
 
 const UKEDAG_KORT = ['søn', 'man', 'tir', 'ons', 'tor', 'fre', 'lør'];
@@ -482,13 +541,18 @@ export async function main({ horisontDager = lesHorisontDager() } = {}) {
   }
 
   const ventende = await scorVentendePåNytt({ modell, regler });
+  const nyeIder = new Set(nyeFunn.map((f) => f.candidateId));
+  const bildelesing = await lesBilderForNyeAnbefalte(ventende, { nyeIder, kjenteSteder });
+  if (bildelesing.lest) {
+    console.log(`Bildelesing: ${bildelesing.lest} lest, ${bildelesing.beriket} fikk ny info, ${bildelesing.feil} feil`);
+  }
 
   console.log('─'.repeat(50));
-  skrivOppsummering(ventende, { horisontDager, nyeIder: new Set(nyeFunn.map((f) => f.candidateId)) });
+  skrivOppsummering(ventende, { horisontDager, nyeIder });
   console.log('');
 
   await avsluttKjøring(runId, {
-    stats: { kilder: statsPerKilde, nye: totaltNye, ventende: ventende.length },
+    stats: { kilder: statsPerKilde, nye: totaltNye, ventende: ventende.length, bildelesing },
     treningsstørrelse: modell.antall.med + modell.antall.avslått,
   });
 
