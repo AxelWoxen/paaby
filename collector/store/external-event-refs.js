@@ -124,7 +124,7 @@ export async function opprettRefTilEksisterende({
  *   ref opprettes uansett, slik at kilden ikke prøver på nytt hver kjøring.
  */
 export async function opprettCandidateOgRef({
-  event, source = 'collector', muligDuplikat = false, duplikatHint = null,
+  event, source = 'collector', muligDuplikat = false, duplikatHint = null, vurdering = null,
   provider, externalId, sourceUrl, sourceStatus, sourceUpdatedAt, contentHash, contentSnapshot = null,
 }) {
   const client = await pool.connect();
@@ -133,7 +133,7 @@ export async function opprettCandidateOgRef({
     await client.query('BEGIN');
 
     const { id: candidateId, lagtTil } = await leggTilEnCandidateMedClient(
-      client, event, { source, muligDuplikat, duplikatHint },
+      client, event, { source, muligDuplikat, duplikatHint, vurdering },
     );
 
     if (candidateId) {

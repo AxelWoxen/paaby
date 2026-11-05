@@ -134,7 +134,7 @@ el.avslaaPasserte?.addEventListener('click', async () => {
 
   for (let i = 0; i < passerte.length; i++) {
     el.avslaaPasserte.textContent = `Avslår ${i + 1} av ${passerte.length} …`;
-    const data = await api.avslaa(passerte[i].id);
+    const data = await api.avslaa(passerte[i].id, 'passert');
     if (data.ok) {
       passerte[i]._status = 'avslatt';
       lyktes++;

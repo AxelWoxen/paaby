@@ -24,8 +24,11 @@ import {
   markerGodkjent,
   markerTriagert,
   markerAvslatt,
+  markerInkludert,
   oppdaterCandidatePayload,
+  utenInterneFelt,
 } from '../store/candidates-db.js';
+import { erGyldigAvslagsgrunn } from '../core/interesse.js';
 
 import { normaliser } from '../normalize.js';
 import { dedupliser } from '../dedupe.js';
@@ -105,14 +108,9 @@ function byggRedigertPayload(event, body) {
     return { feil: 'Tittel og starttidspunkt er påkrevd' };
   }
 
-  // Interne _-felt (status, kilde, innsenderdata, duplikat-varsel) hører
-  // hjemme i egne kolonner, ikke i payload — fjernes før lagring.
-  const {
-    _status, _kilde,
-    _innsenderNavn, _innsenderOrg, _innsenderKontakt, _innsenderNotat,
-    _muligDuplikat, _duplikatHint, _lagtTil,
-    ...basisPayload
-  } = event;
+  // Interne _-felt (status, kilde, innsenderdata, duplikat-varsel,
+  // agentens vurdering) hører hjemme i egne kolonner, ikke i payload.
+  const basisPayload = utenInterneFelt(event);
 
   const payload = {
     ...basisPayload,
@@ -373,9 +371,18 @@ app.get('/api/candidates', async (_req, res) => {
 //
 // Kandidaten markeres som avslått og id-en lagres i rejected.json,
 // slik at collectoren ikke foreslår samme event igjen senere.
+//
+// body.grunn (valgfri, se AVSLAGSGRUNNER i core/interesse.js) lærer
+// agenten om avslaget handlet om smak eller ikke (duplikat, passert, …).
 app.post('/api/avslaa/:id', async (req, res) => {
+  const grunn = req.body?.grunn ?? null;
+
+  if (grunn !== null && !erGyldigAvslagsgrunn(grunn)) {
+    return res.status(400).json({ feil: 'Ukjent avslagsgrunn' });
+  }
+
   try {
-    const ok = await markerAvslatt(req.params.id);
+    const ok = await markerAvslatt(req.params.id, { grunn, brukerId: req.session.brukerId ?? null });
 
     if (!ok) {
       return res.status(404).json({
@@ -456,6 +463,7 @@ app.post('/api/godkjenn/:id', async (req, res) => {
     await markerGodkjent(
       id,
       publishedEventId,
+      { brukerId: req.session.brukerId ?? null },
     );
 
     res.json({
@@ -514,6 +522,30 @@ app.post('/api/kandidat/:id/oppdater', async (req, res) => {
 });
 
 
+// Legg et collector-funn i agentens utvalg manuelt (fra «Usikre» eller
+// «Ikke valgt» i Fra API). Kun et statusskifte i agentens gruppering —
+// eventet er fortsatt pending, ingenting publiseres.
+app.post('/api/inkluder/:id', async (req, res) => {
+  try {
+    const ok = await markerInkludert(req.params.id, { brukerId: req.session.brukerId ?? null });
+
+    if (!ok) {
+      return res.status(404).json({
+        feil: 'Event ikke funnet, eller allerede behandlet',
+      });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error('Kunne ikke legge eventet i utvalget:', err);
+
+    res.status(500).json({
+      feil: 'Kunne ikke legge eventet i utvalget',
+    });
+  }
+});
+
+
 // Triager en collector-candidate: sender den fra "Fra API" til "Til
 // vurdering". IKKE publisering — kun et statusskifte (pending → triaged).
 // Hvis admin har redigert felter i skjemaet (bilde, tittel, ...) før
@@ -543,12 +575,7 @@ app.post('/api/triager/:id', async (req, res) => {
 
     payload = { ...bygget.payload, gjentas: gjentas || null };
   } else {
-    const {
-      _status, _kilde,
-      _innsenderNavn, _innsenderOrg, _innsenderKontakt, _innsenderNotat,
-      _muligDuplikat, _duplikatHint, _lagtTil,
-      ...basisPayload
-    } = event;
+    const basisPayload = utenInterneFelt(event);
 
     payload = {
       ...basisPayload,
@@ -559,7 +586,7 @@ app.post('/api/triager/:id', async (req, res) => {
 
   try {
     await oppdaterCandidatePayload(id, payload);
-    const ok = await markerTriagert(id);
+    const ok = await markerTriagert(id, { brukerId: req.session.brukerId ?? null });
 
     if (!ok) {
       return res.status(404).json({

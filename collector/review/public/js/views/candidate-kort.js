@@ -74,6 +74,35 @@ function lagInnsenderBoks(event) {
   return boks;
 }
 
+// Samme verdier og tekster som AVSLAGSGRUNNER i collector/core/interesse.js
+// (serveren avviser alt annet). «Passert» settes kun av bulk-knappene.
+export const AVSLAGSGRUNNER = [
+  { verdi: 'ikke-relevant',   tekst: 'Ikke Påby' },
+  { verdi: 'for-kommersielt', tekst: 'For stort / kommersielt' },
+  { verdi: 'utenfor-oslo',    tekst: 'Utenfor Oslo' },
+  { verdi: 'duplikat',        tekst: 'Duplikat' },
+  { verdi: 'mangler-info',    tekst: 'Mangler info' },
+];
+
+// «sted:bla» → «sted: bla ↑» — agentens grunner, lesbart i en tooltip.
+function formaterGrunner(grunner) {
+  return (grunner ?? [])
+    .map((g) => `${g.egenskap.replace(':', ': ')} ${g.vekt > 0 ? '↑' : '↓'}`)
+    .join(' · ');
+}
+
+function lagAgentTekst(event) {
+  if (event._inkludertManuelt) return 'Lagt i utvalget av deg';
+  const score = typeof event._interesse === 'number' ? Math.round(event._interesse) : null;
+  if (event._agentValg === 'usikker') return `Agenten er usikker — relevans ${score}`;
+  if (event._agentValg === 'ikke-valgt') {
+    return event._holdtUte
+      ? `Ikke valgt av agenten — ${event._holdtUte}`
+      : `Ikke valgt av agenten — lav relevans (${score})`;
+  }
+  return null;
+}
+
 function lagMiniatyrbilde(event) {
   const wrap = document.createElement('div');
   wrap.className = 'kort-bilde-wrapper';
@@ -100,16 +129,23 @@ function lagMiniatyrbilde(event) {
   }
 }
 
+// Lesbare navn på felt i «Fra bilde»-markeringen.
+const FELTNAVN = { start: 'tidspunkt', sted: 'sted', adresse: 'adresse', pris: 'pris', koordinater: 'koordinater' };
+function feltNavn(felt) {
+  return FELTNAVN[felt] ?? felt;
+}
+
 /**
  * @param {Object} event  candidate fra /api/candidates
- * @param {{ visInnsender?: boolean, modus?: 'vurdering' | 'fra-api' }} valg
+ * @param {{ visInnsender?: boolean, modus?: 'vurdering' | 'fra-api', onInkludert?: () => void }} valg
  *   modus 'vurdering' (standard): "Godkjenn" publiserer (Til vurdering/Innsendte).
  *   modus 'fra-api': "Godkjenn" sender til vurdering i stedet — ingen
  *   publisering ennå, og fremhev-stjernen skjules (avgjøres ved faktisk
- *   publisering, ikke her).
+ *   publisering, ikke her). Funn agenten har lagt til side (usikre/ikke
+ *   valgt) får i tillegg «Legg i utvalget»; onInkludert kalles etterpå.
  * @returns {{ el: HTMLElement, lastInnBilde: () => void }}
  */
-export function lagKandidatKort(event, { visInnsender = false, modus = 'vurdering' } = {}) {
+export function lagKandidatKort(event, { visInnsender = false, modus = 'vurdering', onInkludert = null } = {}) {
   const kort = document.createElement('article');
   kort.className = 'admin-kort kandidat-kort';
   kort.dataset.id = event.id;
@@ -147,11 +183,32 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
     m.textContent = 'Manuelt lagt inn';
     badger.appendChild(m);
   }
-  if (visInnsender && event._muligDuplikat) {
+  // Agentens interesse-score (kun collector-funn). Ingen badge når den
+  // ikke har nok beslutninger å lære av ennå (score null).
+  if (event._kilde === 'collector' && typeof event._interesse === 'number') {
+    const s = document.createElement('span');
+    s.className = `badge badge-status${event._agentValg === 'valgt' ? ' badge-fylt' : ''}`;
+    s.textContent = `Relevans ${Math.round(event._interesse)}`;
+    const grunner = formaterGrunner(event._interesseGrunner);
+    if (grunner) s.title = grunner;
+    badger.appendChild(s);
+  }
+  if (event._muligDuplikat) {
     const d = document.createElement('span');
     d.className = 'badge badge-status';
     d.textContent = 'Mulig duplikat';
+    if (event._duplikatHint) d.title = event._duplikatHint;
     badger.appendChild(d);
+  }
+  // Felt agenten leste fra eventbildet — modellen kan lese feil (f.eks.
+  // et årstall), så de markeres til en person har sett på dem.
+  const fraBilde = Array.isArray(event._fraBilde) ? event._fraBilde : [];
+  if (fraBilde.length) {
+    const b = document.createElement('span');
+    b.className = 'badge badge-status badge-fra-bilde';
+    b.textContent = 'Fra bilde';
+    b.title = `Lest fra eventbildet: ${fraBilde.map(feltNavn).join(', ')}. Dobbeltsjekk før publisering.`;
+    badger.appendChild(b);
   }
   if (erPassert(event)) {
     const p = document.createElement('span');
@@ -229,6 +286,37 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
     brodtekst.appendChild(kortNavn);
   }
 
+  // Hvorfor agenten la eventet til side (eller at du har lagt det tilbake).
+  const agentTekst = lagAgentTekst(event);
+  if (agentTekst) {
+    const a = document.createElement('p');
+    a.className = 'kort-holdt-ute';
+    a.textContent = agentTekst;
+    brodtekst.appendChild(a);
+  }
+
+  // Marker selve verdiene som kom fra bildet, og si hva som bør sjekkes.
+  const fraBildeEl = { start: dato, sted: stedInfo, pris: prisInfo, adresse: kartEl };
+  for (const felt of fraBilde) {
+    const el = fraBildeEl[felt];
+    if (!el) continue;
+    el.classList.add('fra-bilde');
+    el.title = 'Lest fra eventbildet — dobbeltsjekk';
+  }
+  if (fraBilde.length) {
+    const f = document.createElement('p');
+    f.className = 'kort-fra-bilde';
+    f.textContent = `Lest fra bildet — sjekk: ${fraBilde.map(feltNavn).join(', ')}`;
+    brodtekst.appendChild(f);
+  }
+
+  if (event._mangler?.length) {
+    const m = document.createElement('p');
+    m.className = 'kort-mangler';
+    m.textContent = `Mangler: ${event._mangler.join(', ')}`;
+    brodtekst.appendChild(m);
+  }
+
   if (event.beskrivelse) {
     const besk = document.createElement('p');
     besk.className = 'kort-beskrivelse-kort';
@@ -274,14 +362,12 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
   function byggPanel() {
     if (redigering) return;
 
-    if (visInnsender) {
-      panel.appendChild(lagInnsenderBoks(event));
-      if (event._muligDuplikat && event._duplikatHint) {
-        const varsel = document.createElement('div');
-        varsel.className = 'duplikat-varsel';
-        varsel.textContent = event._duplikatHint;
-        panel.appendChild(varsel);
-      }
+    if (visInnsender) panel.appendChild(lagInnsenderBoks(event));
+    if (event._muligDuplikat && event._duplikatHint) {
+      const varsel = document.createElement('div');
+      varsel.className = 'duplikat-varsel';
+      varsel.textContent = event._duplikatHint;
+      panel.appendChild(varsel);
     }
 
     redigering = lagRedigeringsFelter(event);
@@ -383,9 +469,35 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
     oppdaterFremhevetBadge();
   };
 
+  // «Legg i utvalget»: kun for collector-funn agenten har lagt til side.
+  const kanInkluderes = modus === 'fra-api' && event._agentValg && event._agentValg !== 'valgt';
+  const iKnapp = document.createElement('button');
+  iKnapp.type = 'button';
+  iKnapp.className = 'knapp knapp-sekundaer knapp-inkluder';
+  iKnapp.textContent = 'Legg i utvalget';
+
   function settKnapperDisabled(v) {
-    gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = detaljerKnapp.disabled = v;
+    gKnapp.disabled = aKnapp.disabled = fKnapp.disabled = detaljerKnapp.disabled = iKnapp.disabled = v;
   }
+
+  iKnapp.onclick = async () => {
+    settKnapperDisabled(true);
+    iKnapp.textContent = '…';
+    const data = await api.inkluder(event.id);
+    if (data.ok) {
+      event._inkludertManuelt = true;
+      event._holdtUte = null;
+      event._agentValg = 'valgt';
+      visSuksess(`«${event.tittel}» er lagt i agentens utvalg.`);
+      kort.style.transition = 'opacity .2s';
+      kort.style.opacity = '0';
+      setTimeout(() => onInkludert?.(), 200);
+    } else {
+      settKnapperDisabled(false);
+      iKnapp.textContent = 'Legg i utvalget';
+      visFeil(data.feil ?? 'Kunne ikke legge eventet i utvalget.');
+    }
+  };
 
   gKnapp.onclick = async () => {
     // Samme skjemaverdier som «Lagre endringer» ville sendt — Godkjenn/Send
@@ -438,16 +550,19 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
   };
 
   aKnapp.onclick = async () => {
-    const ok = await bekreft({
+    // Grunnen lærer agenten om avslaget handlet om smak (Ikke Påby, For
+    // kommersielt, …) eller ikke (Duplikat, Mangler info). Valgfri.
+    const grunn = await bekreft({
       tittel: 'Avslå dette eventet?',
-      tekst: `«${event.tittel}» fjernes fra listen og foreslås ikke på nytt.`,
+      tekst: `«${event.tittel}» fjernes fra listen og foreslås ikke på nytt. Hvorfor? (valgfritt — hjelper agenten å lære)`,
       bekreftTekst: 'Avslå',
+      grunner: AVSLAGSGRUNNER,
     });
-    if (!ok) return;
+    if (grunn === false) return;
 
     settKnapperDisabled(true);
     aKnapp.textContent = '…';
-    const data = await api.avslaa(event.id);
+    const data = await api.avslaa(event.id, grunn);
     if (data.ok) {
       kort.style.transition = 'opacity .2s';
       kort.style.opacity = '0';
@@ -462,6 +577,8 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
   };
 
   handlingRad.appendChild(gKnapp);
+  // Legges kun til når den gjelder — .knapp sin display overstyrer [hidden].
+  if (kanInkluderes) handlingRad.appendChild(iKnapp);
   handlingRad.appendChild(detaljerKnapp);
   handlingRad.appendChild(aKnapp);
   handlingRad.appendChild(fKnapp);

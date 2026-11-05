@@ -40,7 +40,15 @@ export async function lesPubliserte() {
         SELECT COALESCE(array_agg(et.tag_slug ORDER BY et.tag_slug), ARRAY[]::text[])
         FROM event_tags et
         WHERE et.event_id = e.id
-      ) AS tags
+      ) AS tags,
+
+      -- Hvilke kilder (event_sources.provider) eventet er kjent fra — brukes
+      -- av collectorens kryss-kilde-dedupe (core/sync.js).
+      (
+        SELECT COALESCE(array_agg(DISTINCT s.provider), ARRAY[]::text[])
+        FROM event_sources s
+        WHERE s.event_id = e.id
+      ) AS "_providere"
 
     FROM events e
 

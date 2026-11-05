@@ -185,6 +185,29 @@ Nye funn går først til:
 
 event_candidates
 status = pending
+Agenten (automatisk kjøring, neste 14 dager)
+
+`npm run agent` (lokalt) og `npm run agent:prod` er collectoren med 14 dagers horisont. I tillegg til vanlig henting gjør den:
+
+- kobler samme event fra ulike kilder (Ticketmaster + Tickster + Billetto) i stedet for å lage to kort: samme dag, start innen 30 min, nesten lik tittel og samme sted. Svakere likhet blir ny candidate med «Mulig duplikat»
+- fyller inn adresse/koordinater fra steder vi allerede har publisert (venues), når kilden mangler dem
+- lagrer hvilke felt som mangler (`missing_fields`), vist som «Mangler: …» på kortet
+- gir hvert funn en relevans-score 0–100 lært fra det som er publisert, triagert og avslått (50 = ingen signal ennå)
+- holder ute steder og tittelord som er avslått minst 5 ganger og aldri godkjent, pluss manuelle regler i `collector/config/kuratering.js`. De skjules bak «Vis holdt ute» i Fra API, men slettes aldri
+- skriver en sortert gjennomgang (dag for dag, mest relevant først) til loggen, og lagrer kjøringen i `collector_runs`
+
+Hver beslutning i review logges i `candidate_decisions` (hvem, når, grunn og agentens score da). Velg gjerne en grunn når du avslår: «Duplikat», «Mangler info» og «Passert» lærer ikke agenten noe om smak, det gjør «Ikke Påby», «For stort / kommersielt» og «Utenfor Oslo».
+
+Krever migrasjon `012_collector_laering.sql` (kjør den mot produksjon FØR koden deployes; review-verktøyet leser de nye kolonnene).
+
+Oppsett for daglig kjøring på Heroku:
+
+heroku config:set TICKETMASTER_API_KEY=… BILLETTO_API_KEY=… BILLETTO_API_SECRET=… TICKSTER_API_KEY=… -a paaby-api
+heroku addons:create scheduler:standard -a paaby-api
+heroku addons:open scheduler -a paaby-api
+
+Legg til jobben `cd collector && node run.js --dager=14`, daglig.
+
 Review-verktøy
 
 Review-verktøyet ligger i:

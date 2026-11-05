@@ -60,7 +60,9 @@ export const api = {
 
   godkjenn:  (id, data)    => post(`/api/godkjenn/${encodeURIComponent(id)}`, data),
   triager:   (id, data)    => post(`/api/triager/${encodeURIComponent(id)}`, data),
-  avslaa:    (id)          => post(`/api/avslaa/${encodeURIComponent(id)}`),
+  inkluder:  (id)          => post(`/api/inkluder/${encodeURIComponent(id)}`),
+  // grunn: se AVSLAGSGRUNNER i collector/core/interesse.js (valgfri)
+  avslaa:    (id, grunn)   => post(`/api/avslaa/${encodeURIComponent(id)}`, grunn ? { grunn } : undefined),
   oppdaterKandidat: (id, data) => post(`/api/kandidat/${encodeURIComponent(id)}/oppdater`, data),
 
   fremhev:      (id) => post(`/api/fremhev/${encodeURIComponent(id)}`),

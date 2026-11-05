@@ -84,8 +84,16 @@ function datoIntervall(valg) {
 const tid = (iso) => (iso ? new Date(iso).getTime() : NaN);
 
 /* lagtTil: (event) => ISO-streng. Events uten tidsstempel sorteres sist
-   og faller ut av «Lagt til siste …»-filtrene. */
-export function lagListeKontroller(host, { lagtTil, onEndring }) {
+   og faller ut av «Lagt til siste …»-filtrene.
+   ekstraSorteringer: [[verdi, tekst, sammenlign]] — visningsspesifikke valg
+   (f.eks. agentens «Mest relevant» i Fra API), lagt rett etter standardvalget. */
+export function lagListeKontroller(host, { lagtTil, onEndring, ekstraSorteringer = [] }) {
+  const ekstra = new Map(ekstraSorteringer.map(([verdi, , sammenlign]) => [verdi, sammenlign]));
+  const sorteringsValg = [
+    SORTERINGER[0],
+    ...ekstraSorteringer.map(([verdi, tekst]) => [verdi, tekst]),
+    ...SORTERINGER.slice(1),
+  ];
   const tilstand = { sortering: 'nyeste', lagtTil: 'alle', dato: 'alle', fra: '', til: '' };
 
   const wrap = document.createElement('div');
@@ -102,7 +110,7 @@ export function lagListeKontroller(host, { lagtTil, onEndring }) {
   kalender.el.hidden = true;
 
   for (const [nokkel, valg, etikett] of [
-    ['sortering', SORTERINGER, 'Sorter'],
+    ['sortering', sorteringsValg, 'Sorter'],
     ['lagtTil', LAGT_TIL, 'Filtrer på når eventet ble lagt til'],
     ['dato', DATOER, 'Filtrer på eventdato'],
   ]) {
@@ -140,6 +148,10 @@ export function lagListeKontroller(host, { lagtTil, onEndring }) {
 
   function sorter(liste) {
     const s = tilstand.sortering;
+    if (ekstra.has(s)) {
+      const sammenlign = ekstra.get(s);
+      return liste.slice().sort((a, b) => sammenlign(a, b) || tid(a.start) - tid(b.start));
+    }
     const nokkel = s === 'nyeste' || s === 'eldste' ? (e) => tid(lagtTil(e)) : (e) => tid(e.start);
     const retning = s === 'nyeste' || s === 'dato-sen' ? -1 : 1;
     return liste.slice().sort((a, b) => {
