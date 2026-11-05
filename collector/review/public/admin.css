@@ -331,6 +331,11 @@ a { color: var(--aksent-tekst); }
 .innsender-notat { white-space: pre-wrap; }
 
 .kort-mangler { font-size: 0.82rem; color: var(--aksent-tekst); margin-bottom: 0.4rem; }
+/* Verdier agenten leste fra eventbildet (core/bildeleser.js): stiplet
+   understrek på selve verdien + en linje som sier hva som bør sjekkes. */
+.fra-bilde { text-decoration: underline dotted; text-underline-offset: 3px; cursor: help; }
+.kort-fra-bilde { font-size: 0.82rem; color: var(--graa); margin-bottom: 0.4rem; }
+.kort-fra-bilde::before { content: '◎ '; }
 .agent-utvalg { margin-bottom: var(--gap-s); }
 .utvalg-forklaring { color: var(--graa); font-size: 0.82rem; margin-bottom: var(--gap-m); }
 .utvalg-antall { opacity: 0.7; }

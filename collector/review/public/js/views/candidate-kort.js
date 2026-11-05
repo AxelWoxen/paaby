@@ -129,6 +129,12 @@ function lagMiniatyrbilde(event) {
   }
 }
 
+// Lesbare navn på felt i «Fra bilde»-markeringen.
+const FELTNAVN = { start: 'tidspunkt', sted: 'sted', adresse: 'adresse', pris: 'pris', koordinater: 'koordinater' };
+function feltNavn(felt) {
+  return FELTNAVN[felt] ?? felt;
+}
+
 /**
  * @param {Object} event  candidate fra /api/candidates
  * @param {{ visInnsender?: boolean, modus?: 'vurdering' | 'fra-api', onInkludert?: () => void }} valg
@@ -193,6 +199,16 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
     d.textContent = 'Mulig duplikat';
     if (event._duplikatHint) d.title = event._duplikatHint;
     badger.appendChild(d);
+  }
+  // Felt agenten leste fra eventbildet — modellen kan lese feil (f.eks.
+  // et årstall), så de markeres til en person har sett på dem.
+  const fraBilde = Array.isArray(event._fraBilde) ? event._fraBilde : [];
+  if (fraBilde.length) {
+    const b = document.createElement('span');
+    b.className = 'badge badge-status badge-fra-bilde';
+    b.textContent = 'Fra bilde';
+    b.title = `Lest fra eventbildet: ${fraBilde.map(feltNavn).join(', ')}. Dobbeltsjekk før publisering.`;
+    badger.appendChild(b);
   }
   if (erPassert(event)) {
     const p = document.createElement('span');
@@ -277,6 +293,21 @@ export function lagKandidatKort(event, { visInnsender = false, modus = 'vurderin
     a.className = 'kort-holdt-ute';
     a.textContent = agentTekst;
     brodtekst.appendChild(a);
+  }
+
+  // Marker selve verdiene som kom fra bildet, og si hva som bør sjekkes.
+  const fraBildeEl = { start: dato, sted: stedInfo, pris: prisInfo, adresse: kartEl };
+  for (const felt of fraBilde) {
+    const el = fraBildeEl[felt];
+    if (!el) continue;
+    el.classList.add('fra-bilde');
+    el.title = 'Lest fra eventbildet — dobbeltsjekk';
+  }
+  if (fraBilde.length) {
+    const f = document.createElement('p');
+    f.className = 'kort-fra-bilde';
+    f.textContent = `Lest fra bildet — sjekk: ${fraBilde.map(feltNavn).join(', ')}`;
+    brodtekst.appendChild(f);
   }
 
   if (event._mangler?.length) {

@@ -31,6 +31,7 @@ export async function lesCandidates() {
       missing_fields,
       kept_out_reason,
       included_manually,
+      image_filled_fields,
       reject_reason,
       reviewed_at,
       (
@@ -69,6 +70,9 @@ export async function lesCandidates() {
     _mangler: row.missing_fields ?? [],
     _holdtUte: row.kept_out_reason,
     _inkludertManuelt: row.included_manually,
+    // Felt agenten leste fra eventbildet (core/bildeleser.js) — vises som
+    // «Fra bilde» i review, så en person dobbeltsjekker dem.
+    _fraBilde: row.image_filled_fields ?? [],
     // Agentens gruppe i Fra API (valgt / usikker / ikke-valgt) — regnet ut
     // her, så admin-UI og kjøringsloggen alltid bruker samme grenser.
     _agentValg: agentensValg({
